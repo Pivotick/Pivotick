@@ -504,3 +504,108 @@ test.describe('pivot save — asking first', () => {
         await expect(page.locator('.pivotick-toast-action')).toHaveText('Retry')
     })
 })
+
+// ── saving a selection ───────────────────────────────────────────────────────
+
+const saveOnly = async (page: Page, elements: string[]): Promise<RecordedSaveReport> =>
+    (await harness(page, 'pivotSave', { elements })) as RecordedSaveReport
+
+/** The ids of the edges between `from` and any of `to`, sorted. */
+const edgesBetween = (page: Page, from: string, to: string[]): Promise<string[]> =>
+    page.evaluate(({ from, to }) => window.__pivotick.graph!.getMutableEdges()
+        .filter((edge) => (edge.from.id === from && to.includes(edge.to.id))
+            || (edge.to.id === from && to.includes(edge.from.id)))
+        .map((edge) => edge.id)
+        .sort(), { from, to })
+
+test.describe('pivot save — a selection', () => {
+    test('saving two of a run sends exactly those two and their edges to the origin', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: [CORRELATION], save: 'ok' })
+        const landed = await runAndIngest(page, CORRELATION)
+        const picked = landed.nodes.slice(0, 2)
+        const before = await unsaved(page)
+
+        const report = await saveOnly(page, picked)
+        expect(report.runs).toBe(1)
+
+        const [call] = await saveCalls(page)
+        expect(call.nodes.sort()).toEqual([...picked].sort())
+        expect(call.children).toEqual([])
+        expect(call.edges).toHaveLength(2)
+        expect(call.edges.sort()).toEqual(await edgesBetween(page, 'a', picked))
+        expect(await unsaved(page)).toEqual({ nodes: before.nodes - 2, edges: before.edges - call.edges.length })
+    })
+
+    test('a later save sends the rest only, and then the run is marked persisted', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: [CORRELATION], save: 'ok' })
+        const landed = await runAndIngest(page, CORRELATION)
+        const picked = landed.nodes.slice(0, 2)
+
+        await saveOnly(page, picked)
+        // Part of a run written is not the run persisted.
+        expect((await entries(page)).find((entry) => entry.id === landed.runId)?.persisted).toBe(false)
+
+        await save(page)
+        const [, rest] = await saveCalls(page)
+        expect(rest.nodes.sort()).toEqual(landed.nodes.filter((id) => !picked.includes(id)).sort())
+        expect(await unsaved(page)).toEqual({ nodes: 0, edges: 0 })
+        expect((await entries(page)).find((entry) => entry.id === landed.runId)?.persisted).toBe(true)
+    })
+
+    test('naming a saved node beside an unsaved one writes only the unsaved one', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: [CORRELATION], save: 'ok' })
+        const landed = await runAndIngest(page, CORRELATION)
+        const [saved, fresh] = landed.nodes
+
+        await saveOnly(page, [saved])
+        await saveOnly(page, [saved, fresh])
+        expect((await saveCalls(page)).map((call) => call.nodes)).toEqual([[saved], [fresh]])
+    })
+
+    test('naming nothing a savable run waits on asks nobody and shows nothing', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: [CORRELATION], save: 'ok' })
+        await runAndIngest(page, CORRELATION)
+
+        // `a` is seed data, and `nope` is no element at all.
+        const report = await saveOnly(page, ['a', 'nope'])
+        expect(report.runs).toBe(0)
+        expect(await saveCalls(page)).toEqual([])
+        await expect(saveToast(page)).toHaveCount(0)
+    })
+
+    test('nodes from two runs ask each run once, and one toast reports both', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: [CORRELATION], save: 'ok' })
+        const urls = await runAndIngest(page, CORRELATION)
+        const ips = await runAndIngest(page, CORRELATION, ['a'], { type: ['ip'] })
+        expect(ips.runId).not.toBe(urls.runId)
+
+        const picked = [urls.nodes[0], ips.nodes[0], ips.nodes[1]]
+        await saveOnly(page, picked)
+
+        const calls = await saveCalls(page)
+        expect(calls.map((call) => call.runId).sort()).toEqual([urls.runId, ips.runId].sort())
+        expect(calls.flatMap((call) => call.nodes).sort()).toEqual([...picked].sort())
+        await expect(saveToast(page)).toHaveCount(1)
+        await expect(saveToast(page)).toContainText('Saved 3 nodes')
+    })
+
+    test('a named container brings its pending children; a named child goes alone', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: ['event-objects'], save: 'ok' })
+        await run(page, 'event-objects', ['a'])
+        const children = (await harness(page, 'childIds', 'event-a')) as string[]
+        expect(children.length).toBeGreaterThan(1)
+
+        await saveOnly(page, [children[0]])
+        await saveOnly(page, ['event-a'])
+        const [child, container] = await saveCalls(page)
+        expect({ nodes: child.nodes, children: child.children }).toEqual({ nodes: [], children: [children[0]] })
+        expect(container.nodes).toEqual(['event-a'])
+        expect(container.children.sort()).toEqual(children.slice(1).sort())
+    })
+})

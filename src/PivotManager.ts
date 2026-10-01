@@ -6,7 +6,8 @@ import type {
     PivotCandidate, PivotCandidateEdge, PivotCandidateSet, PivotContext, PivotDefinition,
     PivotManagerLike, PivotNarrowing, PivotRefusal, PivotRejection, PivotRimBadge, PivotRimBadgeVisibility,
     PivotRun, PivotRunOptions, PivotRunOutcome,
-    PivotSaveContext, PivotSaveOptions, PivotSaveOutcome, PivotSavePayload, PivotSaveReport, PivotSummary,
+    PivotSaveContext, PivotSaveOptions, PivotSaveOutcome, PivotSavePayload, PivotSaveReport, PivotSaveSelection,
+    PivotSummary,
 } from './interfaces/Pivot'
 import { SEED_SOURCE } from './interfaces/Pivot'
 import type { Node } from './Node'
@@ -1080,10 +1081,10 @@ export class PivotManager implements PivotManagerLike {
      * batches, and a sequential pass makes the report exact.
      *
      * @param target A run id for one run, a pivot id for every unsaved run of that
-     * pivot, or nothing for all of them.
+     * pivot, `{ elements }` for just those, or nothing for all of them.
      * @param options `interactive: true` when an analyst asked for it, so a save can prompt.
      */
-    public async save(target?: string, options: PivotSaveOptions = {}): Promise<PivotSaveReport> {
+    public async save(target?: string | PivotSaveSelection, options: PivotSaveOptions = {}): Promise<PivotSaveReport> {
         return this.runSave(target, options.interactive === true)
     }
 
@@ -1093,11 +1094,13 @@ export class PivotManager implements PivotManagerLike {
      * make `Saved 9 of 12 — Retry` become `Saved 12` rather than `Saved 3`.
      */
     private async runSave(
-        target: string | undefined,
+        target: string | PivotSaveSelection | undefined,
         interactive: boolean,
         retried?: { toast: NotificationHandle, sofar: { nodes: number, edges: number }, was: ToastResult },
     ): Promise<PivotSaveReport> {
-        const targets = this.targeted(target)
+        const selection = typeof target === 'object' ? this.selectionOf(target) : undefined
+        const targets = selection ? this.unsaved() : this.targeted(target as string | undefined)
+        const pendingOf = (run: PivotRun) => selection ? this.narrow(run, selection) : this.pending(run)
 
         const report: PivotSaveReport = {
             runs: 0, cancelled: 0, savedNodes: 0, savedEdges: 0, pendingNodes: 0, pendingEdges: 0, errors: [],
@@ -1108,7 +1111,7 @@ export class PivotManager implements PivotManagerLike {
             // Already being written by an earlier click: asking twice is not a reason
             // to send the same batch twice.
             if (this.saving.has(run.runId)) continue
-            const before = this.pending(run)
+            const before = pendingOf(run)
             if (!countOf(before)) continue
 
             const outcome = await this.write(run, before, interactive)
@@ -1123,7 +1126,7 @@ export class PivotManager implements PivotManagerLike {
 
             report.savedNodes += outcome.nodes
             report.savedEdges += outcome.edges
-            const after = this.pending(run)
+            const after = pendingOf(run)
             report.pendingNodes += after.nodes.length + after.children.length
             report.pendingEdges += after.edges.length
         }
@@ -1150,6 +1153,49 @@ export class PivotManager implements PivotManagerLike {
         const run = this.runs.get(target)
         if (run) return this.savable(run) ? [run] : []
         return this.unsaved().filter(candidate => candidate.pivotId === target)
+    }
+
+    /** The named elements of a selection save, by id: nodes and edges apart. */
+    private selectionOf(selection: PivotSaveSelection): { nodes: Set<string>, edges: Set<string> } {
+        const nodes = new Set<string>()
+        const edges = new Set<string>()
+        for (const element of selection.elements) {
+            if (element instanceof Edge) edges.add(element.id)
+            else if (typeof element !== 'string') nodes.add(element.id)
+            else if (this.graph.getMutableNode(element)) nodes.add(element)
+            else if (this.graph.getMutableEdge(element)) edges.add(element)
+        }
+        return { nodes, edges }
+    }
+
+    /**
+     * The part of a run's pending elements a selection names: the named nodes and the
+     * pending children under them, the named edges, and any pending edge from a picked
+     * node to an end that will not be left unwritten (another picked node, the origin,
+     * something already saved or not this ledger's). An edge to an unpicked pending
+     * node stays behind with it, so a write never sends a line to nothing.
+     */
+    private narrow(
+        run: PivotRun,
+        selection: { nodes: Set<string>, edges: Set<string> },
+    ): { nodes: Node[], children: Node[], edges: Edge[] } {
+        const picked = (node: Node): boolean =>
+            selection.nodes.has(node.id) || node.ancestorChain().some(ancestor => selection.nodes.has(ancestor.id))
+        const endOk = (node: Node): boolean => picked(node) || !this.unwritten(node)
+        const all = this.pending(run)
+        return {
+            nodes: all.nodes.filter(picked),
+            children: all.children.filter(picked),
+            edges: all.edges.filter(edge => selection.edges.has(edge.id)
+                || ((picked(edge.from) || picked(edge.to)) && endOk(edge.from) && endOk(edge.to))),
+        }
+    }
+
+    /** A node some savable run created and has not written yet. */
+    private unwritten(node: Node): boolean {
+        const runId = this.nodeRun.get(node.id)
+        const run = runId ? this.runs.get(runId) : undefined
+        return !!run && this.savable(run) && !this.savedNodes.has(node.id)
     }
 
     /** Savable runs with elements still on canvas and not yet written. */
@@ -1342,7 +1388,7 @@ export class PivotManager implements PivotManagerLike {
     private reportSave(
         report: PivotSaveReport,
         message: string | undefined,
-        target?: string,
+        target?: string | PivotSaveSelection,
         toast?: NotificationHandle,
         sofar: { nodes: number, edges: number } = { nodes: 0, edges: 0 },
     ): void {

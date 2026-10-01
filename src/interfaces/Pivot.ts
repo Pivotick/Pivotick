@@ -225,6 +225,23 @@ export type PivotSaveOutcome =
     }
 
 /**
+ * Part of what the runs landed, for {@link PivotManagerLike.save}: say, the nodes an
+ * analyst selected.
+ *
+ * Each run that created a named element is asked once, with a payload narrowed to
+ * what was named: the named nodes, the pending children under them, the named edges,
+ * and each pending edge from a named node whose other end is named too or will not be
+ * left unwritten (the origin, a node already saved). Anything else stays pending,
+ * and named elements no savable run is still waiting on are ignored.
+ *
+ * @category Pivots
+ */
+export interface PivotSaveSelection {
+    /** Elements or their ids. */
+    elements: Array<Node | Edge | string>
+}
+
+/**
  * How {@link PivotManagerLike.save} was asked.
  *
  * @category Pivots
@@ -650,11 +667,12 @@ export interface PivotManagerLike {
      * Each run is sent only what is still unsaved, so a retry is the same call.
      *
      * @param target A run id for one run, a pivot id for every unsaved run of that
-     * pivot, or nothing for all of them.
+     * pivot, a {@link PivotSaveSelection} for just those elements, or nothing for
+     * all of them.
      * @param options `interactive: true` when an analyst asked for the save, so
      * {@link PivotSaveContext.promptData} can open its modal.
      */
-    save(target?: string, options?: PivotSaveOptions): Promise<PivotSaveReport>
+    save(target?: string | PivotSaveSelection, options?: PivotSaveOptions): Promise<PivotSaveReport>
     /** Savable runs with elements still on canvas and not yet written. */
     unsaved(): PivotRun[]
     /**

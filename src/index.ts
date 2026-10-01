@@ -42,7 +42,7 @@ export type {
     PivotDefinition, PivotSummary, PivotFacet, PivotNarrowing, NarrowingFacetType, PivotResult,
     PivotContext, PivotRunOutcome, PivotRefusal, PivotCandidate, PivotCandidateEdge,
     PivotCandidateSet, PivotRun, PivotRestageRecord,
-    PivotSavePayload, PivotSaveContext, PivotSaveOptions, PivotSaveOutcome, PivotSaveReport,
+    PivotSavePayload, PivotSaveContext, PivotSaveOptions, PivotSaveOutcome, PivotSaveReport, PivotSaveSelection,
 } from './interfaces/Pivot'
 export type { PivotManager, PivotChange } from './PivotManager'
 export type {

@@ -1244,8 +1244,8 @@ export interface HarnessApi {
 
     /* --- saving --- */
 
-    /** `graph.pivots.save` — a run id, a pivot id, or everything; `interactive` as a click would. */
-    pivotSave(target?: string, interactive?: boolean): Promise<RecordedSaveReport>
+    /** `graph.pivots.save` — a run id, a pivot id, `{ elements }`, or everything; `interactive` as a click would. */
+    pivotSave(target?: string | { elements: string[] }, interactive?: boolean): Promise<RecordedSaveReport>
     /** Every `save` the fixtures have been asked to perform, in order. */
     saveCalls(): SaveCall[]
     /** What each `'prompt'` save's `promptData` resolved to, in order; `null` is a cancel. */
@@ -1263,8 +1263,8 @@ export interface HarnessApi {
 
     /* --- saving --- */
 
-    /** `graph.pivots.save` — a run id, a pivot id, or everything; `interactive` as a click would. */
-    pivotSave(target?: string, interactive?: boolean): Promise<RecordedSaveReport>
+    /** `graph.pivots.save` — a run id, a pivot id, `{ elements }`, or everything; `interactive` as a click would. */
+    pivotSave(target?: string | { elements: string[] }, interactive?: boolean): Promise<RecordedSaveReport>
     /** Every `save` the fixtures have been asked to perform, in order. */
     saveCalls(): SaveCall[]
     /** What each `'prompt'` save's `promptData` resolved to, in order; `null` is a cancel. */
@@ -5257,7 +5257,7 @@ class Harness implements HarnessApi {
         return this.g.pivots.size
     }
 
-    async pivotSave(target?: string, interactive?: boolean): Promise<RecordedSaveReport> {
+    async pivotSave(target?: string | { elements: string[] }, interactive?: boolean): Promise<RecordedSaveReport> {
         const report = await this.g.pivots.save(target, { interactive })
         return {
             runs: report.runs,

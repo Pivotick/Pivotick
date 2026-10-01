@@ -116,6 +116,26 @@ graph.pivots.isSaved(node)         // false for the unsaved *and* the not-savabl
 graph.pivots.isSavable(node)       // which of those two it is
 ```
 
+### Part of a run
+
+```js
+const selected = graph.renderer.getGraphInteraction().getSelectedNodeIDs() ?? []
+await graph.pivots.save({ elements: selected })   // Nodes, Edges or their ids
+```
+
+Each run that created one of the named elements is asked once, with a payload narrowed to
+what was named. A named node brings the pending children under it, and an edge comes along
+when one end is named and the other is named too or will not be left unwritten: the
+origin, a node already saved, anything the ledger is not waiting on. An edge to a pending
+node left out stays behind with it, so a write never sends a line to nothing. Named
+elements nothing is waiting on are ignored, and the call gets one toast for every run it
+asked.
+
+The rest stays pending, and counts, Retry and `canonicalIds` work as they do for a whole
+run. A run is marked persisted in the history only once nothing of it is left to write.
+`isSavable(el)` and `isSaved(el)` say whether a menu entry like *Save selected* has
+anything to do.
+
 Runs go one at a time, and each is sent only what is still unsaved — so a retry is the same
 call. The result arrives as a toast: `Saved 12 nodes`, or `Saved 9 of 12` with a **Retry**
 that takes over that same toast rather than stacking a second one.

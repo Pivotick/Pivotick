@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Saving part of a run
+
+- `graph.pivots.save({ elements })` writes only the named nodes and edges: each run that
+  created one is asked once, with the pending children under a named node and the edges
+  that would not be left dangling. The rest stays pending, one toast covers the call, and a
+  run is marked persisted only once nothing of it is left.
+
 ### A save can ask first
 
 - `PivotSaveContext.promptData` opens the library's modal from inside a pivot's `save`,
