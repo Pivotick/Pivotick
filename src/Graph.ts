@@ -164,6 +164,9 @@ export class Graph {
         if (this.options.pivotMarkUnsaved === true) {
             this.pivots.markUnsaved = true
         }
+        if (this.options.pivotSaveControls === false) {
+            this.pivots.saveControls = false
+        }
         this.options.pivots?.forEach(pivot => this.pivots.register(pivot))
         // Before the UI too: the Simplify rail mode reads its rules.
         this.simplify = new Simplification(this, this.options.UI?.simplify, this.options.UI?.mode)

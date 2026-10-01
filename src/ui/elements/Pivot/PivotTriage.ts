@@ -91,6 +91,7 @@ export class PivotTriage extends UIComponent {
             // 'registry' matters too: unregistering a pivot drops its candidates.
             if (change === 'candidates' || change === 'registry') this.sync()
             if (change === 'runs') this.reportUnannounced()
+            if (change === 'save') for (const pane of this.panes.values()) pane.refresh()
         }))
         this.sync()
     }

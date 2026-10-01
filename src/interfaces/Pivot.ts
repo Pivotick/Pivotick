@@ -631,6 +631,8 @@ export interface PivotManagerLike {
     rimBadge: PivotRimBadge
     /** When those rim badges are drawn. */
     rimBadgeVisible: PivotRimBadgeVisibility
+    /** Whether the Pivot panel and the triage pane offer their own Save. */
+    saveControls: boolean
     register(definition: PivotDefinition): () => void
     unregister(id: string): void
     get(id: string): PivotDefinition | undefined

@@ -163,6 +163,12 @@ export class TriagePane {
         this.deps.counted(this.pivotId)
     }
 
+    /** Something outside the set changed what the pane shows, such as the unsaved count. */
+    public refresh(): void {
+        this.dirty = true
+        if (this.active) this.paint()
+    }
+
     public activate(): void {
         this.active = true
         if (this.dirty) this.paint()
@@ -465,7 +471,7 @@ export class TriagePane {
         // the set — they are on the canvas, waiting on a different decision.
         const pending = this.deps.pivots.unsavedCount(this.pivotId)
         const unsaved = pending.nodes + pending.edges
-        if (unsaved) {
+        if (unsaved && this.deps.pivots.saveControls) {
             line.appendChild(text('span', '·', 'pvt-triage-dot'))
             line.appendChild(text('span', `${fmt(unsaved)} unsaved`, 'pvt-triage-seg-static'))
             const save = document.createElement('button')

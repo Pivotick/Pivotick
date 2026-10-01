@@ -206,9 +206,10 @@ export class PivotPanel {
      * unsaved: they never reach this count, so it never shows a number with no remedy.
      */
     private paintUnsaved(): void {
-        const { nodes, edges } = this.uiManager.graph.pivots.unsavedCount()
+        const pivots = this.uiManager.graph.pivots
+        const { nodes, edges } = pivots.unsavedCount()
         const total = nodes + edges
-        this.saveBar.hidden = !total && !this.saving
+        this.saveBar.hidden = !pivots.saveControls || (!total && !this.saving)
         if (this.saveBar.hidden) return
 
         this.saveCount.textContent = `${fmt(total)} unsaved`

@@ -138,6 +138,16 @@ export interface GraphOptions {
     pivotMarkUnsaved?: boolean,
 
     /**
+     * Whether the Pivot panel and the triage pane show what is unsaved with a Save that
+     * writes all of it. Off, the consumer offers saving where it wants, through
+     * `graph.pivots.save(...)`; the ledger and the save itself are unchanged.
+     *
+     * `graph.pivots.saveControls` changes it later.
+     * @default true
+     */
+    pivotSaveControls?: boolean,
+
+    /**
      * @private
      * Instance of a parent graph used in the context of collapsible nodes
      */

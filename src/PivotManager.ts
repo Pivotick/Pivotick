@@ -78,6 +78,24 @@ export class PivotManager implements PivotManagerLike {
      */
     public markUnsaved = false
 
+    private _saveControls = true
+
+    /**
+     * Whether the Pivot panel and the triage pane offer their own *N unsaved · Save*.
+     * Off, a consumer writes back only through {@link save}, which, like the ledger and
+     * {@link unsavedCount}, works either way. Set it through `pivotSaveControls` in the
+     * graph options, or here to change it later.
+     */
+    public get saveControls(): boolean {
+        return this._saveControls
+    }
+
+    public set saveControls(shown: boolean) {
+        if (shown === this._saveControls) return
+        this._saveControls = shown
+        this.notify('save')
+    }
+
     private _rimBadge: PivotRimBadge = 'per-pivot'
 
     /**

@@ -402,6 +402,69 @@ test.describe('pivot save — the surfaces', () => {
     })
 })
 
+// ── saving offered elsewhere ─────────────────────────────────────────────────
+// `pivotSaveControls: false` takes the panel's and the pane's Save away for an
+// application that offers saving somewhere of its own. Only the controls go.
+
+const NO_CONTROLS = { ...FULL, pivotSaveControls: false }
+
+/** A run left partly in triage, so its pane stays open beside the panel. */
+const ingestSome = async (page: Page): Promise<RecordedRunOutcome> => {
+    await run(page, CORRELATION, ['a'], URLS)
+    const set = await staged(page)
+    const some = (set?.rows ?? []).filter((row) => !row.deduped).slice(0, 4).map((row) => row.id)
+    await harness(page, 'markPivotCandidates', CORRELATION, some)
+    return ingest(page)
+}
+
+const expectNoSaveControls = async (page: Page): Promise<void> => {
+    await expect(saveBar(page)).toBeHidden()
+    await expect(paneHead(page)).not.toContainText('unsaved')
+    await expect(paneHead(page).locator('.pvt-triage-link')).toHaveCount(0)
+}
+
+test.describe('pivot save — controls off', () => {
+    test('neither the panel nor the pane offers a save, though the ledger still counts', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: [CORRELATION], save: 'ok' }, NO_CONTROLS)
+        await enterMode(page)
+
+        const landed = await ingestSome(page)
+        await expect(paneHead(page)).toBeVisible()
+        await expectNoSaveControls(page)
+        expect((await unsaved(page)).nodes).toBe(landed.nodes.length)
+    })
+
+    test('save({ elements }) still writes, and a partial failure still offers Retry', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: [CORRELATION], save: 'half' }, NO_CONTROLS)
+        const landed = await runAndIngest(page, CORRELATION)
+        const picked = landed.nodes.slice(0, 2)
+
+        const report = await harness(page, 'pivotSave', { elements: picked }, true) as RecordedSaveReport
+        expect(report.savedNodes).toBe(1)
+        expect((await saveCalls(page))[0].nodes.sort()).toEqual([...picked].sort())
+        await expect(page.locator('.pivotick-toast-action')).toHaveText('Retry')
+    })
+
+    test('turning them back on at runtime brings both back', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: [CORRELATION], save: 'ok' }, NO_CONTROLS)
+        await enterMode(page)
+        const landed = await ingestSome(page)
+        const pending = landed.nodes.length + landed.edges.length
+        await expectNoSaveControls(page)
+
+        await harness(page, 'setSaveControls', true)
+        await expect(saveBar(page)).toContainText(`${pending.toLocaleString()} unsaved`)
+        await expect(paneHead(page)).toContainText(`${pending.toLocaleString()} unsaved`)
+        await expect(paneHead(page).locator('.pvt-triage-link')).toBeVisible()
+
+        await harness(page, 'setSaveControls', false)
+        await expectNoSaveControls(page)
+    })
+})
+
 // ── asking before writing ────────────────────────────────────────────────────
 // The `'prompt'` fixture asks for a relationship through `ctx.promptData`, the way a
 // backend tying each result to its origin would, and backs out on a cancel.

@@ -1260,6 +1260,8 @@ export interface HarnessApi {
     pivotCanonicalId(nodeId: string): string | null
     /** Change the save behaviour of the registered fixtures mid-test. */
     setSaveBehavior(behavior: SaveBehavior): void
+    /** `graph.pivots.saveControls` — whether the panel and pane offer their own Save. */
+    setSaveControls(shown: boolean): void
 
     /* --- saving --- */
 
@@ -1279,6 +1281,8 @@ export interface HarnessApi {
     pivotCanonicalId(nodeId: string): string | null
     /** Change the save behaviour of the registered fixtures mid-test. */
     setSaveBehavior(behavior: SaveBehavior): void
+    /** `graph.pivots.saveControls` — whether the panel and pane offer their own Save. */
+    setSaveControls(shown: boolean): void
     /** Point the view at a graph-space position, so "the viewport centre" is not the origin. */
     pointViewAt(x: number, y: number): void
     /** How many child nodes a container holds — what a union or a nested result is judged on. */
@@ -5299,6 +5303,10 @@ class Harness implements HarnessApi {
 
     setSaveBehavior(behavior: SaveBehavior): void {
         this.saveBehavior = behavior
+    }
+
+    setSaveControls(shown: boolean): void {
+        this.g.pivots.saveControls = shown
     }
 
     async pivotSummarize(

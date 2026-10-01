@@ -143,6 +143,17 @@ that takes over that same toast rather than stacking a second one.
 In the UI the count and the button live at the foot of the Pivot panel, and a Review pane
 carries its own provider's share in its header. Nothing appears while the number is zero.
 
+Both write everything pending, with no way to pick. An application that offers saving
+somewhere else, such as a *Save selected* entry in the node menu, can turn them off:
+
+```js
+new Pivotick(el, data, { pivots: [objects], pivotSaveControls: false })
+graph.pivots.saveControls = true   // and back, at runtime
+```
+
+Only the two controls go. The ledger, the counts, `save(...)`, its toast and Retry, and
+`canonicalIds` work as before.
+
 `autoSave: true` writes each run the moment it lands, with no gesture. It runs after the
 ingest resolves rather than inside it, so a slow backend never holds up the canvas, and a
 failure reports through the notifier and leaves the data where it is. Pair it with
