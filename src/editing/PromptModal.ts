@@ -93,14 +93,14 @@ export function runModal<T>(
 export function promptData<TData>(
     graph: Graph,
     options: PromptDataOptions<TData>,
-    defaults: { title: string, bodyClass?: string }
+    defaults: { title: string, submitLabel?: string, bodyClass?: string }
 ): Promise<TData | null> {
 
     let form: HTMLFormElement | null = null
 
     return runModal<TData>(graph, {
         title: options.title ?? defaults.title,
-        submitLabel: options.submitLabel,
+        submitLabel: options.submitLabel ?? defaults.submitLabel,
         cancelLabel: options.cancelLabel,
         bodyClass: defaults.bodyClass,
         populate: (body) => {

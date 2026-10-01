@@ -61,6 +61,7 @@ is what stops a permanent "210 unsaved" with no remedy.
 | `{ savedNodeIds, savedEdgeIds }` | a partial write — **anything not named stays unsaved** |
 | `{ canonicalIds }` | ids the source system assigned, keyed by the local id |
 | `{ message }` | shown verbatim in the result toast |
+| `{ cancelled: true }` | the analyst backed out: nothing recorded, no toast, not an attempt |
 
 `savedNodeIds` covers `nodes` and `children` together. An id naming an element this run did
 not create is ignored: a pivot never writes what it did not produce, so it cannot report it
@@ -68,6 +69,38 @@ written either.
 
 A save that reports an edge written but not the nodes it connects is taken at face value.
 What the source system says it wrote is not the library's to overrule.
+
+## Asking the analyst first
+
+A write sometimes needs one answer before it can go, such as which relationship ties each
+result to the node it was enriched from. `ctx.promptData` opens the library's own modal,
+with the same options as the one behind node and edge creation: declarative `fields`, or
+`render` + `getValues` for your own HTML. It resolves to the values, or `null` on cancel.
+
+```js
+save: async (payload, ctx) => {
+    const answer = await ctx.promptData({
+        fields: [{ key: 'relationship', label: 'Relationship', type: 'text', defaultValue: 'related-to' }],
+    })
+    if (!answer) return { cancelled: true }
+    await api.attach(payload, answer.relationship, { signal: ctx.signal })
+},
+```
+
+The modal is titled and submitted with *Save* unless `title` and `submitLabel` say
+otherwise. Returning `{ cancelled: true }` leaves the run exactly as it was before the
+click: still unsaved, no toast, no Retry, and the next attempt is still `attempt: 1`. A save
+over several runs stops at the first cancel, and the report counts it under `cancelled`
+rather than as a failure. A cancelled Retry puts its toast back the way it was.
+
+Only a save someone clicked for can ask. The Pivot panel's Save, a Review pane's Save and
+the toast's Retry pass `interactive: true`; `autoSave` and a plain `graph.pivots.save()` do
+not, so their `promptData` resolves `null` at once with nothing drawn. A host with a Save
+button of its own passes the flag too:
+
+```js
+await graph.pivots.save(undefined, { interactive: true })
+```
 
 ## Asking for one
 

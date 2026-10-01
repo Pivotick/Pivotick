@@ -401,3 +401,106 @@ test.describe('pivot save — the surfaces', () => {
         await expect(page.locator('.pvt-node-unsaved')).toHaveCount(0)
     })
 })
+
+// ── asking before writing ────────────────────────────────────────────────────
+// The `'prompt'` fixture asks for a relationship through `ctx.promptData`, the way a
+// backend tying each result to its origin would, and backs out on a cancel.
+
+const promptBody = (page: Page): Locator => page.locator('.pvt-prompt-modal-body')
+const modalButton = (page: Page, name: string): Locator =>
+    page.locator('.pvt-modal__footer button', { hasText: name })
+
+const promptValues = async (page: Page): Promise<Array<Record<string, unknown> | null>> =>
+    (await harness(page, 'savePromptValues')) as Array<Record<string, unknown> | null>
+
+test.describe('pivot save — asking first', () => {
+    test('a save that prompts opens the library modal and receives the values', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: [CORRELATION], save: 'prompt' })
+        await runAndIngest(page, CORRELATION)
+
+        // Not awaited: the save is waiting on the analyst.
+        const report = harness(page, 'pivotSave', undefined, true) as Promise<RecordedSaveReport>
+        await promptBody(page).waitFor({ state: 'visible' })
+        await expect(page.locator('.pvt-modal__header')).toContainText('Save')
+        await modalButton(page, 'Save').click()
+
+        expect((await report).runs).toBe(1)
+        expect(await promptValues(page)).toEqual([{ relationship: 'related-to' }])
+        expect(await unsaved(page)).toEqual({ nodes: 0, edges: 0 })
+    })
+
+    test('a cancelled prompt is a cancel: no toast, nothing written, still the first attempt', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: [CORRELATION], save: 'prompt' }, FULL)
+        await enterMode(page)
+        await runAndIngest(page, CORRELATION)
+        const before = await unsaved(page)
+
+        // The panel's own Save is a click, so the save may ask.
+        await saveBar(page).locator('button').click()
+        await promptBody(page).waitFor({ state: 'visible' })
+        await modalButton(page, 'Cancel').click()
+
+        await expect(promptBody(page)).toBeHidden()
+        await expect.poll(() => promptValues(page)).toEqual([null])
+        expect(await unsaved(page)).toEqual(before)
+        await expect(saveBar(page)).toBeVisible()
+        await expect(saveToast(page)).toHaveCount(0)
+
+        // A cancel was not an attempt: the backend's first sight of the run is still attempt 1.
+        const report = harness(page, 'pivotSave', undefined, true) as Promise<RecordedSaveReport>
+        await promptBody(page).waitFor({ state: 'visible' })
+        await modalButton(page, 'Save').click()
+        await report
+        expect((await saveCalls(page)).map((call) => call.attempt)).toEqual([1, 1])
+    })
+
+    test('the report tells a cancel from a refusal', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: [CORRELATION], save: 'prompt' })
+        await runAndIngest(page, CORRELATION)
+
+        const report = harness(page, 'pivotSave', undefined, true) as Promise<RecordedSaveReport>
+        await promptBody(page).waitFor({ state: 'visible' })
+        await modalButton(page, 'Cancel').click()
+        const cancelled = await report
+        expect({ runs: cancelled.runs, cancelled: cancelled.cancelled, errors: cancelled.errors })
+            .toEqual({ runs: 0, cancelled: 1, errors: [] })
+    })
+
+    test('a save nobody clicked gets null at once, with nothing drawn', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: [CORRELATION], save: 'prompt', autoSave: [CORRELATION] })
+        const landed = await runAndIngest(page, CORRELATION)
+
+        await expect.poll(() => promptValues(page)).toEqual([null])
+        await expect(promptBody(page)).toHaveCount(0)
+        expect((await unsaved(page)).nodes).toBe(landed.nodes.length)
+        await expect(saveToast(page)).toHaveCount(0)
+
+        // Nor does a console call, unless it says a person asked.
+        const report = await save(page)
+        expect(report.cancelled).toBe(1)
+        await expect(promptBody(page)).toHaveCount(0)
+    })
+
+    test('a Retry backed out of puts the toast back the way it was', async ({ page }) => {
+        await gotoHarness(page)
+        await load(page, { pivots: [CORRELATION], save: 'half' }, FULL)
+        await enterMode(page)
+        const landed = await runAndIngest(page, CORRELATION)
+        const total = landed.nodes.length + landed.edges.length
+        const written = Math.ceil(landed.nodes.length / 2)
+        await saveBar(page).locator('button').click()
+        await expect(saveToast(page)).toContainText('Saved ' + written + ' of ' + total)
+
+        await harness(page, 'setSaveBehavior', 'prompt')
+        await page.locator('.pivotick-toast-action').click()
+        await promptBody(page).waitFor({ state: 'visible' })
+        await modalButton(page, 'Cancel').click()
+
+        await expect(saveToast(page)).toContainText('Saved ' + written + ' of ' + total)
+        await expect(page.locator('.pivotick-toast-action')).toHaveText('Retry')
+    })
+})

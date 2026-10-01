@@ -501,7 +501,7 @@ export class TriagePane {
         this.saving = true
         this.paint()
         try {
-            await this.deps.pivots.save(this.pivotId)
+            await this.deps.pivots.save(this.pivotId, { interactive: true })
         } finally {
             this.saving = false
             this.paint()

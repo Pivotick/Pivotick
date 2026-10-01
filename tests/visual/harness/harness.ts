@@ -1050,9 +1050,10 @@ export interface PivotFixtureSpec {
  * How a fixture's `save` answers. `'half'` writes every other node and no edges,
  * which is the shape a retry has to be able to pick up from; `'mint'` writes
  * everything under ids of the source system's own choosing, so the next fetch
- * returns them renamed.
+ * returns them renamed. `'prompt'` asks for a relationship through `ctx.promptData`
+ * first, and reports `{ cancelled: true }` when it gets `null`.
  */
-export type SaveBehavior = 'none' | 'ok' | 'half' | 'throw' | 'mint'
+export type SaveBehavior = 'none' | 'ok' | 'half' | 'throw' | 'mint' | 'prompt'
 
 /** One `save` call, as the log records it. */
 export interface SaveCall {
@@ -1072,6 +1073,7 @@ export type IngestHookBehavior = 'accept' | 'accept-async' | 'veto' | 'narrow-fi
 /** A serialisable {@link PivotSaveReport}. */
 export interface RecordedSaveReport {
     runs: number
+    cancelled: number
     savedNodes: number
     savedEdges: number
     pendingNodes: number
@@ -1242,10 +1244,12 @@ export interface HarnessApi {
 
     /* --- saving --- */
 
-    /** `graph.pivots.save` — a run id, a pivot id, or everything. */
-    pivotSave(target?: string): Promise<RecordedSaveReport>
+    /** `graph.pivots.save` — a run id, a pivot id, or everything; `interactive` as a click would. */
+    pivotSave(target?: string, interactive?: boolean): Promise<RecordedSaveReport>
     /** Every `save` the fixtures have been asked to perform, in order. */
     saveCalls(): SaveCall[]
+    /** What each `'prompt'` save's `promptData` resolved to, in order; `null` is a cancel. */
+    savePromptValues(): Array<Record<string, unknown> | null>
     /** `graph.pivots.unsavedCount` — all of it, or one pivot's. */
     pivotUnsavedCount(pivotId?: string): { nodes: number; edges: number }
     /** The run ids `graph.pivots.unsaved()` still lists. */
@@ -1259,10 +1263,12 @@ export interface HarnessApi {
 
     /* --- saving --- */
 
-    /** `graph.pivots.save` — a run id, a pivot id, or everything. */
-    pivotSave(target?: string): Promise<RecordedSaveReport>
+    /** `graph.pivots.save` — a run id, a pivot id, or everything; `interactive` as a click would. */
+    pivotSave(target?: string, interactive?: boolean): Promise<RecordedSaveReport>
     /** Every `save` the fixtures have been asked to perform, in order. */
     saveCalls(): SaveCall[]
+    /** What each `'prompt'` save's `promptData` resolved to, in order; `null` is a cancel. */
+    savePromptValues(): Array<Record<string, unknown> | null>
     /** `graph.pivots.unsavedCount` — all of it, or one pivot's. */
     pivotUnsavedCount(pivotId?: string): { nodes: number; edges: number }
     /** The run ids `graph.pivots.unsaved()` still lists. */
@@ -2121,6 +2127,8 @@ class Harness implements HarnessApi {
     /** Save observation state: what the fixtures were asked to write, and how they answer. */
     private saveBehavior: SaveBehavior = 'none'
     private saveLog: SaveCall[] = []
+    /** What each `'prompt'` save's `promptData` resolved to, `null` for a cancel. */
+    private savePrompts: Array<Record<string, unknown> | null> = []
     /** Ids this fake source system has assigned, so a later fetch returns them renamed. */
     private mintedIds = new Map<string, string>()
     private batchLog: number[] = []
@@ -5195,6 +5203,7 @@ class Harness implements HarnessApi {
         this.seenIngestContexts = []
         this.saveBehavior = spec.save ?? 'none'
         this.saveLog = []
+        this.savePrompts = []
         this.mintedIds.clear()
 
         const names = spec.pivots ?? ALL_FAKE_PIVOTS
@@ -5248,10 +5257,11 @@ class Harness implements HarnessApi {
         return this.g.pivots.size
     }
 
-    async pivotSave(target?: string): Promise<RecordedSaveReport> {
-        const report = await this.g.pivots.save(target)
+    async pivotSave(target?: string, interactive?: boolean): Promise<RecordedSaveReport> {
+        const report = await this.g.pivots.save(target, { interactive })
         return {
             runs: report.runs,
+            cancelled: report.cancelled,
             savedNodes: report.savedNodes,
             savedEdges: report.savedEdges,
             pendingNodes: report.pendingNodes,
@@ -5262,6 +5272,10 @@ class Harness implements HarnessApi {
 
     saveCalls(): SaveCall[] {
         return this.saveLog.map((call) => ({ ...call }))
+    }
+
+    savePromptValues(): Array<Record<string, unknown> | null> {
+        return [...this.savePrompts]
     }
 
     pivotUnsavedCount(pivotId?: string): { nodes: number; edges: number } {
@@ -5735,6 +5749,13 @@ class Harness implements HarnessApi {
 
         const nodes = [...payload.nodes, ...payload.children]
         if (this.saveBehavior === 'throw') throw new Error(`${payload.pivotId}.save refused`)
+        if (this.saveBehavior === 'prompt') {
+            const values = await ctx.promptData({
+                fields: [{ key: 'relationship', label: 'Relationship', type: 'text', defaultValue: 'related-to' }],
+            })
+            this.savePrompts.push(values)
+            return values ? true : { cancelled: true }
+        }
         if (this.saveBehavior === 'half') {
             const kept = nodes.filter((_, i) => i % 2 === 0)
             return {

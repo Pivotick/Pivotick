@@ -4,6 +4,7 @@ import type { Node } from '../Node'
 import type { RenderContext } from './AsyncContent'
 import type { RawEdge, RawNode } from './GraphOptions'
 import type { FilterFacetType } from './GraphQueryEngine'
+import type { PromptDataOptions } from './InterractionCallbacks'
 
 /**
  * One runnable enrichment: what it is called, what it runs on, how to advertise
@@ -174,6 +175,17 @@ export interface PivotSaveContext {
     graph: Graph
     pivotId: string
     signal: AbortSignal
+    /**
+     * Ask the analyst for something before writing, in the library's own modal: a
+     * declarative form (`fields`) or custom HTML (`render` + `getValues`), titled
+     * and submitted with *Save* unless told otherwise. Resolves to the values, or `null` on cancel.
+     *
+     * A save nobody clicked ({@link PivotDefinition.autoSave}, or
+     * {@link PivotManagerLike.save} called without `interactive`) gets `null` at once,
+     * with nothing drawn. Return `{ cancelled: true }` after a `null` to leave the run
+     * pending with no toast.
+     */
+    promptData: <T = Record<string, unknown>>(options: PromptDataOptions<T>) => Promise<T | null>
 }
 
 /**
@@ -204,7 +216,27 @@ export type PivotSaveOutcome =
         canonicalIds?: Record<string, string>
         /** Shown verbatim in the result toast — why the rest did not save. */
         message?: string
+        /**
+         * The analyst backed out, typically of {@link PivotSaveContext.promptData}.
+         * Nothing is recorded, no toast is shown, the attempt does not count, and a
+         * save over several runs stops here. Every other field is ignored.
+         */
+        cancelled?: boolean
     }
+
+/**
+ * How {@link PivotManagerLike.save} was asked.
+ *
+ * @category Pivots
+ */
+export interface PivotSaveOptions {
+    /**
+     * Someone clicked for this save, so the save may ask them something. The
+     * library's own Save buttons and the toast's Retry pass `true`.
+     * @default false
+     */
+    interactive?: boolean
+}
 
 /**
  * What {@link PivotManagerLike.save} resolves with.
@@ -215,8 +247,10 @@ export type PivotSaveOutcome =
  * @category Pivots
  */
 export interface PivotSaveReport {
-    /** How many runs were attempted. */
+    /** How many runs were attempted, not counting a cancelled one. */
     runs: number
+    /** Runs whose save reported `{ cancelled: true }`: left as they were, not failed. */
+    cancelled: number
     savedNodes: number
     savedEdges: number
     /** Still unsaved after this attempt — what a retry would send. */
@@ -617,8 +651,10 @@ export interface PivotManagerLike {
      *
      * @param target A run id for one run, a pivot id for every unsaved run of that
      * pivot, or nothing for all of them.
+     * @param options `interactive: true` when an analyst asked for the save, so
+     * {@link PivotSaveContext.promptData} can open its modal.
      */
-    save(target?: string): Promise<PivotSaveReport>
+    save(target?: string, options?: PivotSaveOptions): Promise<PivotSaveReport>
     /** Savable runs with elements still on canvas and not yet written. */
     unsaved(): PivotRun[]
     /**

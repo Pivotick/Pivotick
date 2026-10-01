@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### A save can ask first
+
+- `PivotSaveContext.promptData` opens the library's modal from inside a pivot's `save`,
+  titled and submitted with *Save*, and resolves to the values or `null`.
+- A save returning `{ cancelled: true }` records nothing, shows no toast, does not count as
+  an attempt, and stops a save over several runs. `PivotSaveReport.cancelled` counts it.
+- `graph.pivots.save(target, { interactive: true })` marks a save someone clicked for; the
+  library's Save buttons and Retry pass it. Without it, `promptData` resolves `null` at once.
+
 ### Waiting on a hook
 
 - **The canvas shows when it waits on an async hook.** After 200 ms without an answer from

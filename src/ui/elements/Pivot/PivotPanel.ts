@@ -229,7 +229,7 @@ export class PivotPanel {
         this.saving = true
         this.paintUnsaved()
         try {
-            await this.uiManager.graph.pivots.save()
+            await this.uiManager.graph.pivots.save(undefined, { interactive: true })
         } finally {
             this.saving = false
             this.paintUnsaved()

@@ -6,11 +6,11 @@ import type {
     PivotCandidate, PivotCandidateEdge, PivotCandidateSet, PivotContext, PivotDefinition,
     PivotManagerLike, PivotNarrowing, PivotRefusal, PivotRejection, PivotRimBadge, PivotRimBadgeVisibility,
     PivotRun, PivotRunOptions, PivotRunOutcome,
-    PivotSaveContext, PivotSaveOutcome, PivotSavePayload, PivotSaveReport, PivotSummary,
+    PivotSaveContext, PivotSaveOptions, PivotSaveOutcome, PivotSavePayload, PivotSaveReport, PivotSummary,
 } from './interfaces/Pivot'
 import { SEED_SOURCE } from './interfaces/Pivot'
 import type { Node } from './Node'
-import { confirmModal } from './editing/PromptModal'
+import { confirmModal, promptData } from './editing/PromptModal'
 import { runHook } from './editing/HookBusy'
 import { rawTree } from './HistoryWorld'
 import type { Notification, NotificationAction, NotificationHandle } from './ui/Notifier'
@@ -21,6 +21,9 @@ export function knownTotal(summary: PivotSummary | undefined): number | undefine
     const total = summary?.total
     return typeof total === 'number' && Number.isFinite(total) ? total : undefined
 }
+
+/** What a save's toast says. */
+type ToastResult = Pick<Notification, 'level' | 'title' | 'message' | 'action'>
 
 /** What changed, so a surface can re-render only what it shows. */
 export type PivotChange = 'registry' | 'summarize' | 'candidates' | 'runs' | 'save'
@@ -1078,9 +1081,10 @@ export class PivotManager implements PivotManagerLike {
      *
      * @param target A run id for one run, a pivot id for every unsaved run of that
      * pivot, or nothing for all of them.
+     * @param options `interactive: true` when an analyst asked for it, so a save can prompt.
      */
-    public async save(target?: string): Promise<PivotSaveReport> {
-        return this.runSave(target)
+    public async save(target?: string, options: PivotSaveOptions = {}): Promise<PivotSaveReport> {
+        return this.runSave(target, options.interactive === true)
     }
 
     /**
@@ -1089,14 +1093,14 @@ export class PivotManager implements PivotManagerLike {
      * make `Saved 9 of 12 — Retry` become `Saved 12` rather than `Saved 3`.
      */
     private async runSave(
-        target?: string,
-        toast?: NotificationHandle,
-        sofar: { nodes: number, edges: number } = { nodes: 0, edges: 0 },
+        target: string | undefined,
+        interactive: boolean,
+        retried?: { toast: NotificationHandle, sofar: { nodes: number, edges: number }, was: ToastResult },
     ): Promise<PivotSaveReport> {
         const targets = this.targeted(target)
 
         const report: PivotSaveReport = {
-            runs: 0, savedNodes: 0, savedEdges: 0, pendingNodes: 0, pendingEdges: 0, errors: [],
+            runs: 0, cancelled: 0, savedNodes: 0, savedEdges: 0, pendingNodes: 0, pendingEdges: 0, errors: [],
         }
         let message: string | undefined
 
@@ -1107,8 +1111,13 @@ export class PivotManager implements PivotManagerLike {
             const before = this.pending(run)
             if (!countOf(before)) continue
 
+            const outcome = await this.write(run, before, interactive)
+            // The analyst said no: the rest of this pass was asked by the same click.
+            if (outcome.cancelled) {
+                report.cancelled++
+                break
+            }
             report.runs++
-            const outcome = await this.write(run, before)
             if (outcome.error !== undefined) report.errors.push({ runId: run.runId, error: outcome.error })
             message = outcome.message ?? message
 
@@ -1122,7 +1131,10 @@ export class PivotManager implements PivotManagerLike {
         if (report.runs) {
             this.notify('save')
             this.repaintUnsaved()
-            this.reportSave(report, message, target, toast, sofar)
+            this.reportSave(report, message, target, retried?.toast, retried?.sofar)
+        } else if (retried && !retried.toast.dismissed) {
+            // A Retry backed out of: the toast goes back to what it said before the click.
+            retried.toast.update({ ...retried.was, action: retried.was.action ?? null })
         }
         return report
     }
@@ -1225,7 +1237,8 @@ export class PivotManager implements PivotManagerLike {
     private async write(
         run: PivotRun,
         pending: { nodes: Node[], children: Node[], edges: Edge[] },
-    ): Promise<{ nodes: number, edges: number, message?: string, error?: unknown }> {
+        interactive: boolean,
+    ): Promise<{ nodes: number, edges: number, message?: string, error?: unknown, cancelled?: boolean }> {
         const def = this.defs.get(run.pivotId)
         if (!def?.save) return { nodes: 0, edges: 0 }
 
@@ -1252,7 +1265,14 @@ export class PivotManager implements PivotManagerLike {
 
         const controller = new AbortController()
         this.saving.set(run.runId, controller)
-        const context: PivotSaveContext = { graph: this.graph, pivotId: run.pivotId, signal: controller.signal }
+        const context: PivotSaveContext = {
+            graph: this.graph,
+            pivotId: run.pivotId,
+            signal: controller.signal,
+            promptData: options => interactive
+                ? promptData(this.graph, options, { title: 'Save', submitLabel: 'Save' })
+                : Promise.resolve(null),
+        }
 
         let outcome: PivotSaveOutcome
         try {
@@ -1263,6 +1283,11 @@ export class PivotManager implements PivotManagerLike {
             if (this.saving.get(run.runId) === controller) this.saving.delete(run.runId)
         }
 
+        if (typeof outcome === 'object' && outcome?.cancelled) {
+            // Not an attempt: the next one is still the first the backend sees.
+            this.attempts.set(run.runId, attempt - 1)
+            return { nodes: 0, edges: 0, cancelled: true }
+        }
         return this.record(run, payload, outcome)
     }
 
@@ -1333,11 +1358,11 @@ export class PivotManager implements PivotManagerLike {
             label: 'Retry',
             onClick: handle => {
                 handle.update({ title: 'Saving…', message: undefined, action: null })
-                void this.runSave(target, handle, total)
+                void this.runSave(target, true, { toast: handle, sofar: total, was: result })
             },
         }
 
-        const result: Pick<Notification, 'level' | 'title' | 'message' | 'action'> = !pending
+        const result: ToastResult = !pending
             ? {
                 level: NotificationLevel.Success,
                 title: `Saved ${countText(total.nodes, total.edges)}`,
