@@ -182,9 +182,10 @@ export class Graph {
         this.renderer = createGraphRenderer(this, appContainer, rendererOptions)
         this.renderer.setupRendering()
 
+        // Two places name the layout; the top-level one wins when both do.
         const simulationOptions = {
             ...this.options.simulation,
-            layout: this.options?.layout as LayoutOptions
+            layout: (this.options?.layout ?? this.options.simulation?.layout) as LayoutOptions
         }
         this.simulation = new Simulation(this, simulationOptions)
 
