@@ -1546,6 +1546,37 @@ export const fixtures = {
         }
         return { nodes, edges, notes: [] }
     },
+
+    /**
+     * An event's objects and their references: two detection objects both blocking the
+     * same eight URLs, a file with four neighbours (one of them an email it is linked to
+     * both ways), and a domain nothing references. Unplaced, for a layout to place.
+     */
+    objectGraph(): BuiltFixture {
+        const node = (id: string, type: string, label: string) => new Node(id, { label, type }, {}, id)
+        const urls = ['intgmx', 'axwscw', 'kgodir', 'nvbvod', 'qpdjrn', 'isannt', 'pofkwn', 'xlalfg']
+            .map((name) => node(`url-${name}`, 'url', `c2.${name}.deadnxuyla.ru`))
+        const suricata = node('suricata', 'suricata', 'suricata')
+        const script = node('script', 'script', 'script')
+        const email = node('email', 'email', 'Urgent: Bank Account Verification')
+        const file = node('file', 'file', 'Account_Verification.docx.exe')
+        const dropped = node('dropped-script', 'script', 'script')
+        const key = node('registry-key', 'registry-key', 'HKCU\\SOFTWARE\\MSCall PublicKey')
+        const crypto = node('crypto-material', 'crypto-material', 'crypto-material')
+        const domain = node('domain-ip', 'domain-ip', 'secure-pay.com')
+        const edges = [
+            ...urls.flatMap((url) => [
+                new Edge(`suricata-${url.id}`, suricata, url, { label: 'blocks' }),
+                new Edge(`script-${url.id}`, script, url, { label: 'blocks' }),
+            ]),
+            new Edge('email-file', email, file, { label: 'contains' }),
+            new Edge('file-email', file, email, { label: 'contained-by' }),
+            new Edge('file-dropped', file, dropped, { label: 'exfiltrates-to' }),
+            new Edge('file-key', file, key, { label: 'writes' }),
+            new Edge('file-crypto', file, crypto, { label: 'uses' }),
+        ]
+        return { nodes: [...urls, suricata, script, email, file, dropped, key, crypto, domain], edges, notes: [] }
+    },
 }
 
 export type FixtureName = keyof typeof fixtures

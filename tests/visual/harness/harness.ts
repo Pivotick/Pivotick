@@ -2331,6 +2331,24 @@ class Harness implements HarnessApi {
     /** The zoom as the last {@link loadNeighbourhood} graph fired `ready`. */
     zoomAtReady: number | null = null
 
+    /**
+     * {@link fixtures.objectGraph} under the structured layout, typed by `data.type`, each
+     * node labelled below itself — a floated label, which the layout may move to another side.
+     */
+    async loadObjectGraph(overrides: PlainObject = {}): Promise<void> {
+        const options = mergeOptions(mergeOptions(BASE_OPTIONS, {
+            layout: { type: 'structured' },
+            render: {
+                nodeTypeAccessor: (node: Node) => node.getData().type as string | undefined,
+                defaultNodeStyle: {
+                    text: (node: Node) => node.getData().label as string,
+                    textVerticalShift: -1.4,
+                },
+            },
+        }), overrides)
+        return this.bootData(fixtures.objectGraph(), options)
+    }
+
     spreadOf(ids: string[]): number {
         const nodes = ids.map((id) => this.g.getMutableNode(id)!)
         const cx = nodes.reduce((sum, node) => sum + (node.x ?? 0), 0) / nodes.length

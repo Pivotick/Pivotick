@@ -19,10 +19,11 @@ import { runSimulationInWorker } from './SimulationWorkerWrapper'
 import merge from 'lodash.merge'
 import { TreeLayout, type TreeLayoutAlgorithm } from './plugins/layout/Tree'
 import { EgoTreeLayout } from './plugins/layout/EgoTree'
+import { StructuredLayout, type LabelSide } from './plugins/layout/Structured'
 import { edgeLabelGetter } from './utils/GraphGetters'
 import type { DeepPartial } from './utils/utils'
 import type { SimulationCallbacks, SimulationForces, SimulationOptions } from './interfaces/SimulationOptions'
-import type { LayoutType, TreeLayoutOptions } from './interfaces/LayoutOptions'
+import type { LayoutType, StructuredLayoutOptions, TreeLayoutOptions } from './interfaces/LayoutOptions'
 import type { GraphInteractions } from './GraphInteractions'
 import { ForceClusterRadial } from './plugins/d3Forces/ForceClusterRadial'
 import { analyseComponents, tunePhysics, type AutoContext } from './AutoPhysics'
@@ -175,7 +176,7 @@ export class Simulation {
     private graph: Graph
     private container: HTMLElement | undefined
     private graphInteraction: GraphInteractions
-    private layout
+    private layout?: TreeLayout | StructuredLayout
     /**
      * The area the physics tunes itself against: the **root container**, never the canvas.
      * Chrome opening or closing (a sidebar, the data dock) resizes the canvas, and a layout
@@ -303,8 +304,10 @@ export class Simulation {
                 this.simulationForces,
                 this.options.layout
             )
+        } else if (this.options.layout.type === 'structured') {
+            this.layout = this.createStructuredLayout(this.options.layout)
         }
-        if (this.layout) Object.assign(this.options.layout, this.layout.getSpacing())
+        if (this.treeLayout) Object.assign(this.options.layout, this.treeLayout.getSpacing())
 
         // Last, so a callback firing on the very next frame finds the forces in place.
         this.observeContainer()
@@ -478,7 +481,9 @@ export class Simulation {
     public update() {
         // Feed data to force-directed layout
 
-        if (this.layout) {
+        if (this.layout instanceof StructuredLayout) {
+            this.relayoutStructured()
+        } else if (this.layout) {
             this.layout.update()
             // Auto spacing decides inside the layout, so read its answer back: the options
             // are what `graph.getOptions()` reports and what the worker path is handed.
@@ -763,6 +768,13 @@ export class Simulation {
     }
 
     private async runSimulationWorkerRouter(optionOverride: Partial<SimulationOptions> = {}) {
+        // Computed, not simulated, and its pins would be overwritten by a force pass. Redone
+        // here because the nodes have been drawn since, so their sizes are known.
+        if (this.layout instanceof StructuredLayout) {
+            this.relayoutStructured()
+            this.graph.updateLayoutProgress(100, 0, 'done')
+            return
+        }
         if (this.options.useWorker) {
             try {
                 await this.runSimulationWorker(optionOverride)
@@ -846,6 +858,11 @@ export class Simulation {
      * the opening layout has cooled. No-op when disabled.
      */
     public refreshForcesAndReheat(alpha = 0.5): void {
+        // A structured layout spaced by the old size is redone, physics or not: it pins.
+        if (this.layout instanceof StructuredLayout) {
+            this.relayoutStructured()
+            this.graph.nextTick()
+        }
         if (!this.options.enabled) return
         // Radii may only just have been measured by a custom node, so re-tune off the
         // real sizes; the reheat below covers both changes at once.
@@ -980,9 +997,38 @@ export class Simulation {
         return this.options.layout.type
     }
 
+    /** The active tree layout, if the layout is a tree. */
+    private get treeLayout(): TreeLayout | undefined {
+        return this.layout instanceof TreeLayout ? this.layout : undefined
+    }
+
+    /**
+     * Run the structured layout again, and redraw the nodes already drawn whose label it
+     * moved to another side.
+     */
+    private relayoutStructured(): void {
+        if (!(this.layout instanceof StructuredLayout)) return
+        const moved = this.layout.update().filter(node => node.getGraphElement())
+        if (!moved.length) return
+        moved.forEach(node => node.markDirty())
+        this.graph.renderer.update(false)
+    }
+
+    private createStructuredLayout(options: Partial<StructuredLayoutOptions>): StructuredLayout {
+        return new StructuredLayout(this.graph, this.simulation, this.simulationForces, options, () => this.getActiveEdges())
+    }
+
+    /**
+     * Which side of its node a node's floated label goes on, when the layout chose one —
+     * only the `structured` layout does.
+     */
+    public getLabelSide(id: string): LabelSide | undefined {
+        return this.layout instanceof StructuredLayout ? this.layout.getLabelSide(id) : undefined
+    }
+
     /** The active tree layout's spacing multipliers; `1×` under the force layout. */
     public getTreeSpacing(): TreeSpacing {
-        return this.layout?.getSpacing() ?? { ...FITTED_TREE_SPACING }
+        return this.treeLayout?.getSpacing() ?? { ...FITTED_TREE_SPACING }
     }
 
     /**
@@ -993,7 +1039,8 @@ export class Simulation {
      * with physics paused, while the free axis still settles into its new sibling slots.
      */
     public setTreeSpacing(spacing: Partial<TreeSpacing>): void {
-        if (!this.layout) return
+        const tree = this.treeLayout
+        if (!tree) return
         const clamped: Partial<TreeSpacing> = {}
         if (spacing.levelSpacing !== undefined) {
             clamped.levelSpacing = Simulation.clamp(spacing.levelSpacing, TREE_SPACING_RANGE)
@@ -1001,7 +1048,7 @@ export class Simulation {
         if (spacing.siblingSpacing !== undefined) {
             clamped.siblingSpacing = Simulation.clamp(spacing.siblingSpacing, TREE_SPACING_RANGE)
         }
-        this.layout.setSpacing(clamped)
+        tree.setSpacing(clamped)
         // Keep the options the graph reports in step with what is actually laid out.
         Object.assign(this.options.layout, clamped, { spacing: 'manual' })
         this.graph.nextTick()
@@ -1013,7 +1060,7 @@ export class Simulation {
      * reports the finder a tree would start with and no pin.
      */
     public getTreeRoot(): TreeRoot {
-        return this.layout?.getRoot() ?? { algorithm: DEFAULT_ROOT_FINDER }
+        return this.treeLayout?.getRoot() ?? { algorithm: DEFAULT_ROOT_FINDER }
     }
 
     /**
@@ -1025,11 +1072,12 @@ export class Simulation {
      * a whole tree rather than a stump beside the old one. See {@link TreeLayout.setRoot}.
      */
     public setTreeRoot(root: { rootId: string } | { algorithm: TreeLayoutAlgorithm }): void {
-        if (!this.layout) return
-        this.layout.setRoot(root)
+        const tree = this.treeLayout
+        if (!tree) return
+        tree.setRoot(root)
         // Keep the options the graph reports — and the worker path is handed — in step with
         // what is actually laid out.
-        const applied = this.layout.getRoot()
+        const applied = tree.getRoot()
         Object.assign(this.options.layout, { rootId: applied.rootId, rootIdAlgorithmFinder: applied.algorithm })
         this.graph.nextTick()
         this.reheatIfEnabled()
@@ -1037,7 +1085,7 @@ export class Simulation {
 
     /** Is the tree spacing tuning itself? `false` under the force layout. */
     public isAutoTreeSpacingEnabled(): boolean {
-        return this.layout?.isAutoSpacing() ?? false
+        return this.treeLayout?.isAutoSpacing() ?? false
     }
 
     /**
@@ -1047,8 +1095,9 @@ export class Simulation {
      * {@link enableAutoPhysics}.
      */
     public enableAutoTreeSpacing(): void {
-        if (!this.layout) return
-        this.layout.enableAutoSpacing()
+        const tree = this.treeLayout
+        if (!tree) return
+        tree.enableAutoSpacing()
         Object.assign(this.options.layout, { spacing: 'auto' })
         this.graph.nextTick()
         this.reheatIfEnabled()
@@ -1469,14 +1518,21 @@ export class Simulation {
             Simulation.initSimulationForceCollide(this.simulationForces.collide, this.options)
         } else if (type === 'tree') {
             this.layout = new TreeLayout(this.graph, this.simulation, this.simulationForces, simulationOptions.layout as TreeLayoutOptions)
+        } else if (type === 'structured') {
+            this.layout = this.createStructuredLayout(simulationOptions.layout as Partial<StructuredLayoutOptions>)
         }
         this.options.layout.type = type
         this.update()
         this.pause()
         await this.runSimulationWorkerRouter(simulationOptions as SimulationOptions)
-        this.restart()
-
-        await this.waitForSimulationStop()
+        if (this.options.enabled) {
+            this.restart()
+            await this.waitForSimulationStop()
+        } else {
+            // Nothing ticks with physics off: waiting for a stop would wait forever, and
+            // the new places have to be drawn here.
+            this.graph.nextTick()
+        }
         this.graph.renderer.fitAndCenterWhenSettled()
     }
 }

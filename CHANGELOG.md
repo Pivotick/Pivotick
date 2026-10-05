@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+### A structured layout for small graphs
+
+- **`layout: { type: 'structured' }`** places every node itself and pins it, so the same
+  graph always gives the same picture. Each connected component is laid out on its own and
+  the components are packed to fit the canvas at the largest zoom; three or more leaves of
+  one type hanging off the same one or two nodes line up as a row or column beside them; the
+  rest is placed so its distances follow the edges, which draws a hub's neighbours round it
+  and a chain straight; nodes with no edge go in a tray below (or right of) the rest. Options
+  `groupMin`, `direction`, `gap`, `trayPosition` and `labelSides`. Also through
+  `simulation.changeLayout('structured')`.
+- **Floated labels move to the free side.** Under that layout a label shifted outside its
+  node is drawn on the side its edges leave free, as far out as the style put it; a fan's
+  labels all face away from the nodes it hangs from. `labelSides: false` keeps them where
+  the style says. `graph.simulation.getLabelSide(id)` reports the side.
+
 ### Saving part of a run
 
 - `graph.pivots.save({ elements })` writes only the named nodes and edges: each run that
@@ -57,6 +72,11 @@
 
 ### Fixes
 
+- `simulation.layout` is now honoured. It was overwritten by the top-level `layout` option
+  even when that was unset, so a layout named there was silently ignored. The top-level
+  option still wins when both are set.
+- `simulation.changeLayout()` no longer hangs with the simulation switched off; it lays the
+  graph out, redraws it and fits the view.
 - Hovering a history row now drains a group or closed cluster whose members it would
   take out, and the lines to it, instead of leaving them at full strength. Edges of a
   node about to be hidden drain with it.

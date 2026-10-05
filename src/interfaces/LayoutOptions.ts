@@ -1,6 +1,6 @@
 import type { TreeLayoutAlgorithm } from '../plugins/layout/Tree'
 
-export type LayoutType = 'force' | 'tree' | 'egoTree'
+export type LayoutType = 'force' | 'tree' | 'egoTree' | 'structured'
 
 
 export interface BaseLayoutOptions {
@@ -11,7 +11,7 @@ export interface BaseLayoutOptions {
 /**
  * @default ForceLayoutOptions
  */
-export type LayoutOptions = ForceLayoutOptions | AnyTreeLayoutOptions
+export type LayoutOptions = ForceLayoutOptions | AnyTreeLayoutOptions | StructuredLayoutOptions
 export type AnyTreeLayoutOptions = TreeLayoutOptions | EgoTreeLayoutOptions
 
 export interface ForceLayoutOptions extends BaseLayoutOptions {
@@ -108,4 +108,52 @@ export interface EgoTreeLayoutOptions
     extends Omit<TreeLayoutOptions, 'rootId' | 'type' | 'parentKey' | 'depthKey'> {
     type: 'egoTree'
     rootId: string
+}
+
+/**
+ * Lays a small graph out the way a person would draw it, and pins it there. Computed once
+ * per change rather than simulated, so the same graph always gives the same picture.
+ *
+ * - Each connected component is laid out on its own, and the components are packed side by
+ *   side to fit the canvas at the largest zoom.
+ * - Leaves of one type hanging off the same one or two nodes line up as a block, beside
+ *   the nodes they hang from.
+ * - Everything else is placed so its distances follow the edges: a hub's neighbours come
+ *   out on a ring, a chain on a line.
+ * - Nodes with no edge at all go in a tray beside the rest.
+ *
+ * Meant for graphs of up to a few hundred nodes.
+ */
+export interface StructuredLayoutOptions extends BaseLayoutOptions {
+    type: 'structured'
+    /**
+     * The fewest leaves sharing a type and their neighbours that line up as a block; fewer
+     * are placed one by one. A leaf has two neighbours at most.
+     * @default 3
+     */
+    groupMin?: number
+    /**
+     * How a block lines up. `'auto'` stands it across the line to the nodes it hangs from;
+     * `'row'` and `'column'` force one way.
+     * @default 'auto'
+     */
+    direction?: 'auto' | 'row' | 'column'
+    /**
+     * Clear space between two nodes, in graph units. An edge is drawn twice this long, and
+     * components and the tray sit three times this apart.
+     * @default 30
+     */
+    gap?: number
+    /**
+     * Where the nodes with no edge go: under the rest, or to their right.
+     * @default 'bottom'
+     */
+    trayPosition?: 'bottom' | 'right'
+    /**
+     * Move each floated label (see `textVerticalShift`) to the side of its node that its
+     * edges leave free; a block's members all take the side away from the nodes they hang
+     * from. The style still decides how far out the label sits.
+     * @default true
+     */
+    labelSides?: boolean
 }

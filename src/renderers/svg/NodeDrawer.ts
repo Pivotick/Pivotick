@@ -674,6 +674,7 @@ export class NodeDrawer {
         nodeStyle.textAnchorPosition = nodeStyle.textAnchorPosition !== undefined ? tryResolveString(nodeStyle.textAnchorPosition, node) as ('start' | 'middle' | 'end') : 'middle'
         nodeStyle.textHorizontalShift = nodeStyle.textHorizontalShift !== undefined ? (tryResolveNumber(nodeStyle.textHorizontalShift, node) ?? 0) : 0
         nodeStyle.textVerticalShift = nodeStyle.textVerticalShift !== undefined ? (tryResolveNumber(nodeStyle.textVerticalShift, node) ?? 0) : 0
+        this.placeLabelOnSide(nodeStyle, node)
         nodeStyle.textRotateDegree = nodeStyle.textRotateDegree !== undefined ? (tryResolveNumber(nodeStyle.textRotateDegree, node) ?? 0) : 0
         nodeStyle.textTruncate = nodeStyle.textTruncate !== undefined ? (tryResolveBoolean(nodeStyle.textTruncate, node) ?? true) : true
         const textMaxWidth = nodeStyle.textMaxWidth !== undefined ? tryResolveNumber(nodeStyle.textMaxWidth, node) : undefined
@@ -693,6 +694,20 @@ export class NodeDrawer {
         nodeStyle.imageFit = nodeStyle.imageFit !== undefined ? (tryResolveString(nodeStyle.imageFit, node) as ImageFit) : undefined
 
         return nodeStyle
+    }
+
+    /**
+     * Move a floated label to the side of its node the layout chose, as far out as the style
+     * put it. A label inside the node has nowhere to go, so it is left alone.
+     */
+    private placeLabelOnSide(style: NodeStyle, node: Node): void {
+        const reach = Math.max(Math.abs(style.textHorizontalShift as number), Math.abs(style.textVerticalShift as number))
+        if (reach < 1) return
+        const side = this.graph.simulation?.getLabelSide(node.id)
+        if (!side) return
+        style.textHorizontalShift = side === 'right' ? reach : side === 'left' ? -reach : 0
+        style.textVerticalShift = side === 'top' ? reach : side === 'bottom' ? -reach : 0
+        style.textAnchorPosition = side === 'right' ? 'start' : side === 'left' ? 'end' : 'middle'
     }
 
     private isCustomShape(shape: NodeShape): shape is CustomNodeShape {

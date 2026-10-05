@@ -216,7 +216,9 @@ export class PhysicsFlyout extends Flyout {
         this.setAutoSpacing(this.sim.getLayoutType() === 'force' || this.sim.isAutoTreeSpacingEnabled())
         this.highlightPreset(this.sim.isAutoPhysicsEnabled() ? 'auto' : null)
         this.updateRunButton()
-        this.highlightLayout(this.sim.getLayoutType() === 'force' ? 'force' : 'tree-v')
+        // A structured layout has no tile: none lights up until the user picks one.
+        const type = this.sim.getLayoutType()
+        this.highlightLayout(type === 'force' || type === 'structured' ? type : 'tree-v')
         this.watchSelection()
         this.syncRoot()
         this.updateLayoutControls()
@@ -550,14 +552,16 @@ export class PhysicsFlyout extends Flyout {
      * — which only a tree can honour — takes their place.
      */
     private updateLayoutControls() {
-        const isTree = this.activeLayout !== 'force'
+        // A structured layout pins every node, so no physics knob reaches it — collision included.
+        const placed = this.activeLayout !== 'force'
+        const isTree = placed && this.activeLayout !== 'structured'
         const collisionApplies = isTree && this.activeLayout !== 'tree-r'
-        this.simulationCard?.classList.toggle('pvt-physicsflyout-disabled', isTree)
+        this.simulationCard?.classList.toggle('pvt-physicsflyout-disabled', placed)
         this.simulationCard?.classList.toggle('pvt-physicsflyout-collision-only', collisionApplies)
         for (const [key, input] of this.sliders) {
-            input.disabled = isTree && !(collisionApplies && key === TREE_LIVE_SLIDER)
+            input.disabled = placed && !(collisionApplies && key === TREE_LIVE_SLIDER)
         }
-        for (const button of this.presetButtons.values()) button.disabled = isTree
+        for (const button of this.presetButtons.values()) button.disabled = placed
 
         if (this.rootRow) this.rootRow.hidden = !isTree
         if (this.spacingCard) this.spacingCard.hidden = !isTree

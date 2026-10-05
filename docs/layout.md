@@ -4,11 +4,11 @@ outline: [2, 3]
 
 # Graph Layout
 
-Pivotick supports multiple layout strategies for positioning nodes. You can configure the layout through the `layout` option.
+Pivotick supports multiple layout strategies for positioning nodes. You can configure the layout through the `layout` option, or through `simulation.layout`; when both are set, `layout` wins.
 
-| Option | Type                | Default   | Description                                                                                                               |
-| ------ | ------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `type` | `'force' \| 'tree'` | `'force'` | The layout algorithm to use. `'force'` applies a physics-based force layout. `'tree'` arranges nodes in a tree structure. |
+| Option | Type                                  | Default   | Description                                                                                                                                                                                              |
+| ------ | ------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type` | `'force' \| 'tree' \| 'structured'` | `'force'` | The layout algorithm to use. `'force'` applies a physics-based force layout. `'tree'` arranges nodes in a tree structure. `'structured'` draws a small graph the way a person would, see [Structured Layout](#structured-layout). |
 
 ### Tree Layout Options
 
@@ -221,6 +221,59 @@ Two things it deliberately will not do:
 In the `radial` layout, where a level always spans the full circle, crowding within a ring can only
 be relieved by pushing the rings further out — so both measurements drive `levelSpacing` there.
 
+
+### Structured Layout
+
+`type: 'structured'` lays out a small graph the way a person would draw it, for an embedded
+viewer that has to be readable at a glance. It is computed rather than simulated: every node is
+placed and pinned, so the same graph always gives the same picture, and dragging a node moves
+only that node.
+
+- **Components side by side.** Each connected component is laid out on its own, and the
+  components are packed in rows. The row width is the one that fits the whole layout to the
+  canvas at the largest zoom.
+- **Fans line up.** Three or more leaves of the same type that hang off the same one or two
+  nodes (a leaf has at most two neighbours) stand in one evenly spaced row or column, with the
+  nodes they hang from on one side of it. The grouping is the one Simplify's
+  [same neighbours](./simplify.md) rule uses, typed by `UI.simplify.typeOf`, else
+  `render.nodeTypeAccessor`. Nothing is folded away.
+- **Distances follow the edges.** Everything else is placed by stress majorization: nodes one
+  edge apart sit one edge length apart, two edges apart twice that, and so on. A hub's
+  neighbours come out round it and a chain comes out straight, with no special case for either.
+- **A tray for loose nodes.** Nodes with no edge at all are gridded below the rest, or to its
+  right.
+- **Labels on the free side.** A floated label (`textVerticalShift` or `textHorizontalShift`
+  of 1 or more) is drawn on the side of its node that its edges leave free, as far out as the
+  style put it. A fan's labels all face away from the nodes it hangs from.
+
+The layout is redone whenever the visible graph changes, and once more after the first draw,
+when the nodes' real sizes are known. Nodes are spaced by `getLayoutRadius()`, so a node style
+that declares `layoutSize` is laid out at that size whatever it draws. It is meant for graphs of
+up to a few hundred nodes.
+
+| Option         | Type                              | Default    | Description                                                                                                         |
+| -------------- | --------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| `groupMin`     | `number`                          | `3`        | The fewest leaves sharing a type and their neighbours that line up as a fan. Fewer are placed one by one.          |
+| `direction`    | `'auto' \| 'row' \| 'column'`   | `'auto'`   | How a fan lines up. `'auto'` stands it across the line to the nodes it hangs from.                                 |
+| `gap`          | `number`                          | `30`       | Clear space between two nodes. An edge is drawn twice this long; components and the tray sit three times this apart. |
+| `trayPosition` | `'bottom' \| 'right'`            | `'bottom'` | Where the nodes with no edge go.                                                                                    |
+| `labelSides`   | `boolean`                         | `true`     | Move each floated label to the side its edges leave free. `false` leaves labels where the style puts them.         |
+
+```ts
+new Pivotick(container, data, {
+    layout: { type: 'structured', trayPosition: 'right' },
+    render: {
+        nodeTypeAccessor: (node) => node.getData().type,
+        defaultNodeStyle: { text: (node) => node.getData().label, textVerticalShift: -1.4 },
+    },
+})
+```
+
+`graph.simulation.getLabelSide(id)` reports the side chosen for a node: `'top'`, `'bottom'`,
+`'left'` or `'right'`, or `undefined` under any other layout.
+
+The view is fitted to the nodes, not to their labels, so a long label beside a node at the edge
+of the layout can run past the canvas.
 
 ::: danger
 Add example with the two layouts!

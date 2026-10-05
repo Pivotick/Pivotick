@@ -818,15 +818,22 @@ export class Simplification {
             nodes,
             inNeighbours: (node) => [...ins.get(node) ?? []],
             outNeighbours: (node) => [...outs.get(node) ?? []],
-            typeOf: (node) => {
-                if (node instanceof GroupNode) {
-                    const types = Object.keys(node.info.typeCounts)
-                    return types.length === 1 ? (types[0] === '' ? undefined : types[0]) : '\u0000mixed'
-                }
-                return typeOf?.(node)
-            },
+            typeOf: (node) => node instanceof GroupNode ? this.typeOf(node) : typeOf?.(node),
             groupOf: (node) => node instanceof GroupNode ? node.info : undefined,
         }
+    }
+
+    /**
+     * @private
+     * What a node is typed by outside any one rule: a group by its members, a node by
+     * `UI.simplify.typeOf`, else `nodeTypeAccessor`.
+     */
+    public typeOf(node: Node): string | undefined {
+        if (node instanceof GroupNode) {
+            const types = Object.keys(node.info.typeCounts)
+            return types.length === 1 ? (types[0] === '' ? undefined : types[0]) : '\u0000mixed'
+        }
+        return this.typeResolver('')?.(node)
     }
 
     /** What a rule types a real node by: its own `typeOf`, else `UI.simplify.typeOf`, else `nodeTypeAccessor`. */

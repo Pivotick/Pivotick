@@ -58,7 +58,7 @@ Pivotick supports multiple layout strategies for positioning nodes. You can conf
 
 | Option | Type               | Default   | Description |
 | ------ | ------------------ | --------- | ----------- |
-| `type` | `'force' \| 'tree'` | `'force'` | The layout algorithm to use. `'force'` applies a physics-based force layout. `'tree'` arranges nodes in a tree structure. |
+| `type` | `'force' \| 'tree' \| 'structured'` | `'force'` | The layout algorithm to use. `'force'` applies a physics-based force layout. `'tree'` arranges nodes in a tree structure. `'structured'` places and pins a small graph, see [Structured Layout](./layout.md#structured-layout). |
 
 #### Tree Layout Options
 
