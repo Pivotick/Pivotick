@@ -22,6 +22,7 @@ import type {
 import type { GraphInteractionContext } from '../../../src/interfaces/GraphInteractions'
 import type { GraphBounds } from '../../../src/GraphRenderer'
 import type { EdgeStyle, NodeBadge } from '../../../src/interfaces/RendererOptions'
+import type { TopBarAction, TopBarActionContext } from '../../../src/interfaces/GraphUI'
 import { Minimap, type MinimapOptions } from '../../../src/plugins/minimap'
 import type {
     ExtraPanel, ExtraPanelSelection, LegendEntry, LegendGroupOptions, LegendOptions, LegendPosition,
@@ -1131,6 +1132,25 @@ export interface HarnessApi {
     reopenAsLeft(simulation?: PlainObject): Promise<void>
     /** Farthest any node now sits from the `x`/`y` it was loaded with, in px. */
     maxDriftFromGiven(): number
+
+    // --- Top-bar actions --------------------------------------------------------------
+
+    /**
+     * Boot `basic` with host pills: `export` at the start, then at the end a hidden one,
+     * `lock` (enabled while {@link setTopBarLocked} is off) and `save` ("Save as graph",
+     * prompting for a name; once saved "Update graph", with a "Save as new graph…" row).
+     */
+    loadWithTopBarActions(overrides?: PlainObject): Promise<void>
+    /** Every action and row run since the load, by id. */
+    topBarCalls(): string[]
+    /** What each `save` prompt resolved to, `null` for a cancel. */
+    topBarPromptValues(): Array<Record<string, unknown> | null>
+    /** Flip what `lock`'s `enabled` reads, without refreshing. */
+    setTopBarLocked(locked: boolean): void
+    refreshTopBar(): void
+    /** Install a plugin adding a `plugin-action` pill; {@link disposePluginTopBarAction} runs its disposer. */
+    addPluginTopBarAction(): void
+    disposePluginTopBarAction(): void
     /** What auto chose, what the layout looks like, and what the camera made of it. */
     autoState(): AutoState
 
@@ -5163,6 +5183,71 @@ class Harness implements HarnessApi {
         await this.bootData({ nodes, edges, notes: [] }, mergeOptions(BASE_OPTIONS, {
             simulation: { enabled: true, ...simulation },
         }))
+    }
+
+    private topBarCallLog: string[] = []
+    private topBarPrompts: Array<Record<string, unknown> | null> = []
+    private topBarSaved = false
+    private topBarLocked = false
+    private topBarPluginDispose?: () => void
+
+    async loadWithTopBarActions(overrides: PlainObject = {}): Promise<void> {
+        this.topBarCallLog = []
+        this.topBarPrompts = []
+        this.topBarSaved = false
+        this.topBarLocked = false
+        const record = (id: string) => () => { this.topBarCallLog.push(id) }
+        const save = async (ctx: TopBarActionContext, id: string): Promise<void> => {
+            this.topBarCallLog.push(id)
+            const values = await ctx.promptData({ fields: [{ key: 'name', label: 'Name', type: 'text' }] })
+            this.topBarPrompts.push(values)
+            if (values) this.topBarSaved = true
+        }
+        const actions = (): TopBarAction[] => [
+            { id: 'export', text: 'Export', placement: 'start', onclick: record('export') },
+            { id: 'hidden', text: 'Hidden', visible: false, onclick: record('hidden') },
+            { id: 'lock', text: 'Lock', enabled: () => !this.topBarLocked, onclick: record('lock') },
+            {
+                id: 'save',
+                text: () => this.topBarSaved ? 'Update graph' : 'Save as graph',
+                onclick: (_event, ctx) => this.topBarSaved ? record('update')() : save(ctx, 'save'),
+                menu: (ctx) => this.topBarSaved
+                    ? [{ text: 'Save as new graph…', onclick: () => { void save(ctx, 'save-new') } }]
+                    : [],
+            },
+        ]
+        await this.load('basic', mergeOptions({ UI: { topBar: { actions } } }, overrides))
+    }
+
+    topBarCalls(): string[] {
+        return [...this.topBarCallLog]
+    }
+
+    topBarPromptValues(): Array<Record<string, unknown> | null> {
+        return [...this.topBarPrompts]
+    }
+
+    setTopBarLocked(locked: boolean): void {
+        this.topBarLocked = locked
+    }
+
+    refreshTopBar(): void {
+        this.g.UIManager.refreshTopBar()
+    }
+
+    addPluginTopBarAction(): void {
+        this.g.use({
+            name: 'topbar-test-plugin',
+            install: (ctx) => {
+                this.topBarPluginDispose = ctx.addTopBarAction({
+                    id: 'plugin-action', text: 'From plugin', onclick: () => { this.topBarCallLog.push('plugin-action') },
+                })
+            },
+        })
+    }
+
+    disposePluginTopBarAction(): void {
+        this.topBarPluginDispose?.()
     }
 
     maxDriftFromGiven(): number {

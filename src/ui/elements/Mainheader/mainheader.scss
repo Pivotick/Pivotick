@@ -1,4 +1,5 @@
-// Top bar — Search / Filter on the left, Notes + undo/redo pushed right.
+// Top bar — Search / Filter / Notes and the host's 'start' pills on the left, its
+// 'end' pills and undo/redo pushed right.
 // A transparent, click-through strip overlaying the top of the canvas (see
 // _layout.scss): the graph renders behind it and the pills float over it.
 
@@ -106,6 +107,78 @@
 
             &.pvt-filter-on:hover div.action-container {
                 background-color: color-mix(in srgb, var(--pvt-theme-primary) 14%, var(--pvt-chrome-bg));
+            }
+        }
+
+        // Host pills: the wrapper only orders them, the strip lays them out.
+        .pvt-topbar-actions {
+            display: contents;
+        }
+
+        .pvt-action-button.pvt-disabled {
+            div.action-container {
+                opacity: 0.45;
+                cursor: default;
+            }
+
+            &:hover div.action-container {
+                background-color: var(--pvt-chrome-bg);
+            }
+
+            &:active {
+                transform: none;
+            }
+        }
+
+        // A split pill: the label runs the action, the caret opens its rows.
+        .pvt-action-button.pvt-topbar-split {
+            div.action-container {
+                padding-right: 0;
+            }
+
+            // Only the half under the pointer lights up.
+            &:has(.pvt-topbar-caret:hover) div.action-container {
+                background-color: var(--pvt-chrome-bg);
+            }
+
+            &:has(.pvt-topbar-caret:active) {
+                transform: none;
+            }
+
+            button.pvt-topbar-caret {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                align-self: stretch;
+                width: 24px;
+                padding: 0;
+                margin-left: 2px;
+                border: none;
+                border-left: 1px solid var(--pvt-chrome-border);
+                border-radius: 0 8px 8px 0;
+                background: transparent;
+                color: var(--pvt-text-color-4);
+                cursor: pointer;
+
+                svg {
+                    width: 10px;
+                    height: 10px;
+                    opacity: 0.75;
+                }
+
+                &:hover:not(:disabled) {
+                    background-color: var(--pvt-chrome-border);
+                    color: var(--pvt-text-color-6);
+                }
+
+                &[aria-expanded='true']:not(:disabled) {
+                    background-color: color-mix(in srgb, var(--pvt-theme-primary) 18%, transparent);
+                    color: var(--pvt-theme-primary);
+                }
+
+                &:disabled {
+                    cursor: default;
+                }
             }
         }
 

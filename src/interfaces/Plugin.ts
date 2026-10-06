@@ -4,7 +4,7 @@ import type { UIManager } from '../ui/UIManager'
 import type { UIComponent, UIPhase } from '../ui/UIComponent'
 import type { Layout } from '../ui/elements/Layout'
 import type { KeybindingManager } from '../ui/KeybindingManager'
-import type { DockTab, ExtraPanel, Keybinding, RailModeDefinition } from './GraphUI'
+import type { DockTab, ExtraPanel, Keybinding, RailModeDefinition, TopBarAction } from './GraphUI'
 
 /**
  * A Pivotick plugin: a self-contained bundle of UI elements, keybindings and
@@ -103,6 +103,13 @@ export interface PluginContext {
     addRailMode(mode: RailModeDefinition): () => void
     /** Remove a rail mode by id (equivalent to calling its disposer). */
     removeRailMode(id: string): void
+    /**
+     * Add a pill to the top bar — the same door as `UIManager.addTopBarAction` and
+     * `UI.topBar.actions`. Returns a disposer. `ui.refreshTopBar()` re-reads its fields.
+     */
+    addTopBarAction(action: TopBarAction): () => void
+    /** Remove a top-bar action by id (equivalent to calling its disposer). */
+    removeTopBarAction(id: string): void
     /**
      * Register a pivot — the same door as `graph.pivots.register` and the `pivots`
      * option, and the way a plugin ships an enrichment. Returns a disposer.

@@ -12,7 +12,7 @@ import type { Notification, NotificationHandle } from './Notifier'
 import merge from 'lodash.merge'
 import { Tooltip, tooltipMounts } from './elements/Tooltip/Tooltip'
 import { ContextMenu } from './elements/ContextMenu/ContextMenu'
-import type { DockTab, Editors, ExtraPanel, FeatureToggle, GraphUI, GraphUIMode, LegendGroupOptions, LegendOptions, PropertyEntry, RailModeDefinition, RegisteredDockTab, RegisteredExtraPanel, TableOptions } from '../interfaces/GraphUI'
+import type { DockTab, Editors, ExtraPanel, FeatureToggle, GraphUI, GraphUIMode, LegendGroupOptions, LegendOptions, PropertyEntry, RailModeDefinition, RegisteredDockTab, RegisteredExtraPanel, TableOptions, TopBarAction } from '../interfaces/GraphUI'
 import { KeybindingManager } from './KeybindingManager'
 import { createInspectModal } from './elements/modals/InspectNodeModal/InspectNodeModal'
 import { Note } from '../Note'
@@ -420,6 +420,8 @@ export class UIManager {
     private dockTabs: RegisteredDockTab[] = []
     /** Monotonic counter behind auto-generated tab ids (never reset, so stale disposers can't collide). */
     private dockTabSeq = 0
+    /** Top-bar pills added at runtime, after the ones `UI.topBar.actions` declares. */
+    private topBarActions: TopBarAction[] = []
     /** The mounted dock, subscribed to registry changes. At most one. */
     private dockTabSubscribers: Array<(change: DockTabChange) => void> = []
     /**
@@ -750,6 +752,8 @@ export class UIManager {
             setDockTabLabel: (id, label) => this.setDockTabLabel(id, label),
             addRailMode: (mode) => this.addRailMode(mode),
             removeRailMode: (id) => this.removeRailMode(id),
+            addTopBarAction: (action) => this.addTopBarAction(action),
+            removeTopBarAction: (id) => this.removeTopBarAction(id),
             addPivot: (definition) => this.graph.pivots.register(definition),
             onPhase: (phase, callback) => this.onPhase(phase, callback),
             addKeybinding: (binding) => { this.uiDisposables.push(this.keyManager.register(binding)) },
@@ -987,6 +991,57 @@ export class UIManager {
         this.emitDockTabChange({ type: 'relabel', id })
     }
 
+    /* ---------- top-bar actions ---------- */
+
+    /**
+     * Add a pill to the top bar, after those `UI.topBar.actions` declares at the same
+     * placement. Registration succeeds in every mode; the pill is only drawn where there
+     * is a top bar (`full` and `light`, unless `UI.topBar.enabled` is `false`).
+     *
+     * @returns A disposer that removes the pill. Calling it twice is a no-op.
+     */
+    public addTopBarAction(action: TopBarAction): () => void {
+        if (this.destroyed) {
+            console.warn('Cannot add a top-bar action after the UI is destroyed.')
+            return () => {}
+        }
+        if (this.getTopBarActions().some(a => a.id === action.id)) {
+            console.warn(`A top-bar action with id "${action.id}" is already registered; skipping the duplicate.`)
+            return () => {}
+        }
+        this.topBarActions.push(action)
+        this.refreshTopBar()
+
+        let disposed = false
+        return () => {
+            if (disposed) return
+            disposed = true
+            this.removeTopBarAction(action.id)
+        }
+    }
+
+    /** Remove a top-bar action added with {@link addTopBarAction}, by id. */
+    public removeTopBarAction(id: string): void {
+        const index = this.topBarActions.findIndex(a => a.id === id)
+        if (index === -1) {
+            if (!this.destroyed) console.warn(`No top-bar action with id "${id}" to remove.`)
+            return
+        }
+        this.topBarActions.splice(index, 1)
+        this.refreshTopBar()
+    }
+
+    /** Re-read the text, title, visibility, enabled state and menu of every top-bar action. */
+    public refreshTopBar(): void {
+        this.mainHeader?.refreshActions()
+    }
+
+    /** Every top-bar action, declared then added, in order (a copy). */
+    public getTopBarActions(): TopBarAction[] {
+        const declared = this.options.topBar?.actions
+        return [...(typeof declared === 'function' ? declared() : declared ?? []), ...this.topBarActions]
+    }
+
     /** The registered tabs, in display order (a copy — mutate through addDockTab / removeDockTab). */
     public getDockTabs(): ReadonlyArray<RegisteredDockTab> {
         return [...this.dockTabs]
@@ -1178,6 +1233,7 @@ export class UIManager {
         this.panelSubscribers = []
         this.dockTabs = []
         this.dockTabSubscribers = []
+        this.topBarActions = []
         this.railModes = []
         this.railModeSubscribers = []
         this.railModeFlyouts.clear()

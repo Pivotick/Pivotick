@@ -1,7 +1,7 @@
 import type { Edge } from '../Edge'
 import type { EdgeEditSession } from '../editing/EdgeEditSession'
 import type { NodeEditSession } from '../editing/NodeEditSession'
-import type { EdgeLabelPromptMode } from './InterractionCallbacks'
+import type { ConfirmOptions, EdgeLabelPromptMode, PromptDataOptions } from './InterractionCallbacks'
 import type { Graph } from '../Graph'
 import type { Node } from '../Node'
 import type { Note } from '../Note'
@@ -31,6 +31,82 @@ export interface FeatureToggle {
 }
 
 /**
+ * `UI.topBar`: the strip along the top of the canvas, and the host's own pills in it.
+ *
+ * @category Main Options
+ */
+export interface TopBar extends FeatureToggle {
+    /**
+     * Pills the host adds beside the built-in ones, in the same style. The function form
+     * is called again on every refresh, so it may return a different set.
+     * @default undefined
+     */
+    actions?: TopBarAction[] | (() => TopBarAction[])
+}
+
+/**
+ * One host pill in the top bar: an action on the whole canvas, such as saving it.
+ * Every function field is re-read on {@link UIManager.refreshTopBar}, after a data
+ * change, and once an `onclick` that returned a promise settles.
+ *
+ * @category Main Options
+ */
+export interface TopBarAction {
+    /** Stable id: the pill's `data-action`, and the key {@link UIManager.removeTopBarAction} takes. */
+    id: string
+    /** The label: "Save as graph", then "Update graph" once saved. */
+    text: string | ((graph: Graph) => string)
+    /** Shown on hover. */
+    title?: string | ((graph: Graph) => string)
+    iconClass?: IconClass
+    svgIcon?: SVGIcon
+    /**
+     * `'start'` follows the built-in pills on the left; `'end'` sits just before the
+     * undo-redo group on the right. Declaration order within each.
+     * @default 'end'
+     */
+    placement?: 'start' | 'end'
+    /** `false` draws no pill. @default true */
+    visible?: boolean | ((graph: Graph) => boolean)
+    /** `false` draws the pill disabled. @default true */
+    enabled?: boolean | ((graph: Graph) => boolean)
+    /**
+     * Runs on a click, or Enter / Space on the focused pill. A returned promise disables
+     * the pill until it settles, so a slow save cannot be started twice, then refreshes
+     * every action.
+     */
+    onclick?: (evt: MouseEvent | KeyboardEvent, ctx: TopBarActionContext) => void | Promise<void>
+    /**
+     * Rows behind a caret: the pill becomes a split button, the label running `onclick`
+     * and the caret opening these. The same row type as the context menus, without
+     * `submenu`. The function form gets the context, so a row can prompt too; it is called
+     * on every refresh and every open, and no rows means no caret.
+     */
+    menu?: MenuActionItemOptions[] | ((ctx: TopBarActionContext) => MenuActionItemOptions[])
+    /** Shown as a badge on the pill. Visual only: the binding is the host's to register. */
+    shortcut?: string
+}
+
+/**
+ * What a {@link TopBarAction}'s `onclick` and `menu` are handed.
+ *
+ * @category Main Options
+ */
+export interface TopBarActionContext {
+    graph: Graph
+    /**
+     * Open the library's modal and resolve to the values, or `null` on cancel. The same
+     * declarative form the editors and a pivot's save use; titled with the action's label
+     * and submitted with *OK* unless the options say otherwise.
+     */
+    promptData: <T = Record<string, unknown>>(options: PromptDataOptions<T>) => Promise<T | null>
+    /** Ask before doing something; resolves `true` only on the confirm button. */
+    confirm: (options?: ConfirmOptions) => Promise<boolean>
+    /** Re-read every action's fields, as {@link UIManager.refreshTopBar} does. */
+    refresh: () => void
+}
+
+/**
  * @category Main Options
  *
  * Options for the UI
@@ -54,9 +130,9 @@ export interface GraphUI {
     navigation: Navigation,
     editors: Editors,
     /**
-     * The strip along the top of the canvas: the Search / Filter / Notes pills and the
-     * undo-redo group. `enabled: false` removes the strip, the 48px it reserved and the
-     * shortcuts its controls own.
+     * The strip along the top of the canvas: the Search / Filter / Notes pills, the
+     * host's own {@link TopBar.actions} and the undo-redo group. `enabled: false` removes
+     * the strip, the 48px it reserved and the shortcuts its controls own.
      *
      * Not to be confused with {@link GraphUI.mainHeader}, which is how elements are
      * *named* wherever they are shown. Each pill also has its own switch
@@ -64,7 +140,7 @@ export interface GraphUI {
      * {@link GraphUI.history}) for taking one away rather than all of them.
      * @default { enabled: true }
      */
-    topBar?: FeatureToggle,
+    topBar?: TopBar,
     /**
      * Free-floating notes on the canvas: the strip's **Notes** button and its panel,
      * the Create ▸ Add note tool, the canvas menu's **Add Note**, and the `N` /

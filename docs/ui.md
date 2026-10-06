@@ -107,7 +107,7 @@ const options = {
 
 | Option | What goes with it |
 | --- | --- |
-| `UI.topBar.enabled` | The top strip, the height it reserved, and the shortcuts its controls own (`Shift+J`, `Shift+K`, `Shift+N`, `Mod+Z`). Use the switches below to drop one pill and keep the rest. |
+| `UI.topBar.enabled` | The top strip, the height it reserved, the shortcuts its controls own (`Shift+J`, `Shift+K`, `Shift+N`, `Mod+Z`) and any [host actions](#topbar-actions). Use the switches below to drop one pill and keep the rest. |
 | `UI.search.enabled` | The Search pill, its node picker and `Shift+J`. |
 | `UI.filter.enabled` | The Filter Graph pill, its panel and `Shift+K`. `graph.queryEngine` still filters from code. |
 | `UI.notes.enabled` | The Notes pill and panel, `Shift+N`, the Add note tool, the canvas menu's Add Note, `N`, the note context menu, and `noteManager.addNote`, which refuses. |
@@ -145,6 +145,58 @@ The Create rail mode holds exactly four tools: Add node, Add edge, Add note and 
 node. Switch all four off and the mode leaves the rail, along with its `C` shortcut,
 rather than opening onto an empty panel. Select always stays.
 :::
+
+## Your own actions in the top bar {#topbar-actions}
+
+An action on the whole canvas, such as saving it, belongs in the top bar beside the
+undo-redo group. `UI.topBar.actions` declares pills drawn in the same style as Search,
+Filter and Notes, so a theme that restyles those restyles these too.
+
+```ts
+const options = {
+    UI: {
+        topBar: {
+            actions: [{ // [!code focus:16]
+                id: 'save-graph',
+                text: () => storedId ? 'Update graph' : 'Save as graph',
+                async onclick(_event, ctx) {
+                    if (storedId) return updateGraph(storedId, ctx.graph)
+                    const values = await ctx.promptData({
+                        fields: [{ key: 'name', label: 'Name', type: 'text' }],
+                    })
+                    if (values) storedId = await createGraph(values.name, ctx.graph)
+                },
+                menu: () => storedId
+                    ? [{ text: 'Save as new graph…', onclick: saveAsNew }]
+                    : [],
+            }],
+        },
+    },
+}
+```
+
+- **Where.** `placement: 'end'` (the default) puts the pill just before the undo-redo
+  group; `'start'` puts it after the built-in pills on the left. Pills keep the order
+  they were declared in.
+- **What it says.** `text`, `title`, `visible` and `enabled` take a value or a function of
+  the graph. The functions are read again after every data change, on
+  `graph.UIManager.refreshTopBar()`, and once a promise returned by `onclick` settles.
+  While that promise is out the pill is disabled, so a slow save cannot be started twice.
+- **What it gets.** `onclick(event, ctx)` receives the graph and two helpers that open the
+  library's modal: `ctx.promptData({ fields })` resolves to the values or `null` on
+  cancel, and `ctx.confirm({ body })` resolves `true` only on the confirm button.
+  `ctx.refresh()` re-reads every action.
+- **A caret.** With `menu`, the pill becomes a split button: the label runs `onclick`, and
+  a caret opens the rows, in the same row format as the [context menus](./ui-context-menu)
+  (without submenus). A function form is handed the same `ctx` and is called on every
+  refresh and every open; while it returns no rows, the pill has no caret. Escape or a
+  click elsewhere closes the rows.
+- **A shortcut.** `shortcut` draws a badge on the pill. It is a label only: register the
+  binding yourself.
+
+A plugin adds a pill with `ctx.addTopBarAction(action)`, which returns a disposer
+(see [Plugins](./plugins)). The pills follow the strip: none in `viewer` or `static`
+mode, and none with `UI.topBar.enabled: false`.
 
 ## An empty canvas {#empty-state}
 

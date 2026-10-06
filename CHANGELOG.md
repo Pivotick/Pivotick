@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Host actions in the top bar
+
+- **`UI.topBar.actions`** declares pills beside the built-in ones, in their style:
+  `placement: 'start'` after Search / Filter / Notes, `'end'` (the default) just before
+  the undo-redo group. `text`, `title`, `visible` and `enabled` take a value or a function
+  of the graph, read again after every data change and on `graph.UIManager.refreshTopBar()`.
+- `onclick(event, ctx)` gets `ctx.promptData`, `ctx.confirm` and `ctx.refresh`. A returned
+  promise disables the pill until it settles, then refreshes every action.
+- A `menu` makes the pill a split button: the caret opens context-menu rows below it.
+- Plugins add one with `ctx.addTopBarAction(action)`, which returns a disposer, and remove
+  it with `ctx.removeTopBarAction(id)`.
+
 ### A structured layout for small graphs
 
 - **`layout: { type: 'structured' }`** places every node itself and pins it, so the same
