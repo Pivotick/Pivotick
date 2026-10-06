@@ -73,7 +73,7 @@ Check [D3-force official documentation](https://d3js.org/d3-force/simulation#for
 | `userWorker`        | boolean             | `true`              | Should the initial node placement calculation done by a web worker                   |
 | `enabled`           | boolean             | `true`              | Should the simulation be running                                                     |
 | `physics`           | `'auto' \| 'manual'` | `'auto'`†          | Who drives the force settings — see [Automatic layout tuning](#auto-physics).        |
-| `warmupTicks`       | number \| `'auto'` | `'auto'`            | Ticks the opening layout runs before the first frame. `0` runs none, so nodes given an `x`/`y` open where they were. |
+| `warmupTicks`       | number \| `'auto'` | `'auto'`            | Ticks the opening layout runs before the first frame. `0` runs none, so nodes given an `x`/`y` open where they were, and auto physics re-tunes without moving them until the graph changes. |
 | `d3Alpha`           | number              | `1.0`               | Initial simulation alpha                                                             |
 | `d3AlphaMin`        | number              | `0.001`             | Minimum alpha value before the simulation stops.                                     |
 | `d3VelocityDecay`   | number              | `0.4`               | Friction applied to node velocities.                                                 |

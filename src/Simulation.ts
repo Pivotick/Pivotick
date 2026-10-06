@@ -237,6 +237,11 @@ export class Simulation {
     private suppressReheat = false
     /** Last context + knobs auto computed. */
     private autoLastRun: AutoRun | null = null
+    /**
+     * Opened with `warmupTicks: 0`: the canvas the host vouched the positions for. Until
+     * it changes, a background tune writes its knobs without reheating.
+     */
+    private heldCanvas: string | undefined
 
     /** Simulation options auto derives; setting any of them opts a graph out of auto. */
     private static readonly AUTO_OWNED_OPTIONS = [
@@ -497,6 +502,11 @@ export class Simulation {
 
         // const visibleNodes = this.graph.getMutableVisibleNodes()
         const visibleNodes = this.graph.getCanvasNodes()
+        const activeEdges = this.getActiveEdges()
+        // By content, not by caller: the opening's own regrouping and layout pass land here too.
+        if (this.heldCanvas !== undefined && this.heldCanvas !== Simulation.canvasKey(visibleNodes, activeEdges)) {
+            this.heldCanvas = undefined
+        }
 
         this.simulation
             .nodes(visibleNodes)
@@ -505,7 +515,7 @@ export class Simulation {
         if (linkForce) {
             (linkForce as d3ForceLinkType<Node, Edge>)
                 .id((node: Node) => node.id)
-                .links(this.getActiveEdges())
+                .links(activeEdges)
         }
 
         this.restart()
@@ -586,6 +596,10 @@ export class Simulation {
         // Tune *before* the layout pass, so the worker is handed the tuned options and
         // the opening frame is already right rather than corrected a moment later.
         if (recomputeLayout) {
+            // Before the await: a tune already scheduled reads this when it fires.
+            this.heldCanvas = this.options.warmupTicks === 0
+                ? Simulation.canvasKey(this.graph.getCanvasNodes(), this.getActiveEdges())
+                : undefined
             // A microtask later, so what the host does right after `new Graph()` (groups set,
             // opened, pulled out) is in the layout rather than corrected after it.
             await Promise.resolve()
@@ -1224,8 +1238,14 @@ export class Simulation {
         if (this.autoTuneTimer !== null) clearTimeout(this.autoTuneTimer)
         this.autoTuneTimer = setTimeout(() => {
             this.autoTuneTimer = null
-            this.tuneNow()
+            // The knobs are for what comes next, not a reason to move a vouched-for layout.
+            this.tuneNow({ reheat: this.heldCanvas === undefined })
         }, Simulation.AUTO_DEBOUNCE_MS)
+    }
+
+    /** What is on the canvas, for telling a real change from an update that changed nothing. */
+    private static canvasKey(nodes: Node[], edges: Edge[]): string {
+        return `${nodes.map(node => node.id).join('\n')}\n|\n${edges.map(edge => edge.id).join('\n')}`
     }
 
     /**

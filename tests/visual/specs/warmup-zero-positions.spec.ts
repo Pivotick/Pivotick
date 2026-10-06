@@ -1,5 +1,6 @@
 import { test, expect, gotoHarness } from '../helpers'
 import type { Page } from '@playwright/test'
+import type { AutoState } from '../harness/harness'
 
 /**
  * Behavioural (non-screenshot) test: `simulation.warmupTicks: 0` keeps the positions the
@@ -43,5 +44,56 @@ test.describe('warmupTicks: 0 keeps given positions', () => {
     test('without warmupTicks: 0, the opening layout still moves them', async ({ page }) => {
         const drift = await driftAfterLoad(page, { enabled: false, useWorker: false })
         expect(drift).toBeGreaterThan(50)
+    })
+})
+
+/**
+ * The same reopen under auto physics. Auto re-tunes once the opening pass lands; that tune
+ * may move the knobs, but must not reheat a layout the host vouched for.
+ *
+ * Square cards are drawn at a guessed radius and measured a frame later, so the tune after
+ * the opening pass sees twice the radius the opening tune did, and lands outside the deadband.
+ */
+test.describe('warmupTicks: 0 under auto physics', () => {
+    const cards = { render: { defaultNodeStyle: { shape: 'square', size: 40 } } }
+    const reopen = { physics: 'auto', warmupTicks: 0, d3Alpha: 0.05, d3LinkDistance: 200 }
+
+    const autoState = (page: Page) => page.evaluate(() => window.__pivotick.autoState())
+
+    /**
+     * Load the cards under auto, let them settle, then reopen them where they were left.
+     * Resolves the knobs auto settled on the first time.
+     */
+    async function reopenUnderAuto(page: Page, useWorker: boolean): Promise<AutoState['knobs']> {
+        await page.evaluate(([sim, o]) => window.__pivotick.loadPositioned(sim, o), [{ useWorker, physics: 'auto' }, cards] as const)
+        const { knobs } = await autoState(page)
+        await page.evaluate(([sim, o]) => window.__pivotick.reopenAsLeft(sim, o), [{ useWorker, ...reopen }, cards] as const)
+        return knobs
+    }
+
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    for (const useWorker of [true, false]) {
+        const thread = useWorker ? 'worker' : 'main thread'
+
+        test(`a settled graph reopens as it was left (${thread})`, async ({ page }) => {
+            const settledOn = await reopenUnderAuto(page, useWorker)
+            expect(await driftAfter(page, 2000)).toBeLessThan(10)
+            // Auto did re-tune to the measured cards; it just left the layout where it was.
+            expect((await autoState(page)).knobs).toEqual(settledOn)
+        })
+    }
+
+    test('nodes added afterwards re-tune and reheat', async ({ page }) => {
+        await reopenUnderAuto(page, false)
+        await page.waitForTimeout(500)
+        await page.evaluate(() => window.__pivotick.resetReheatCount())
+
+        await page.evaluate(() => window.__pivotick.growAuto(12, 40))
+        await page.waitForTimeout(500)
+        expect((await autoState(page)).skipped).toBe(false)
+        expect(await page.evaluate(() => window.__pivotick.reheatCount())).toBe(1)
     })
 })

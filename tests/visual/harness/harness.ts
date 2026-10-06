@@ -1125,11 +1125,11 @@ export interface HarnessApi {
     growAuto(count: number, radius: number): void
     /**
      * Boot unpinned nodes that carry their own `x`/`y` — a graph reopened as it was left —
-     * with the simulation on and `simulation` merged over it.
+     * with the simulation on, `simulation` merged over it and `overrides` over the rest.
      */
-    loadPositioned(simulation?: PlainObject): Promise<void>
+    loadPositioned(simulation?: PlainObject, overrides?: PlainObject): Promise<void>
     /** Boot the same nodes again, each given the `x`/`y` it has now: a stored graph reopened. */
-    reopenAsLeft(simulation?: PlainObject): Promise<void>
+    reopenAsLeft(simulation?: PlainObject, overrides?: PlainObject): Promise<void>
     /** Farthest any node now sits from the `x`/`y` it was loaded with, in px. */
     maxDriftFromGiven(): number
 
@@ -1332,7 +1332,7 @@ export interface HarnessApi {
     resetBatchSizes(): void
     /** Start counting `dataBatchChanged` announcements (`loadWithPivots` does it itself). */
     watchBatches(): void
-    /** Reheats since the last `loadAuto` or `resetReheatCount`. */
+    /** Reheats since the last `loadAuto`, `loadPositioned`, `reopenAsLeft` or `resetReheatCount`. */
     reheatCount(): number
     resetReheatCount(): void
     /**
@@ -5161,21 +5161,25 @@ class Harness implements HarnessApi {
         this.countReheats()
     }
 
-    async loadPositioned(simulation: PlainObject = {}): Promise<void> {
+    async loadPositioned(simulation: PlainObject = {}, overrides: PlainObject = {}): Promise<void> {
         // A ring of linked pairs, far from where the forces would settle them, so any
         // layout pass that runs shows up as drift.
         await this.bootPositioned((i) => {
             const angle = (i / 12) * 2 * Math.PI
             return { x: Math.round(Math.cos(angle) * 300), y: Math.round(Math.sin(angle) * 300) }
-        }, simulation)
+        }, simulation, overrides)
     }
 
-    async reopenAsLeft(simulation: PlainObject = {}): Promise<void> {
+    async reopenAsLeft(simulation: PlainObject = {}, overrides: PlainObject = {}): Promise<void> {
         const left = new Map(this.g.getMutableNodes().map((node) => [node.id, { x: node.x ?? 0, y: node.y ?? 0 }]))
-        await this.bootPositioned((i) => left.get(`p${i}`)!, simulation)
+        await this.bootPositioned((i) => left.get(`p${i}`)!, simulation, overrides)
     }
 
-    private async bootPositioned(at: (i: number) => { x: number; y: number }, simulation: PlainObject): Promise<void> {
+    private async bootPositioned(
+        at: (i: number) => { x: number; y: number },
+        simulation: PlainObject,
+        overrides: PlainObject,
+    ): Promise<void> {
         const nodes = Array.from({ length: 12 }, (_, i) => {
             const node = new Node(`p${i}`, { label: `P${i}` }, {}, `p${i}`)
             node.x = at(i).x
@@ -5183,9 +5187,11 @@ class Harness implements HarnessApi {
             return node
         })
         const edges = nodes.map((node, i) => new EdgeInstance(`p${i}-p${(i + 5) % 12}`, node, nodes[(i + 5) % 12]))
-        await this.bootData({ nodes, edges, notes: [] }, mergeOptions(BASE_OPTIONS, {
-            simulation: { enabled: true, ...simulation },
-        }))
+        await this.bootData({ nodes, edges, notes: [] }, mergeOptions(BASE_OPTIONS, mergeOptions(
+            { simulation: { enabled: true, ...simulation } },
+            overrides,
+        )))
+        this.countReheats()
     }
 
     private topBarCallLog: string[] = []
