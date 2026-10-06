@@ -98,9 +98,7 @@ function runLayout(input: WorkerInput) {
         )
     }
 
-    let warmupTicks = options.warmupTicks || MAX_EXECUTION_TICKS
-    warmupTicks = warmupTicks === 'auto' ? MAX_EXECUTION_TICKS : warmupTicks
-    warmupTicks = warmupTicks - REHEAT_TICKS
+    const { warmupTicks, reheatTicks } = layoutTicks(options)
 
     let currentAlphaTarget = 0.3
     simulation.alphaTarget(currentAlphaTarget)
@@ -128,7 +126,7 @@ function runLayout(input: WorkerInput) {
     currentAlphaTarget = 0
     simulation.alphaTarget(currentAlphaTarget)
     simulation.alpha(1) // small bump
-    for (let i = 0; i < REHEAT_TICKS; ++i) {
+    for (let i = 0; i < reheatTicks; ++i) {
         if (
             isSimulationStable(options, simulation, currentAlphaTarget) &&
             (new Date()).getTime() - startTime > options.cooldownTime * 0.15
@@ -208,13 +206,7 @@ export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: S
         )
     }
 
-    let warmupTicks: number
-    if (options.warmupTicks === 'auto' || options.warmupTicks == null) {
-        warmupTicks = MAX_EXECUTION_TICKS
-    } else {
-        warmupTicks = options.warmupTicks
-    }
-    warmupTicks = warmupTicks - REHEAT_TICKS
+    const { warmupTicks, reheatTicks } = layoutTicks(options)
 
     let currentAlphaTarget = 0.3
     simulation.alphaTarget(currentAlphaTarget)
@@ -237,7 +229,7 @@ export function runSimulation(plainNodes: Node[], plainEdges: Edge[], options: S
     currentAlphaTarget = 0
     simulation.alphaTarget(currentAlphaTarget)
     simulation.alpha(1) // small bump
-    for (let i = 0; i < REHEAT_TICKS; ++i) {
+    for (let i = 0; i < reheatTicks; ++i) {
         if (
             isSimulationStable(options, simulation, currentAlphaTarget) &&
             (new Date()).getTime() - startTime > options.cooldownTime * 0.15
@@ -268,6 +260,18 @@ function registerGroupCohesion(simulation: d3Simulation<Node, undefined>, groups
         .map(ids => ({ parts: ids.map(id => nodeMap.get(id)).filter(node => node !== undefined) }))
         .filter(group => group.parts.length > 1)
     if (parts.length) simulation.force('groupCohesion', forceGroupCohesion(() => parts))
+}
+
+/**
+ * Ticks for the warmup and for the reheat after it. `warmupTicks: 0` means the given
+ * positions are already right, so neither runs.
+ */
+function layoutTicks(options: SimulationOptions): { warmupTicks: number; reheatTicks: number } {
+    const requested = options.warmupTicks === 'auto' || options.warmupTicks == null
+        ? MAX_EXECUTION_TICKS
+        : options.warmupTicks
+    if (requested <= 0) return { warmupTicks: 0, reheatTicks: 0 }
+    return { warmupTicks: requested - REHEAT_TICKS, reheatTicks: REHEAT_TICKS }
 }
 
 function getProgress(_tick: number, elapsedTime: number, options: SimulationOptions): number {

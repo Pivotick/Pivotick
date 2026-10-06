@@ -1122,6 +1122,15 @@ export interface HarnessApi {
     loadAutoWithConfig(spec: AutoFixtureSpec, simulation?: PlainObject): Promise<void>
     /** Add `count` nodes of radius `radius`, chained onto the graph already loaded. */
     growAuto(count: number, radius: number): void
+    /**
+     * Boot unpinned nodes that carry their own `x`/`y` — a graph reopened as it was left —
+     * with the simulation on and `simulation` merged over it.
+     */
+    loadPositioned(simulation?: PlainObject): Promise<void>
+    /** Boot the same nodes again, each given the `x`/`y` it has now: a stored graph reopened. */
+    reopenAsLeft(simulation?: PlainObject): Promise<void>
+    /** Farthest any node now sits from the `x`/`y` it was loaded with, in px. */
+    maxDriftFromGiven(): number
     /** What auto chose, what the layout looks like, and what the camera made of it. */
     autoState(): AutoState
 
@@ -5127,6 +5136,43 @@ class Harness implements HarnessApi {
         if (!('physics' in simulation)) delete options.simulation.physics
         await this.bootData(buildAutoFixture(spec), options)
         this.countReheats()
+    }
+
+    async loadPositioned(simulation: PlainObject = {}): Promise<void> {
+        // A ring of linked pairs, far from where the forces would settle them, so any
+        // layout pass that runs shows up as drift.
+        await this.bootPositioned((i) => {
+            const angle = (i / 12) * 2 * Math.PI
+            return { x: Math.round(Math.cos(angle) * 300), y: Math.round(Math.sin(angle) * 300) }
+        }, simulation)
+    }
+
+    async reopenAsLeft(simulation: PlainObject = {}): Promise<void> {
+        const left = new Map(this.g.getMutableNodes().map((node) => [node.id, { x: node.x ?? 0, y: node.y ?? 0 }]))
+        await this.bootPositioned((i) => left.get(`p${i}`)!, simulation)
+    }
+
+    private async bootPositioned(at: (i: number) => { x: number; y: number }, simulation: PlainObject): Promise<void> {
+        const nodes = Array.from({ length: 12 }, (_, i) => {
+            const node = new Node(`p${i}`, { label: `P${i}` }, {}, `p${i}`)
+            node.x = at(i).x
+            node.y = at(i).y
+            return node
+        })
+        const edges = nodes.map((node, i) => new EdgeInstance(`p${i}-p${(i + 5) % 12}`, node, nodes[(i + 5) % 12]))
+        await this.bootData({ nodes, edges, notes: [] }, mergeOptions(BASE_OPTIONS, {
+            simulation: { enabled: true, ...simulation },
+        }))
+    }
+
+    maxDriftFromGiven(): number {
+        let drift = 0
+        for (const node of this.g.getMutableNodes()) {
+            const given = this.intended.get(node.id)
+            if (!given) continue
+            drift = Math.max(drift, Math.hypot((node.x ?? 0) - given.x, (node.y ?? 0) - given.y))
+        }
+        return drift
     }
 
     /**

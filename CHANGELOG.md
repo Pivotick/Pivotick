@@ -72,6 +72,9 @@
 
 ### Fixes
 
+- `simulation.warmupTicks: 0` now runs no opening layout, so nodes given an `x`/`y` open
+  where they were. The worker read `0` as unset and ran the full warmup, and both threads
+  reheated afterwards whatever the count.
 - `simulation.layout` is now honoured. It was overwritten by the top-level `layout` option
   even when that was unset, so a layout named there was silently ignored. The top-level
   option still wins when both are set.

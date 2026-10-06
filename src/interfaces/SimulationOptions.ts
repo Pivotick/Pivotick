@@ -70,7 +70,11 @@ export interface SimulationOptions {
      * @default 2000
      */
     cooldownTime: number
-    /** @default auto */
+    /**
+     * Ticks the opening layout runs before the first frame. `0` runs none, so nodes that
+     * carry their own `x`/`y` open where they were given.
+     * @default auto
+     */
     warmupTicks: number | 'auto'
     /** @default true */
     freezeNodesOnDrag: boolean
