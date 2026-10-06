@@ -97,6 +97,24 @@ test.describe('top-bar actions', () => {
         expect(await prompts(page)).toEqual([{ name: 'Incident 42' }, null])
     })
 
+    // The refresh while the save is out gives the pill its caret, which rebuilds it: the
+    // rebuilt pill has to come back from busy too, not only the one the click started on.
+    test('a pill rebuilt while its onclick is out comes back enabled', async ({ page }) => {
+        await page.evaluate(() => window.__pivotick.holdTopBarSave())
+        await pill(page, 'save').click()
+        await promptInput(page).fill('Incident 42')
+        await modalButton(page, 'OK').click()
+        await page.evaluate(() => window.__pivotick.refreshTopBar())
+        await expect(caret(page, 'save')).toBeVisible()
+        await expect(pill(page, 'save')).toHaveAttribute('aria-busy', '')
+
+        await page.evaluate(() => window.__pivotick.releaseTopBarSave())
+        await expect(pill(page, 'save')).not.toHaveAttribute('aria-busy')
+        await expect(pill(page, 'save')).toHaveAttribute('aria-disabled', 'false')
+        await caret(page, 'save').click()
+        await expect(actionMenu(page)).toContainText('Save as new graph…')
+    })
+
     test('a plugin adds a pill, and its disposer takes it away', async ({ page }) => {
         await page.evaluate(() => window.__pivotick.addPluginTopBarAction())
         expect(await stripOrder(page)).toEqual([

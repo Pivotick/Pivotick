@@ -29,8 +29,6 @@ interface ActionPill {
     /** Last painted, for the prompt's title. */
     text: string
     disabled: boolean
-    /** An `onclick` promise is out. */
-    busy: boolean
 }
 
 export class Mainheader extends UIComponent {
@@ -52,6 +50,8 @@ export class Mainheader extends UIComponent {
     private startActions?: HTMLDivElement
     private endActions?: HTMLDivElement
     private actionPills = new Map<string, ActionPill>()
+    /** Actions whose `onclick` promise is out, by id: a refresh meanwhile may rebuild the pill. */
+    private busyActions = new Set<string>()
     private actionMenu?: TopBarActionMenu
     private refreshQueued = false
 
@@ -224,22 +224,23 @@ export class Mainheader extends UIComponent {
         let pill = this.actionPills.get(action.id)
         if (pill && pill.shape !== shape) {
             this.closeMenuOf(pill)
-            const fresh = this.buildActionPill(action, shape, hasMenu, pill.busy)
+            const fresh = this.buildActionPill(action, shape, hasMenu)
             pill.root.replaceWith(fresh.root)
             pill = fresh
         }
-        pill ??= this.buildActionPill(action, shape, hasMenu, false)
+        pill ??= this.buildActionPill(action, shape, hasMenu)
         this.actionPills.set(action.id, pill)
 
+        const busy = this.busyActions.has(action.id)
         pill.action = action
         pill.text = text
-        pill.disabled = !enabled || pill.busy
+        pill.disabled = !enabled || busy
         pill.label.textContent = text
         pill.root.title = title ?? ''
         pill.root.setAttribute('aria-label', text)
         pill.root.classList.toggle('pvt-disabled', pill.disabled)
         pill.root.setAttribute('aria-disabled', String(pill.disabled))
-        pill.root.toggleAttribute('aria-busy', pill.busy)
+        pill.root.toggleAttribute('aria-busy', busy)
         pill.root.tabIndex = pill.disabled ? -1 : 0
         if (pill.caret) {
             pill.caret.disabled = pill.disabled
@@ -249,7 +250,7 @@ export class Mainheader extends UIComponent {
         return pill
     }
 
-    private buildActionPill(action: TopBarAction, shape: string, hasMenu: boolean, busy: boolean): ActionPill {
+    private buildActionPill(action: TopBarAction, shape: string, hasMenu: boolean): ActionPill {
         const root = document.createElement('div')
         root.className = 'pvt-action-button pvt-topbar-action'
         root.dataset.action = action.id
@@ -268,7 +269,7 @@ export class Mainheader extends UIComponent {
         if (action.shortcut) container.appendChild(createShortcutBadge(action.shortcut))
         root.appendChild(container)
 
-        const pill: ActionPill = { action, root, label, shape, text: '', disabled: false, busy }
+        const pill: ActionPill = { action, root, label, shape, text: '', disabled: false }
 
         if (hasMenu) {
             root.classList.add('pvt-topbar-split')
@@ -300,12 +301,13 @@ export class Mainheader extends UIComponent {
         this.actionMenu?.close()
         const result: unknown = pill.action.onclick(event, this.actionContext(() => pill.text))
         if (!(result instanceof Promise)) return
-        pill.busy = true
+        const { id } = pill.action
+        this.busyActions.add(id)
         this.refreshActions()
         result
-            .catch(error => console.error(`Pivotick: top-bar action "${pill.action.id}" failed.`, error))
+            .catch(error => console.error(`Pivotick: top-bar action "${id}" failed.`, error))
             .finally(() => {
-                pill.busy = false
+                this.busyActions.delete(id)
                 this.refreshActions()
             })
     }

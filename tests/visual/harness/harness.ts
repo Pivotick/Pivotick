@@ -1148,6 +1148,9 @@ export interface HarnessApi {
     /** Flip what `lock`'s `enabled` reads, without refreshing. */
     setTopBarLocked(locked: boolean): void
     refreshTopBar(): void
+    /** The next `save` marks itself saved, then stays pending until {@link releaseTopBarSave}. */
+    holdTopBarSave(): void
+    releaseTopBarSave(): void
     /** Install a plugin adding a `plugin-action` pill; {@link disposePluginTopBarAction} runs its disposer. */
     addPluginTopBarAction(): void
     disposePluginTopBarAction(): void
@@ -5189,6 +5192,7 @@ class Harness implements HarnessApi {
     private topBarPrompts: Array<Record<string, unknown> | null> = []
     private topBarSaved = false
     private topBarLocked = false
+    private topBarSaveHold?: { promise: Promise<void>; release: () => void }
     private topBarPluginDispose?: () => void
 
     async loadWithTopBarActions(overrides: PlainObject = {}): Promise<void> {
@@ -5202,6 +5206,7 @@ class Harness implements HarnessApi {
             const values = await ctx.promptData({ fields: [{ key: 'name', label: 'Name', type: 'text' }] })
             this.topBarPrompts.push(values)
             if (values) this.topBarSaved = true
+            await this.topBarSaveHold?.promise
         }
         const actions = (): TopBarAction[] => [
             { id: 'export', text: 'Export', placement: 'start', onclick: record('export') },
@@ -5233,6 +5238,17 @@ class Harness implements HarnessApi {
 
     refreshTopBar(): void {
         this.g.UIManager.refreshTopBar()
+    }
+
+    holdTopBarSave(): void {
+        let release!: () => void
+        const promise = new Promise<void>((resolve) => { release = resolve })
+        this.topBarSaveHold = { promise, release }
+    }
+
+    releaseTopBarSave(): void {
+        this.topBarSaveHold?.release()
+        this.topBarSaveHold = undefined
     }
 
     addPluginTopBarAction(): void {
