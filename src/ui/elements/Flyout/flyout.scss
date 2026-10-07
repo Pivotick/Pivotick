@@ -8,7 +8,10 @@
     left: 84px;
     z-index: 7;
     width: 252px;
-    max-height: calc(100% - 28px);
+    max-width: calc(100% - 98px);
+    // Offset by the header like the tool panel, so subtract it too: without it a tall
+    // flyout ran under the dock, its last rows cut off instead of scrolled to.
+    max-height: calc(100% - var(--pvt-mainheader-height) - 28px);
     overflow-y: auto;
 }
 

@@ -117,20 +117,27 @@ export class SimplifyFlyout extends Flyout {
             card.appendChild(description)
         }
 
-        if (rule.setting?.control === 'slider') card.appendChild(this.buildSlider(rule.id, rule.setting))
-        else if (rule.setting) card.appendChild(this.buildStepper(rule.id, rule.setting.label))
-
         const result = document.createElement('div')
         result.className = 'pvt-simplifyflyout-rule-result'
-        card.appendChild(result)
+        if (rule.setting?.control === 'slider') card.append(this.buildSlider(rule.id, rule.setting), result)
+        else if (rule.setting) card.appendChild(this.buildStepper(rule.id, rule.setting.label, result))
+        else card.appendChild(result)
         return card
     }
 
-    /** The rule's setting: − / + regroup on each click, and the number can be typed. */
-    private buildStepper(id: string, label: string): HTMLElement {
+    /**
+     * The rule's setting: − / + regroup on each click, and the number can be typed. What
+     * the rule did sits under the label, beside the stepper, to save the card a line.
+     */
+    private buildStepper(id: string, label: string, result: HTMLElement): HTMLElement {
         const row = document.createElement('div')
         row.className = 'pvt-simplifyflyout-rule-setting'
-        row.textContent = label
+        const text = document.createElement('span')
+        text.className = 'pvt-simplifyflyout-rule-setting-text'
+        const name = document.createElement('span')
+        name.textContent = label
+        text.append(name, result)
+        row.appendChild(text)
         const stepper = document.createElement('span')
         stepper.className = 'pvt-simplifyflyout-stepper'
         const minus = document.createElement('button')

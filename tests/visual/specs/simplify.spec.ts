@@ -455,6 +455,27 @@ test.describe('the Simplify flyout', () => {
         await expect(ruleSwitch(page, 'broken')).toHaveAttribute('aria-pressed', 'false')
         await expect(ruleResult(page, 'broken')).toHaveText('This rule failed')
     })
+
+    test('on a short canvas the panel ends inside it, and only the rules scroll', async ({ page }) => {
+        await page.setViewportSize({ width: 1400, height: 600 })
+        await loadSimplify(page, { UI: { mode: 'full', simplify: { rules: [
+            { kind: 'neighbours' }, { kind: 'chains' }, { kind: 'degree' }, { kind: 'kcore' }, { kind: 'communities' },
+        ] } } })
+        await openSimplifyFlyout(page)
+        const panel = page.locator('.pvt-flyout-panel.pvt-flyout-simplify')
+        const rules = page.locator('.pvt-simplifyflyout-rules')
+        const summary = page.locator('.pvt-simplifyflyout-summary')
+
+        const panelBottom = (await panel.boundingBox())!.y + (await panel.boundingBox())!.height
+        const canvasBottom = await page.evaluate(() => document.querySelector('.pvt-flyout')!.parentElement!.getBoundingClientRect().bottom)
+        expect(panelBottom).toBeLessThan(canvasBottom)
+
+        const summaryTop = (await summary.boundingBox())!.y
+        await rules.evaluate((list) => { list.scrollTop = list.scrollHeight })
+        expect(await rules.evaluate((list) => list.scrollTop)).toBeGreaterThan(0)
+        expect((await summary.boundingBox())!.y).toBe(summaryTop)
+        await expect(ruleCard(page, 'communities')).toBeInViewport()
+    })
 })
 
 test.describe('recomputing', () => {

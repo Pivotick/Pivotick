@@ -1,5 +1,24 @@
 // Simplify flyout — a summary of what the canvas holds, then one card per rule in run
 // order. The panel chrome it sits in is shared, see `Flyout/flyout.scss`.
+
+// Wider than the other flyouts, so a rule's description wraps less. Only the rules
+// scroll: the slot stops scrolling and bounds the panel, so the header and summary stay.
+.pvt-flyout:has(> .pvt-flyout-simplify.open) {
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+    overflow: hidden;
+}
+
+.pvt-flyout-simplify {
+    min-height: 0;
+}
+
+.pvt-simplifyflyout-rules {
+    min-height: 0;
+    overflow-y: auto;
+}
+
 .pvt-simplifyflyout-summary {
     display: grid;
     gap: 6px;
@@ -38,9 +57,9 @@
 
 .pvt-simplifyflyout-rule {
     display: grid;
-    gap: 8px;
-    margin: 8px 0 0;
-    padding: 10px 11px;
+    gap: 6px;
+    margin: 6px 0 0;
+    padding: 8px 10px;
     border-radius: 10px;
     background-color: var(--pvt-bg-color-4);
     border: 1px solid var(--pvt-bg-color-5);
@@ -128,19 +147,29 @@
 
 .pvt-simplifyflyout-rule-desc {
     font-size: 12px;
-    line-height: 1.4;
+    line-height: 1.35;
     color: var(--pvt-text-color-4);
 }
 
 .pvt-simplifyflyout-rule-setting {
     display: flex;
     align-items: center;
+    gap: 10px;
     font-size: 12px;
     color: var(--pvt-text-color-5);
 }
 
+// The setting's name, with what the rule did under it.
+.pvt-simplifyflyout-rule-setting-text {
+    display: grid;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+}
+
 .pvt-simplifyflyout-stepper {
     display: inline-flex;
+    flex: none;
     align-items: center;
     margin-left: auto;
     padding: 2px;
