@@ -576,6 +576,38 @@ export const fixtures = {
         return { nodes, edges: [], notes: [] }
     },
 
+    /**
+     * `textFontSize` — an 80-unit node and a 16-unit one labelled at the same declared 12,
+     * beside an 80-unit node left on the derived `max(12, size x 0.45)` (36 units).
+     */
+    nodeLabelsFontSize(): BuiltFixture {
+        const color = '#b45309'
+        const below = { color, textVerticalShift: -1 }
+        const nodes = [
+            mkStyledNode('big-declared', -250, -40, { ...below, size: 80, text: 'Screenshot.png', textFontSize: 12 }),
+            mkStyledNode('small-declared', 0, -40, { ...below, size: 16, text: 'Attribute', textFontSize: 12 }),
+            mkStyledNode('big-derived', 250, -40, { ...below, size: 80, text: 'Screenshot.png' }),
+        ]
+        return { nodes, edges: [], notes: [] }
+    },
+
+    /**
+     * `textFontSize` values that aren't a size, next to a function that names one for some
+     * nodes only. Every node is 40 units, so a label left on the derived size is 18.
+     */
+    nodeLabelsFontSizeValues(): BuiltFixture {
+        const color = '#b45309'
+        const fromData = (n: Node) => n.getData()?.font as number
+        const nodes = [
+            mkStyledNode('zero', -240, -60, { color, size: 40, text: 'Zero', textFontSize: 0 }),
+            mkStyledNode('negative', 0, -60, { color, size: 40, text: 'Negative', textFontSize: -4 }),
+            mkStyledNode('nan', 240, -60, { color, size: 40, text: 'NaN', textFontSize: NaN }),
+            mkStyledNode('fn-named', -120, 80, { color, size: 40, text: 'Named', textFontSize: fromData }, { font: 12 }),
+            mkStyledNode('fn-unnamed', 120, 80, { color, size: 40, text: 'Unnamed', textFontSize: fromData }),
+        ]
+        return { nodes, edges: [], notes: [] }
+    },
+
     /** Straight, curved, and a reciprocal pair that curves apart under `bidirectional`. */
     edgeCurves(): BuiltFixture {
         const mk = (id: string, x: number, y: number) => mkStyledNode(id, x, y, { size: 14, color: '#64748b' })

@@ -521,6 +521,12 @@ export interface NodeStyle {
      * @default undefined — the built-in budget
      */
     textMaxWidth?: ((node: Node) => number) | number
+    /**
+     * Font size of the node's label, in graph units (CSS pixels at zoom 1). The label's
+     * offset, its built-in character budget and the zoom gate all follow it.
+     * @default undefined — derived from the node's size: max(12, size × 0.45)
+     */
+    textFontSize?: ((node: Node) => number) | number
     iconClass?: IconClass,
     iconUnicode?: IconUnicode,
     /**

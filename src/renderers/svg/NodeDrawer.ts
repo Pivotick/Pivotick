@@ -679,6 +679,8 @@ export class NodeDrawer {
         nodeStyle.textTruncate = nodeStyle.textTruncate !== undefined ? (tryResolveBoolean(nodeStyle.textTruncate, node) ?? true) : true
         const textMaxWidth = nodeStyle.textMaxWidth !== undefined ? tryResolveNumber(nodeStyle.textMaxWidth, node) : undefined
         nodeStyle.textMaxWidth = textMaxWidth !== undefined && Number.isFinite(textMaxWidth) && textMaxWidth > 0 ? textMaxWidth : undefined
+        const textFontSize = nodeStyle.textFontSize !== undefined ? tryResolveNumber(nodeStyle.textFontSize, node) : undefined
+        nodeStyle.textFontSize = textFontSize !== undefined && Number.isFinite(textFontSize) && textFontSize > 0 ? textFontSize : undefined
         nodeStyle.text = nodeStyle.text !== undefined ? tryResolveString(nodeStyle.text, node) : undefined
 
         nodeStyle.iconUnicode = nodeStyle.iconUnicode !== undefined ? tryResolveString(nodeStyle.iconUnicode, node) : undefined
@@ -974,7 +976,7 @@ export class NodeDrawer {
         }
         // Do not have text dislay be mutually exclusive with icons
         if (style.text) {
-            const fontSize = nodeLabelFontSize(style.size)
+            const fontSize = nodeLabelFontSize(style)
             // The focus drawing is counter-scaled to stay readable whatever the zoom, so
             // there is nothing for the gate to decide about its label.
             const showing = !writesGeometry || this.graphSvgRenderer.labelGate.shows(fontSize)
@@ -1012,7 +1014,8 @@ export class NodeDrawer {
         const isOusideNode = floated || shapeless
         // A consumer's width cap replaces the built-in budget, and is measured once drawn.
         const maxWidth = style.textTruncate ? style.textMaxWidth as number | undefined : undefined
-        const [fontSize, text] = this.computeTextLayout(style.text as string, size, floated, style.textTruncate as boolean && maxWidth === undefined)
+        const fontSize = nodeLabelFontSize(style)
+        const text = this.computeTextLayout(style.text as string, size, fontSize, floated, style.textTruncate as boolean && maxWidth === undefined)
 
         const x_pos = horizontalShift * (size + fontSize/2*1.2)
         const y_pos = - verticalShift * (size + fontSize/2*1.2)
@@ -1155,12 +1158,11 @@ export class NodeDrawer {
         return face
     }
 
-    private computeTextLayout(label: string, nodeSize: number, isOusideNode: boolean = false, truncate: boolean = true): [number, string] {
+    private computeTextLayout(label: string, nodeSize: number, fontSize: number, isOusideNode: boolean = false, truncate: boolean = true): string {
         const base = nodeSize * 0.9
         // Allow wider strings when text is outside the node
         const maxWidth = isOusideNode ? base * 5 : base * 2
-        const fontSize = nodeLabelFontSize(nodeSize)
- 
+
         // Approximate width: ~0.55em per character
         const charWidth = fontSize * 0.55
         const maxChars = Math.floor(maxWidth / charWidth) - 1
@@ -1177,7 +1179,7 @@ export class NodeDrawer {
             if (truncated.length < label.length) label = truncated
         }
 
-        return [fontSize, label]
+        return label
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1358,12 +1360,13 @@ interface NodeLabelState {
 }
 
 /**
- * The font a node's label is drawn at: derived from the node's own size, with a floor at the
- * size text stops being worth setting. A big node therefore keeps its label longer than a
- * small one, which is the per-element difference the single threshold would otherwise lose.
+ * The font a node's label is drawn at: the style's `textFontSize` when set, otherwise derived
+ * from the node's own size, with a floor at the size text stops being worth setting. A big
+ * node therefore keeps its label longer than a small one, which is the per-element difference
+ * the single threshold would otherwise lose.
  */
-function nodeLabelFontSize(nodeSize: number | undefined): number {
-    return Math.max(12, (nodeSize ?? 0) * 0.45)
+function nodeLabelFontSize(style: NodeStyle): number {
+    return (style.textFontSize as number | undefined) ?? Math.max(12, ((style.size as number | undefined) ?? 0) * 0.45)
 }
 
 /** How far from a node's centre its label can reach, for the pass's on-screen check. */
@@ -1400,7 +1403,7 @@ function intersectsBounds(node: Node, footprint: number, bounds: GraphBounds): b
 const NODE_STYLE_KEYS = [
     'shape', 'strokeColor', 'strokeWidth', 'fontFamily', 'size', 'color', 'textColor',
     'textAnchorPosition', 'textHorizontalShift', 'textVerticalShift', 'textRotateDegree',
-    'textTruncate', 'textMaxWidth', 'iconUnicode', 'iconClass', 'svgIcon', 'imagePath', 'imageFit', 'text',
+    'textTruncate', 'textMaxWidth', 'textFontSize', 'iconUnicode', 'iconClass', 'svgIcon', 'imagePath', 'imageFit', 'text',
     'html', 'badges', 'layoutSize', 'tiers', 'focusTier', 'focusTierYieldsAt',
 ] as const satisfies readonly (keyof NodeStyle)[]
 

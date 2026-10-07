@@ -130,6 +130,21 @@ test.describe('labels at zoom', () => {
     })
 })
 
+test.describe('a declared label font at zoom', () => {
+    test('an 80-unit node labelled at 12 gives way with the other 12-unit labels', async ({ page }) => {
+        await gotoHarness(page)
+        await loadFixture(page, 'nodeLabelsFontSize')
+        await waitForViewSettled(page)
+
+        await harness(page, 'setZoomScale', EVERY_LABEL)
+        await expectLabels(page, { 'big-declared': true, 'small-declared': true, 'big-derived': true })
+
+        // The 80-unit node left on its derived 36 is nowhere near its own line (0.25).
+        await harness(page, 'setZoomScale', ONLY_THE_BIG_ONE)
+        await expectLabels(page, { 'big-declared': false, 'small-declared': false, 'big-derived': true })
+    })
+})
+
 test.describe('a selected edge keeps its label', () => {
     test.beforeEach(async ({ page }) => {
         await gotoHarness(page)

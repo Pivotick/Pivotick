@@ -40,6 +40,21 @@ async function labelHasPill(page: Page, nodeId: string): Promise<boolean> {
     return await nodeEl(page, nodeId).locator('g.pvt-node-label-group > rect').count() === 1
 }
 
+/** The `font-size` a node label is drawn at, in graph units. */
+async function labelFontSize(page: Page, nodeId: string): Promise<number> {
+    return Number(await nodeEl(page, nodeId).locator('text.pvt-node-label').getAttribute('font-size'))
+}
+
+/** How far below its node's centre a label is placed, in graph units. */
+async function labelOffset(page: Page, nodeId: string): Promise<number> {
+    return Number(await nodeEl(page, nodeId).locator('text.pvt-node-label').getAttribute('y'))
+}
+
+/** The height of the pill behind a floated label, in graph units. */
+async function pillHeight(page: Page, nodeId: string): Promise<number> {
+    return Number(await nodeEl(page, nodeId).locator('g.pvt-node-label-group > rect').getAttribute('height'))
+}
+
 /** Whether a node label was cut through a surrogate pair, leaving half a character. */
 async function hasLoneSurrogate(page: Page, nodeId: string): Promise<boolean> {
     // Checked in the page: a lone surrogate may not survive the trip back to the test.
@@ -125,6 +140,33 @@ test.describe('node & edge styling', () => {
         expect(await labelWidth(page, 'cap-fn-wide')).toBeGreaterThan(160)
         expect(await labelWidth(page, 'cap-fn-narrow')).toBeLessThanOrEqual(60)
         await expectCanvas(page, 'node-labels-max-width.png')
+    })
+
+    // T1.4d — `textFontSize` sets a label's font in place of the size-derived one: an
+    // 80-unit node's label matches a 16-unit node's, still clears the node, and keeps a pill
+    // the height of a 12-unit label. The 80-unit node beside them keeps the derived 36.
+    test('node labels at a declared font size', async ({ page }) => {
+        await loadPinned(page, 'nodeLabelsFontSize')
+
+        expect(await labelFontSize(page, 'big-declared')).toBe(12)
+        expect(await labelFontSize(page, 'small-declared')).toBe(12)
+        expect(await labelFontSize(page, 'big-derived')).toBe(36)
+        // Offset is `size + fontSize / 2 x 1.2` below the centre: the node's edge plus a half-line.
+        expect(await labelOffset(page, 'big-declared')).toBeCloseTo(80 + 6 * 1.2)
+        expect(await labelOffset(page, 'big-derived')).toBeCloseTo(80 + 18 * 1.2)
+        expect(await pillHeight(page, 'big-declared')).toBeCloseTo(await pillHeight(page, 'small-declared'))
+        await expectCanvas(page, 'node-labels-font-size.png')
+    })
+
+    // T1.4e — a `textFontSize` that isn't a positive finite number is ignored, and a function
+    // applies only where it returns a size.
+    test('node label font size falls back where none is given', async ({ page }) => {
+        await loadPinned(page, 'nodeLabelsFontSizeValues')
+
+        for (const id of ['zero', 'negative', 'nan', 'fn-unnamed']) {
+            expect(await labelFontSize(page, id), id).toBe(18)
+        }
+        expect(await labelFontSize(page, 'fn-named')).toBe(12)
     })
 
     // T1.5 — straight vs curved vs bidirectional (reciprocal edges curve apart).

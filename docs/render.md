@@ -198,6 +198,26 @@ const options = {
 }
 ```
 
+## Label font size
+
+A node label is drawn at `max(12, size × 0.45)` by default, so it grows with the node.
+When a node is big for what it draws rather than for how much it matters, such as an image
+thumbnail, set `textFontSize` (graph units) to keep its label in line with its neighbours:
+
+```ts
+const options = {
+    render: {
+        nodeStyleMap: {
+            image: { size: 80, imagePath: (node) => node.getData()?.url, textFontSize: 12 },
+        },
+    },
+}
+```
+
+The label still sits just clear of the node, the built-in budget still takes its width from
+the node (so a smaller font fits more characters), and the
+[zoom gate](#label-zoom) judges it by the size you set.
+
 The cap scales with the zoom like the rest of the node, and it can be a function of the
 node. It is ignored when `textTruncate` is `false`.
 
@@ -478,6 +498,7 @@ It is one number for the whole canvas, edge labels and node labels alike. The di
 between them is already in the font size: an edge label is drawn at
 `defaultLabelStyle.fontSize` (12 by default), while a node's is derived from the node,
 `max(12, size × 0.45)`, so a large node keeps its label to a lower zoom than a small one.
+A node style's `textFontSize` replaces that derived size.
 
 `0` turns the gate off and draws every label at every zoom.
 
