@@ -1,5 +1,6 @@
 import { generateSafeDomId } from './utils/ElementCreation'
 import { isSafeColor } from './utils/colorSafety'
+import { randomUUID } from './utils/utils'
 
 export interface AttachedElement {
     type: 'node' | 'edge'
@@ -59,7 +60,7 @@ export class Note {
     public readonly domID: string
 
     public constructor(options: NoteOptions = {}, domID: string = generateSafeDomId()) {
-        this.id = options.id ?? crypto.randomUUID()
+        this.id = options.id ?? randomUUID()
         this.domID = domID
 
         this.x = options.x ?? 0

@@ -207,3 +207,22 @@ test.describe('note host API', () => {
         expect(await notesAsJSON(page)).toEqual(before)
     })
 })
+
+test.describe('note ids outside a secure context', () => {
+    test('a note without an id still gets a v4 UUID when crypto.randomUUID is missing', async ({ page }) => {
+        // A plain HTTP page has no crypto.randomUUID; the harness runs on localhost, so remove it.
+        await page.addInitScript(() => {
+            delete (Crypto.prototype as unknown as { randomUUID?: unknown }).randomUUID
+        })
+        await gotoHarness(page)
+        await loadFixture(page, 'basic')
+
+        const id = await page.evaluate(() => {
+            if (typeof crypto.randomUUID === 'function') return 'randomUUID still present'
+            const graph = (window.__pivotick as unknown as { graph: { addNote(o: unknown): { id: string } } }).graph
+            return graph.addNote({ content: 'x' }).id
+        })
+
+        expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+    })
+})
