@@ -1260,6 +1260,86 @@ export class Graph {
     }
 
     /**
+     * Adds a note to the graph and draws it. Takes the same options as `data.notes`
+     * (what {@link Note.toJSON} returns), or a `Note`. Emits `noteAdd`.
+     *
+     * @throws Error if a note with the same `id` already exists.
+     * @returns the note, or `undefined` while `UI.notes.enabled` is `false`.
+     */
+    addNote(n: NoteOptions | Note): Note | undefined {
+        const note = Graph.normalizeNote(n)
+        if (!note) return undefined
+        if (this.noteManager.hasNote(note.id)) {
+            throw new Error(`Note with id ${note.id} already exists.`)
+        }
+        return this.noteManager.addNote(note) ? note : undefined
+    }
+
+    /**
+     * Replaces the graph's notes, leaving nodes and edges alone. Notes are matched by
+     * id: one already on the canvas is updated in place, so its drawing stays bound
+     * to it, one not in `notes` is removed, and a new one is added.
+     *
+     * @throws Error if two entries share an id. Nothing is changed then.
+     * @returns the notes now on the graph, in the order given.
+     */
+    setNotes(notes: Array<NoteOptions | Note>): Note[] {
+        const ids = new Set<string>()
+        for (const n of notes) {
+            if (n.id === undefined) continue
+            if (ids.has(n.id)) throw new Error(`Note id ${n.id} appears twice.`)
+            ids.add(n.id)
+        }
+        return this.batchChanges(() => {
+            for (const note of this.noteManager.getNotes()) {
+                if (!ids.has(note.id)) this.noteManager.removeNote(note)
+            }
+            const result: Note[] = []
+            for (const n of notes) {
+                const existing = n.id !== undefined ? this.noteManager.getNote(n.id) : undefined
+                if (existing) {
+                    if (existing !== n) this.updateNote(existing, n instanceof Note ? n.toJSON() : n)
+                    result.push(existing)
+                } else {
+                    const added = this.addNote(n)
+                    if (added) result.push(added)
+                }
+            }
+            return result
+        })
+    }
+
+    /**
+     * Make `note` what `new Note(options)` would be, keeping the instance. Emits
+     * `noteChange` only when something changed.
+     */
+    private updateNote(note: Note, options: NoteOptions): void {
+        const next = new Note({ ...options, id: note.id }, note.domID)
+        const moved = note.x !== next.x || note.y !== next.y
+        const drawn = ['width', 'height', 'content', 'color', 'surface'] as const
+        const bodyChanged = drawn.some(field => note[field] !== next[field])
+        const before = note.getAttachedElement()
+        const after = next.getAttachedElement()
+        const attachmentChanged = before?.type !== after?.type || before?.id !== after?.id
+        if (!moved && !bodyChanged && !attachmentChanged) return
+
+        // A move needs no rebuild: every render tick places notes from x and y.
+        note.setPosition(next.x, next.y)
+        note.setSize(next.width, next.height)
+        note.content = next.content
+        note.color = next.color
+        note.surface = next.surface
+        if (attachmentChanged) note.setAttachedElement(after ? { ...after } : undefined)
+        if (bodyChanged) {
+            note.markDirty()
+            // A rebuild draws the link too; while editing there is no rebuild, so the
+            // link refreshes on its own.
+            if (!note.isEditing()) note.clearAttachmentDirty()
+        }
+        this.noteManager.editNote(note)
+    }
+
+    /**
      * Would this edge count, if `visibleIds` were the visible top-level nodes? The
      * endpoint reasons only: layers are a separate veto (`layerVisible`), and where a
      * closed cluster puts the line is {@link ClusterProjection}'s concern.

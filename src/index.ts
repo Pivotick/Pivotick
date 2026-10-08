@@ -1,6 +1,7 @@
 import { Graph } from './Graph'
 import { Node } from './Node'
 import { Edge } from './Edge'
+import { Note } from './Note'
 import { ColorPaletteMapper } from './plugins/colors/ColorPaletteMapper'
 import { UIComponent } from './ui/UIComponent'
 import { Flyout } from './ui/elements/Flyout/Flyout'
@@ -12,6 +13,8 @@ import './styles/style.scss'
 Graph.Node = Node
 // @ts-expect-error Make usage of browser build easier
 Graph.Edge = Edge
+// @ts-expect-error Make usage of browser build easier
+Graph.Note = Note
 // @ts-expect-error Make usage of browser build easier
 Graph.ColorPaletteMapper = ColorPaletteMapper
 // @ts-expect-error Make usage of browser build easier
@@ -26,7 +29,7 @@ Graph.tableColumns = tableColumns
 // export default Graph
 
 // Named exports (still available for modular imports)
-export { Graph as Pivotick, Node, Edge, ColorPaletteMapper, UIComponent, Flyout, minimap, tableColumns }
+export { Graph as Pivotick, Node, Edge, Note, ColorPaletteMapper, UIComponent, Flyout, minimap, tableColumns }
 export type { UIPhase } from './ui/UIComponent'
 export type { PivotickPlugin, PluginContext } from './interfaces/Plugin'
 export type { MinimapOptions, MinimapPosition } from './plugins/minimap'
@@ -39,6 +42,7 @@ export type { TooltipKind, TooltipKinds } from './interfaces/GraphUI'
 export type { RailMode, RailModeKind, ModeState } from './ui/ModeStore'
 export type { TableVisibility } from './ui/elements/Table/TableColumns'
 export type { NodeBorderBox } from './Node'
+export type { NoteOptions, NoteSurface, AttachedElement } from './Note'
 export type {
     PivotDefinition, PivotSummary, PivotFacet, PivotNarrowing, NarrowingFacetType, PivotResult,
     PivotContext, PivotRunOutcome, PivotRefusal, PivotCandidate, PivotCandidateEdge,

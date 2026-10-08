@@ -132,6 +132,26 @@ export class Note {
         this.markAttachmentDirty()
     }
 
+    /**
+     * The plain options that rebuild this note: `new Note(note.toJSON())` or
+     * `graph.addNote(note.toJSON())` on another graph. Visibility is left out, as
+     * hiding notes is a view state rather than part of the note.
+     */
+    public toJSON(): NoteOptions {
+        const json: NoteOptions = {
+            id: this.id,
+            x: this.x,
+            y: this.y,
+            width: this.width,
+            height: this.height,
+            content: this.content,
+            color: this.color,
+            surface: this.surface,
+        }
+        if (this.attachedElement) json.attachedElement = { ...this.attachedElement }
+        return json
+    }
+
     public markDirty(): void {
         this.dirty = true
     }

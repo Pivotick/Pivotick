@@ -67,3 +67,28 @@ import { loaded } from './examples/api/add-node-edge.js'
         position: relative;
         height: 400px;"
 ></Pivotick>
+
+## Notes
+
+Notes take plain options, the same shape as `data.notes`, so a stored set can be drawn at any time, not only when the graph is built.
+
+| Method                                  | Returns              | Description |
+| --------------------------------------- | -------------------- | ----------- |
+| `addNote(options: NoteOptions \| Note)` | `Note \| undefined`  | Adds and draws a note, and emits `noteAdd`. Throws if the id is taken. Returns `undefined` while `UI.notes.enabled` is `false`. |
+| `setNotes(notes: NoteOptions[])`        | `Note[]`             | Replaces the notes, leaving nodes and edges alone. Notes are matched by id: a note already on the canvas is updated in place, one missing from the list is removed, and a new one is added. |
+| `note.toJSON()`                         | `NoteOptions`        | The note as plain options: `id`, `x`, `y`, `width`, `height`, `content`, `color`, `surface` and, when it has one, `attachedElement`. |
+| `getNotes()` / `getNote(id)`            | `Note[]` / `Note \| undefined` | The notes on the graph. |
+
+`toJSON()` is what `JSON.stringify` calls, so saving the notes is one line, and so is drawing them on another graph:
+
+```js
+const saved = JSON.stringify(graph.getNotes())
+
+other.setNotes(JSON.parse(saved))
+// or one at a time
+other.addNote(graph.getNote('n1').toJSON())
+```
+
+A note attached to a node keeps its link when the node exists on the other graph. Whether notes are hidden is a view setting and stays out of `toJSON()`.
+
+The `Note` class is exported too, as `import { Note } from 'pivotick'` or `Pivotick.Note` in the browser build.

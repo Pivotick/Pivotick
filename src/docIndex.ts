@@ -1,6 +1,8 @@
 import { Graph as Pivotick } from './Graph'
 import { Node } from './Node'
 import { Edge } from './Edge'
+import { Note } from './Note'
+import type { NoteOptions, NoteSurface, AttachedElement } from './Note'
 
 import type * as GraphOptions from './interfaces/GraphOptions'
 import type { EdgeData } from './Edge'
@@ -42,6 +44,9 @@ export type {
     EdgeData,
     NodeData,
     NodeBorderBox,
+    NoteOptions,
+    NoteSurface,
+    AttachedElement,
     GraphUI,
     AsyncContent,
     InterractionCallbacks,
@@ -89,6 +94,7 @@ export type {
 export {
     Node,
     Edge,
+    Note,
     UIComponent,
     Flyout,
     defaultNodeStyle as defaultNodeStyleValue,

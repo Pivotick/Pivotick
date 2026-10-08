@@ -27,7 +27,6 @@
     "KeybindingManager",
     "Layout",
     "UIManager",
-    "Note",
     "FieldConfig",
     "NodeEditSession",
     "SimulationEdgeDTO",

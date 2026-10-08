@@ -18,20 +18,23 @@ export class NoteManager {
      * the feature off there is no panel to read a note in and no menu to remove one
      * with, so a note that got in would be unreachable. The warning names the option
      * rather than letting the call vanish quietly.
+     *
+     * @returns whether the note was registered.
      */
-    public addNote(note: Note, noEmit=false): void {
+    public addNote(note: Note, noEmit=false): boolean {
         if (this.graph.UIManager?.isFeatureEnabled('notes') === false) {
             if (!NoteManager.warnedDisabled) {
                 NoteManager.warnedDisabled = true
                 console.warn('Notes are disabled (UI.notes.enabled === false); addNote() is a no-op.')
             }
-            return
+            return false
         }
         this.notes.set(note.id, note)
         if (!noEmit) {
             this.graph.noteAdd(note)
             this.graph.onChange()
         }
+        return true
     }
 
     public removeNote(noteOrId: Note | string): void {
