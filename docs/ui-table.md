@@ -89,7 +89,9 @@ renders a separate subgraph of its own, so:
   to the cluster instead, so this is the node's own count rather than a description of
   the picture.
 - Clicking the row selects the node, so the sidebar can show it — often the only way to
-  reach it. **Double-clicking opens the cluster hiding it**, one level per press.
+  reach it. The canvas rings the closed cluster that stands for it. **Double-clicking
+  opens that cluster**, one level per press. With `render.enableNodeExpansion: false` the
+  cluster stays shut and the view centres on it instead.
 
 ## Sorting and narrowing {#sorting}
 

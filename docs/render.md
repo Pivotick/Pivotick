@@ -29,7 +29,7 @@ All styles defined here apply only when `render.type` is set to `svg`.
 | `fitAnchor`        | `string`                                                               | `undefined`                                                              | Id of the node a fit held at `minFitScale` centres on. The view stops at the graph's edges, so an anchor on one side stays near that side. |
 | `zoomEnabled`      | `boolean`                                                              | `true`                                                                   | Enable zoom. `false` also takes the viewport rail's zoom buttons, keeping fit-and-center.                                                 |
 | `selectionBox`     | [SelectionBox](/api/html/interfaces/RendererOptions.SelectionBox.html)  | `undefined`                                                              | Region selection: `enabled: false` drops the drag marquee **and** the Select ▸ Lasso tool.                                               |
-| `enableNodeExpansion` | `boolean`                                                           | `true`                                                                   | Expanding a cluster: `false` takes the chevron, the `Enter` shortcut and the dashed collapsed outline with it.                            |
+| `enableNodeExpansion` | `boolean`                                                           | `true`                                                                   | Expanding a cluster: `false` takes the chevron, the `Enter` shortcut and the dashed collapsed outline with it. A selected child still lights its closed cluster. |
 
 ## Type of rendering
 

@@ -1564,8 +1564,9 @@ export class Graph {
     }
 
     /**
-     * Brings the specified node or edge into focus within the graph view.
-     * 
+     * Brings the specified node or edge into focus within the graph view. A node hidden in
+     * a closed cluster or group brings that cluster or group into focus.
+     *
      * @param element The `Node` or `Edge` to focus.
      */
     focusElement(element: Node | Edge | Note): void {
@@ -1573,8 +1574,9 @@ export class Graph {
     }
 
     /**
-     * Selects a given node or edge in the graph.
-     * 
+     * Selects a given node or edge in the graph. A node hidden in a closed cluster or group
+     * is still the one selected; the canvas lights the cluster or group drawn for it.
+     *
      * @param element The `Node` or `Edge` to select.
      */
     selectElement(element: Node | Edge): void {

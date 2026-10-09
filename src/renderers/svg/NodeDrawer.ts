@@ -1104,16 +1104,18 @@ export class NodeDrawer {
     /**
      * Work out, once per redraw, what the selection lights: the dots it selects, the dots
      * one drawn line away, and those lines. Read off the lines the canvas draws, so a
-     * group and the lines landing on it count like any node. A folded member stands for
-     * its group, so selecting one from the table lights the group; an open group stands
-     * for its members, which are what the canvas draws of it. They are lit, not ringed:
-     * opening a group does not select them.
+     * group and the lines landing on it count like any node. A node the canvas does not
+     * draw stands for the box that hides it, a closed group or a closed cluster, so
+     * selecting one from the table lights that box; an open group stands for its members,
+     * which are what the canvas draws of it. They are lit, not ringed: opening a group
+     * does not select them.
      */
     public beginHighlightPass(): void {
         const ringed: Node[] = []
         const openParts: Node[] = []
         for (const { node } of this.graphSvgRenderer.getGraphInteraction().getSelectedNodes()) {
-            if (node.foldedInto) ringed.push(node.canvasRepresentative())
+            const drawn = node.canvasRepresentative()
+            if (drawn !== node) ringed.push(drawn)
             else if (node.isGroup && (node as GroupNode).info.open) openParts.push(...(node as GroupNode).parts)
             else ringed.push(node)
         }

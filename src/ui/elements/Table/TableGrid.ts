@@ -636,8 +636,8 @@ export class TableGrid {
         })
 
         // A double-click is the "take me there" gesture, whatever a single click does. For
-        // a nested row "there" is behind a shut cluster, so it opens one and aims at that
-        // instead — `focusElement` on a nested node is a silent no-op (see `revealNested`).
+        // a nested row "there" is behind a shut cluster, so it opens one, where clusters
+        // can open, and aims at it (see `revealNested`).
         element.addEventListener('dblclick', () => {
             this.uiManager.graph.selectElements([row.element])
             if (row.nested) {

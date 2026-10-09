@@ -13,8 +13,8 @@ import type { UIManager } from '../../UIManager'
  *
  * - its `Visibility` comes from the clusters above it, never from `visible` — see
  *   `nodeVisibility`, which answers `nested` while any of them is shut;
- * - `focusElement` on it is a silent no-op, so "take me there" has to aim at a cluster —
- *   see {@link revealNested};
+ * - "take me there" opens the cluster hiding it, or, where clusters can't open, aims at
+ *   the cluster that stands for it — see {@link revealNested};
  * - and `Degree` reads its *real* edges, which is not what the canvas draws while its
  *   cluster is shut: there the canvas shows a stand-in edge to the cluster instead. (The
  *   column already counts stand-ins for root nodes, so this is consistent with it.)
@@ -41,13 +41,18 @@ export function nestedOffered(uiManager: UIManager): boolean {
  * owns the next cluster actually exists.
  *
  * Focus aims at the outermost cluster, because that is the only ancestor with a DOM
- * element in *this* graph.
+ * element in *this* graph. With `render.enableNodeExpansion` off nothing opens, and focus
+ * aims at the closed cluster drawn for the node.
  *
  * @returns whether a cluster was opened.
  */
 export function revealNested(graph: Graph, node: Node): boolean {
     const chain = node.ancestorChain()
     if (chain.length === 0) return false
+    if (graph.renderer.getOptions().enableNodeExpansion === false) {
+        graph.focusElement(node)
+        return false
+    }
 
     const shut = chain.find((ancestor) => !ancestor.expanded)
     if (shut) {

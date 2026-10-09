@@ -11,8 +11,7 @@ import { test, expect, expectElement, gotoHarness, loadFixture } from '../helper
 // than the table: a nested node **is** in `graph.nodes`, and it is **never drawn
 // by this graph** — an expanded cluster renders a separate subgraph from
 // `toDict()` data. So its `Visibility` has to be read off the clusters above it
-// (`nested`), and "take me there" has to aim at a cluster, because focusing the
-// node itself does nothing.
+// (`nested`), and "take me there" has to aim at a cluster.
 
 type Page = import('@playwright/test').Page
 
@@ -214,7 +213,7 @@ test.describe('what a nested row reports', () => {
         expect((await columnById(page, 'Visibility'))['s1']).toBe('nested')
     })
 
-    test('a nested row can be selected without the canvas dimming or throwing', async ({ page }) => {
+    test('a nested row can be selected without throwing, and lights its cluster', async ({ page }) => {
         const errors: string[] = []
         page.on('pageerror', (error) => errors.push(error.message))
         await openDock(page)
@@ -225,6 +224,8 @@ test.describe('what a nested row reports', () => {
         expect(await page.evaluate(() =>
             (window.__pivotick as any).graph.renderer.getGraphInteraction().getSelectedNodeIDs(),
         )).toEqual(['a1'])
+        // The canvas never draws a1, so it rings the closed cluster standing for it.
+        await expect(page.locator('#node-team-a')).toHaveClass(/pvt-node-selected-highlight/)
         expect(errors).toEqual([])
     })
 

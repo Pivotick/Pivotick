@@ -40,7 +40,8 @@ export function selectGroupMembers(uiManager: UIManager, group: GroupNode): void
 /**
  * Select a node wherever it is folded. The groups holding it open on the way, outermost
  * first, as Select members opens one; a group above the open limit stays closed and is
- * selected instead.
+ * selected instead. A closed cluster stays closed: the node is selected and the view
+ * moves to the cluster.
  */
 export function revealNode(uiManager: UIManager, node: Node): void {
     const graph = uiManager.graph
@@ -57,6 +58,7 @@ export function revealNode(uiManager: UIManager, node: Node): void {
         drawn = next
     }
     graph.selectElement(node)
+    if (drawn !== node) graph.focusElement(drawn)
 }
 
 /** What an action on these nodes acts on: each group stands for its members. */

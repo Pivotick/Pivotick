@@ -1001,6 +1001,8 @@ export class GraphSvgRenderer extends GraphRenderer {
     }
 
     public focusElement(element: Node | Edge | Note): void {
+        // A node hidden in a closed group or cluster is shown where its box is drawn.
+        if (element instanceof Node) element = element.canvasRepresentative()
         const targetEl: SVGGElement | null = element.getGraphElement()
         const zoomBehavior = this.getZoomBehavior()
         const canvas = this.getCanvasSelection()
