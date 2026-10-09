@@ -743,62 +743,47 @@ export class Graph {
      * A container's `children` are not restructured here — pass the container through
      * {@link removeNode} and {@link addNode} to change what it holds.
      *
-     * Triggers the `onChange` callback if any updates were applied.
+     * The whole call is one batch: one `dataBatchChanged` listing every add and change in
+     * the order given, then one re-render, however many elements it carries.
      *
      * @param newNodes Optional array of nodes to update or add.
      * @param newEdges Optional array of edges to update or add.
-     * Triggers `onChange`
+     * @param triggerChangeEvent Announce the in-place changes. Adds are announced either way.
      */
     updateData(newNodes?: Array<Node>, newEdges?: Array<Edge>, triggerChangeEvent=true): void {
-        const changes: GraphDataChange[] = []
-
-        if (newNodes) {
-            newNodes.forEach(newNode => {
+        // Batched, or every added element re-renders the whole graph on its own.
+        this.batchChanges(() => {
+            newNodes?.forEach(newNode => {
                 const existing = this.nodes.get(newNode.id)
-                if (existing) {
-                    changes.push({
-                        type: 'node:change',
-                        node: existing,
-                        previousData: existing.getData(),
-                        nextData: newNode.getData(),
-                    } as GraphDataChange)
-                    this.applyNodeUpdate(existing, newNode)
-                } else {
+                if (!existing) {
+                    // Announces itself.
                     this.addNode(newNode)
-                    changes.push({
-                        type: 'node:add',
-                        node: newNode
-                    } as GraphDataChange)
+                    return
                 }
+                if (triggerChangeEvent) this.dataBatchChanged([{
+                    type: 'node:change',
+                    node: existing,
+                    previousData: existing.getData(),
+                    nextData: newNode.getData(),
+                }])
+                this.applyNodeUpdate(existing, newNode)
             })
-        }
-        if (newEdges) {
-            newEdges.forEach(newEdge => {
+            newEdges?.forEach(newEdge => {
                 const existing = this.edges.get(newEdge.id)
-                if (existing) {
-                    changes.push({
-                        type: 'edge:change',
-                        edge: existing,
-                        previousData: existing.getData(),
-                        nextData: newEdge.getData(),
-                    } as GraphDataChange)
-                    this.applyEdgeUpdate(existing, newEdge)
-                } else {
+                if (!existing) {
                     this.addEdge(newEdge)
-                    changes.push({
-                        type: 'edge:add',
-                        edge: newEdge
-                    } as GraphDataChange)
+                    return
                 }
+                if (triggerChangeEvent) this.dataBatchChanged([{
+                    type: 'edge:change',
+                    edge: existing,
+                    previousData: existing.getData(),
+                    nextData: newEdge.getData(),
+                }])
+                this.applyEdgeUpdate(existing, newEdge)
             })
-        }
-        if (newNodes || newEdges) {
-            this.onChange()
-        }
-
-        if (triggerChangeEvent) {
-            this.dataBatchChanged(changes)
-        }
+            if (newNodes || newEdges) this.onChange()
+        })
     }
 
     /**

@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { test, expect, gotoHarness, harness, loadFixture } from '../helpers'
-import type { RecordedEdgeBinding, RecordedPlacement } from '../harness/harness'
+import type { RecordedEdgeBinding, RecordedPlacement, UpdateDataReport, UpdateDataSpec } from '../harness/harness'
 
 // `graph.updateData` with an id the graph already holds. The signature says the
 // existing node is "replaced", and it used to be replaced *literally* — a new Node
@@ -28,6 +28,9 @@ const degree = async (page: Page, id: string): Promise<{ out: number; in: number
 
 const ends = async (page: Page, edgeId: string): Promise<{ from: string; to: string }> =>
     (await harness(page, 'edgeEnds', edgeId)) as { from: string; to: string }
+
+const watchUpdateData = async (page: Page, spec: UpdateDataSpec): Promise<UpdateDataReport> =>
+    (await harness(page, 'watchUpdateData', spec)) as UpdateDataReport
 
 const refresh = async (page: Page, id: string): Promise<void> => {
     await harness(page, 'updateExistingNode', id, { label: 'refreshed' })
@@ -120,5 +123,42 @@ test.describe('updateData — the graph keeps what the node had learned', () => 
         }
         expect(dropped.nodes).toContain('event-a')
         expect(await harness(page, 'hasGraphNode', 'event-a')).toBe(false)
+    })
+})
+
+// Every element `updateData` added used to go through `addNode` / `addEdge` on its own: a
+// full re-render and a `dataBatchChanged` each, then the call announced the same adds
+// again. A thousand new edges took minutes on a graph of HTML cards.
+test.describe('updateData — one call is one batch', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+        await loadFixture(page, 'basic')
+    })
+
+    test('twenty-five new nodes and their edges redraw the graph once, each announced once', async ({ page }) => {
+        // One edge per new node, so each is its own line rather than one shared by a pair.
+        const addNodes = Array.from({ length: 25 }, (_, i) => `extra-${i}`)
+        const addEdges = addNodes.map((id): [string, string, string] => [`hub-${id}`, 'hub', id])
+
+        const report = await watchUpdateData(page, { addNodes, addEdges })
+
+        expect(report.renders).toBe(1)
+        expect(report.announcements).toEqual([[
+            ...addNodes.map((id) => `node:add ${id}`),
+            ...addEdges.map(([id]) => `edge:add ${id}`),
+        ]])
+        expect(report.drawnEdges).toBe(25)
+    })
+
+    test('changes and adds land in one announcement, in the order given', async ({ page }) => {
+        const report = await watchUpdateData(page, {
+            refresh: ['a'],
+            addNodes: ['z'],
+            addEdges: [['z-a', 'z', 'a']],
+        })
+
+        expect(report.renders).toBe(1)
+        expect(report.announcements).toEqual([['node:change a', 'node:add z', 'edge:add z-a']])
+        expect(report.drawnEdges).toBe(1)
     })
 })

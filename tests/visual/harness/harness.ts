@@ -235,6 +235,26 @@ export interface RecordedHistoryEntry {
     ordinal?: number
 }
 
+/** What one `updateData` call is asked to do — see {@link HarnessApi.watchUpdateData}. */
+export interface UpdateDataSpec {
+    /** Existing node ids pushed back with refreshed data. */
+    refresh?: string[]
+    /** New node ids. */
+    addNodes?: string[]
+    /** New edges, as `[id, from, to]`. */
+    addEdges?: Array<[string, string, string]>
+}
+
+/** What that call cost the renderer and what it announced. */
+export interface UpdateDataReport {
+    /** How many times the renderer redrew the graph. */
+    renders: number
+    /** Each `dataBatchChanged` that fired, as `type id` lines. */
+    announcements: string[][]
+    /** How many of the added edges are drawn afterwards. */
+    drawnEdges: number
+}
+
 /** One edge as everything downstream of it sees it — see {@link HarnessApi.edgeBinding}. */
 export interface RecordedEdgeBinding {
     /** Both endpoints are the very Node objects the graph holds under those ids. */
@@ -1264,6 +1284,8 @@ export interface HarnessApi {
      * already holds — same endpoints by default, or different ones to re-point it.
      */
     updateExistingEdge(edgeId: string, fromId?: string, toId?: string): void
+    /** Run one `updateData` call, counting the renderer's redraws and recording what it announced. */
+    watchUpdateData(spec: UpdateDataSpec): UpdateDataReport
     /** Which nodes an edge joins, by id. */
     edgeEnds(edgeId: string): { from: string; to: string } | null
     /** How many edges a node counts as its own — what a stale registration inflates. */
@@ -5788,6 +5810,47 @@ class Harness implements HarnessApi {
         const to = this.g.getMutableNode(toId ?? existing.to.id)
         if (!from || !to) return
         this.g.updateData(undefined, [new EdgeInstance(edgeId, from, to, { label: 'refreshed' })])
+    }
+
+    watchUpdateData(spec: UpdateDataSpec): UpdateDataReport {
+        const graph = this.g
+        const node = (id: string) => {
+            const existing = graph.getMutableNode(id)
+            if (existing) return existing
+            const added = new Node(id, { label: id.toUpperCase() }, {}, id)
+            Object.assign(added, { x: 0, y: 220, fx: 0, fy: 220 })
+            return added
+        }
+        const nodes = [
+            ...(spec.refresh ?? []).map((id) => new Node(id, { ...graph.getMutableNode(id)?.getData(), label: 'refreshed' })),
+            ...(spec.addNodes ?? []).map(node),
+        ]
+        const fresh = new Map(nodes.map((each) => [each.id, each]))
+        const endpoint = (id: string) => graph.getMutableNode(id) ?? fresh.get(id) ?? node(id)
+        const edges = (spec.addEdges ?? []).map(([id, from, to]) => new EdgeInstance(id, endpoint(from), endpoint(to)))
+
+        let renders = 0
+        const renderer = graph.renderer as unknown as { update: (...args: unknown[]) => void }
+        const update = renderer.update.bind(renderer)
+        renderer.update = (...args: unknown[]) => {
+            renders++
+            update(...args)
+        }
+        const announcements: string[][] = []
+        const onBatch = (changes: GraphDataChange[]) => announcements.push(changes.map((change) =>
+            `${change.type} ${'edge' in change ? change.edge.id : 'node' in change ? change.node.id : change.note.id}`))
+        graph.on('dataBatchChanged', onBatch)
+        try {
+            graph.updateData(nodes.length ? nodes : undefined, edges.length ? edges : undefined)
+        } finally {
+            delete (renderer as { update?: unknown }).update
+            graph.off('dataBatchChanged', onBatch)
+        }
+        return {
+            renders,
+            announcements,
+            drawnEdges: edges.filter((edge) => graph.getMutableEdge(edge.id)?.getGraphElement()).length,
+        }
     }
 
     edgeEnds(edgeId: string): { from: string; to: string } | null {
