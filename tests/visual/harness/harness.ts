@@ -9,7 +9,7 @@
  * This file is internal test code, so it imports internal modules directly
  * (`../../../src/...`). Importing from `index` also pulls in the stylesheet.
  */
-import { Pivotick, Node, ColorPaletteMapper, minimap } from '../../../src/index'
+import { Pivotick, Node, Edge, ColorPaletteMapper, minimap } from '../../../src/index'
 import { Note } from '../../../src/Note'
 import { FOCUS_TIER_BADGES, LEGEND_BADGE_TEXT, ROUNDED_CARD_RADIUS, TIER_BADGES } from './sceneConstants'
 import { TreeLayout } from '../../../src/plugins/layout/Tree'
@@ -1107,6 +1107,26 @@ export interface RecordedCandidates {
     carried: number
 }
 
+/** Which graph's `<marker>` a marker reference lands on, resolved the way the browser does. */
+export interface MarkerResolution {
+    /** `own`: the graph that drew the path; `other graph`: a different one; `none`: nothing. */
+    owner: 'own' | 'other graph' | 'none'
+    /** The marker shape's `fill`, to tell two graphs' versions of one key apart. */
+    fill: string | null
+    /** The raw attribute, so a test can see it change between idle and selected. */
+    reference: string | null
+}
+
+/** The second graph {@link HarnessApi.loadBesideAnotherGraph} mounts ahead of the one under test. */
+export interface OtherGraphSpec {
+    /** Put the other graph under a `display: none` ancestor, as a host's inactive tab does. */
+    hidden?: boolean
+    /** The arrow fill the graph under test configures. */
+    arrowFill?: string
+    /** The arrow fill the other graph configures under the same `arrow` key. */
+    otherArrowFill?: string
+}
+
 export interface HarnessApi {
     /** Build a graph from a named fixture; resolves once it has finished rendering. */
     load(name: FixtureName, overrides?: PlainObject): Promise<void>
@@ -1430,8 +1450,19 @@ export interface HarnessApi {
     highlightEdge(id: string): void
     /** The paint the state rules left on an edge's `path`. */
     edgePaint(id: string): NodeShapePaint | null
-    /** An edge's `marker-start` / `marker-end`, which swap to `_selected` variants. */
+    /** An edge's `marker-start` / `marker-end`, which swap to selected variants. */
     edgeMarkers(id: string): { start: string | null, end: string | null } | null
+    /**
+     * Load a fixture with a second graph mounted ahead of it in the document, the order in
+     * which a marker id shared between graphs resolves to the wrong one.
+     */
+    loadBesideAnotherGraph(name: FixtureName, spec?: OtherGraphSpec): Promise<void>
+    /** The marker an edge's end resolves to; `graph: 'other'` asks about the other graph's edge. */
+    edgeEndMarker(id: string, graph?: 'tested' | 'other'): MarkerResolution | null
+    /** The marker the edge-creation shadow edge's end resolves to. */
+    shadowEdgeMarker(): MarkerResolution
+    /** `<defs>` ids that more than one element on the page carries. */
+    repeatedDefIds(): string[]
     /**
      * Select several nodes at once (multi-selection). Renders every node's
      * selection highlight and — with focus mode on — dims the nodes/edges adjacent
@@ -2110,6 +2141,9 @@ function recordOutcome(outcome: PivotRunOutcome): RecordedRunOutcome {
 
 class Harness implements HarnessApi {
     public graph?: Pivotick
+    /** The graph {@link loadBesideAnotherGraph} mounts beside the tested one, and its host. */
+    private otherGraph?: Pivotick
+    private otherHost?: HTMLElement
     private readonly container: HTMLElement
     /** Fixture-declared positions, captured before the graph mutates the nodes. */
     private intended = new Map<string, { x: number; y: number }>()
@@ -2196,6 +2230,14 @@ class Harness implements HarnessApi {
         }
         this.container.innerHTML = ''
         this.graph = undefined
+        try {
+            this.otherGraph?.destroy()
+        } catch {
+            /* ignore teardown errors */
+        }
+        this.otherHost?.remove()
+        this.otherGraph = undefined
+        this.otherHost = undefined
     }
 
     /** Resolves when the graph emits `ready` (layout done, zoom layer revealed). */
@@ -2931,6 +2973,58 @@ class Harness implements HarnessApi {
                 x: Number(element.getAttribute('cx') ?? element.getAttribute('x1')),
                 y: Number(element.getAttribute('cy') ?? element.getAttribute('y1')),
             })),
+        }
+    }
+
+    async loadBesideAnotherGraph(name: FixtureName, spec: OtherGraphSpec = {}): Promise<void> {
+        const arrow = (fill?: string) => fill ? { render: { markerStyleMap: { arrow: { fill } } } } : {}
+        await this.load(name, arrow(spec.arrowFill))
+
+        const host = document.createElement('div')
+        host.style.cssText = 'position: absolute; top: 0; left: 0; width: 320px; height: 240px;'
+        if (spec.hidden) host.style.display = 'none'
+        this.container.before(host)
+        // Its own node ids: the tested fixture's `#node-a` must stay unique on the page.
+        const from = new Node('other-from', {}, {}, 'other-from')
+        const to = new Node('other-to', {}, {}, 'other-to')
+        Object.assign(from, { x: -80, y: 0, fx: -80, fy: 0 })
+        Object.assign(to, { x: 80, y: 0, fx: 80, fy: 0 })
+        const edge = new Edge('other-edge', from, to)
+        this.otherHost = host
+        this.otherGraph = new Pivotick(host, { nodes: [from, to], edges: [edge] } as never,
+            mergeOptions(BASE_OPTIONS, arrow(spec.otherArrowFill)) as never)
+    }
+
+    edgeEndMarker(id: string, graph: 'tested' | 'other' = 'tested'): MarkerResolution | null {
+        const owner = graph === 'tested' ? this.g : this.otherGraph
+        const path = owner?.getMutableEdge(id)?.getGraphElement()?.querySelector('path')
+        if (!owner || !path) return null
+        return Harness.resolveMarker(path, owner)
+    }
+
+    shadowEdgeMarker(): MarkerResolution {
+        const root = document.getElementById(this.g.getAppID())
+        return Harness.resolveMarker(root?.querySelector('.pvt-shadow-edge') ?? null, this.g)
+    }
+
+    repeatedDefIds(): string[] {
+        const seen = new Map<string, number>()
+        for (const element of document.querySelectorAll('defs [id]'))
+            seen.set(element.id, (seen.get(element.id) ?? 0) + 1)
+        return [...seen].filter(([, count]) => count > 1).map(([id]) => id)
+    }
+
+    /** `url(#id)` lands on the first element in the document with that id, whoever drew it. */
+    private static resolveMarker(path: Element | null, graph: Pivotick): MarkerResolution {
+        const reference = path?.getAttribute('marker-end') ?? null
+        const id = reference?.match(/^url\(#(.+)\)$/)?.[1]
+        const marker = id ? document.getElementById(id) : null
+        if (!marker) return { owner: 'none', fill: null, reference }
+        const root = document.getElementById(graph.getAppID())
+        return {
+            owner: root?.contains(marker) ? 'own' : 'other graph',
+            fill: marker.querySelector('path')?.getAttribute('fill') ?? null,
+            reference,
         }
     }
 

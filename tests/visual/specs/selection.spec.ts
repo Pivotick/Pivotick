@@ -82,21 +82,22 @@ test.describe('selection', () => {
         expect(await harness(page, 'edgePaint', 'a-b')).toEqual(idle)
     })
 
-    // The end marker swaps to a `_selected` variant, and the swap runs on every render pass
-    // now — so it has to resolve from the base id rather than append to whatever is there.
+    // The end marker swaps to a selected variant, and the swap runs on every render pass
+    // now — so it has to resolve from the marker key rather than append to whatever is there.
     test('an edge’s end marker swaps to the selected variant and back', async ({ page }) => {
         const idle = await harness(page, 'edgeMarkers', 'a-b')
-        expect(idle?.end).toBe('url(#arrow)')
+        expect(idle?.end).toMatch(/^url\(#.+-marker-arrow\)$/)
 
         await harness(page, 'selectEdge', 'a-b')
-        expect((await harness(page, 'edgeMarkers', 'a-b'))?.end).toBe('url(#arrow_selected)')
+        const selected = (await harness(page, 'edgeMarkers', 'a-b'))?.end
+        expect(selected).toMatch(/^url\(#.+-marker-arrow-selected\)$/)
 
         await harness(page, 'deselectAll')
         expect(await harness(page, 'edgeMarkers', 'a-b')).toEqual(idle)
 
         // Twice through, because appending rather than resolving only shows up on the second.
         await harness(page, 'selectEdge', 'a-b')
-        expect((await harness(page, 'edgeMarkers', 'a-b'))?.end).toBe('url(#arrow_selected)')
+        expect((await harness(page, 'edgeMarkers', 'a-b'))?.end).toBe(selected)
     })
 
     // An edge carries no state animation, so unlike a node nothing overrides a width of 0 —

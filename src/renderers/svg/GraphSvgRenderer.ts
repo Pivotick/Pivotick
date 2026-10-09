@@ -1442,7 +1442,7 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.shadowEdgePath
             .attr('d', path)
-            .attr('marker-end', invalid ? null : 'url(#arrow)')
+            .attr('marker-end', invalid ? null : `url(#${this.edgeDrawer.markerDomId('arrow')})`)
             .classed('pvt-shadow-edge--invalid', invalid)
             .style('display', null)
     }

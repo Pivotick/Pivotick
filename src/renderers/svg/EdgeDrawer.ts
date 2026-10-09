@@ -28,6 +28,8 @@ export class EdgeDrawer {
      * There is only ever one: a box-select of fifty would be a wall of overlapping labels.
      */
     private forcedEdge: Edge | null = null
+    /** The `markerStyleMap` keys each edge's path points at, for the selected-variant swap. */
+    private markerKeys = new WeakMap<Edge, { start?: string, end?: string }>()
 
     public constructor(rendererOptions: GraphRendererOptions, graph: Graph, graphSvgRenderer: GraphSvgRenderer) {
         this.graphSvgRenderer = graphSvgRenderer
@@ -376,19 +378,33 @@ export class EdgeDrawer {
         return pathSelection
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, style: EdgeStyle, _edge: Edge): void {
+    private drawEdgeMarker(edgeSelection: Selection<SVGPathElement, Edge, null, undefined>, style: EdgeStyle, edge: Edge): void {
         if (!this.rendererOptions.markerStyleMap)
             return
 
         const markerEnd = style.markerEnd as string | undefined
         const markerStart = style.markerStart as string | undefined
+        const keys: { start?: string, end?: string } = {}
 
         if (markerEnd && this.rendererOptions.markerStyleMap[markerEnd]) {
-            edgeSelection.attr('marker-end', `url(#${markerEnd})`)
+            edgeSelection.attr('marker-end', `url(#${this.markerDomId(markerEnd)})`)
+            keys.end = markerEnd
         }
-        if (markerStart && this.rendererOptions.markerStyleMap[markerStart])
-            edgeSelection.attr('marker-start', `url(#${markerStart})`)
+        if (markerStart && this.rendererOptions.markerStyleMap[markerStart]) {
+            edgeSelection.attr('marker-start', `url(#${this.markerDomId(markerStart)})`)
+            keys.start = markerStart
+        }
+        this.markerKeys.set(edge, keys)
+    }
+
+    /**
+     * The DOM id of a `markerStyleMap` entry's `<marker>`, scoped to this graph.
+     *
+     * `url(#id)` resolves to the first element in the document with that id, so a bare key
+     * would make every other graph on the page borrow the first one's markers.
+     */
+    public markerDomId(key: string, selected = false): string {
+        return `${this.graph.getAppID()}-marker-${key}${selected ? '-selected' : ''}`
     }
 
     public updatePositions(edgeGroupSelection: Selection<SVGGElement, Edge, SVGGElement, unknown>): void {
@@ -730,17 +746,18 @@ export class EdgeDrawer {
 
     private renderMarkers(): void {
         if (this.rendererOptions.markerStyleMap) {
-            for (const markerId in this.rendererOptions.markerStyleMap) {
-                this.renderMarker(this.rendererOptions.markerStyleMap[markerId], markerId)
+            for (const key in this.rendererOptions.markerStyleMap) {
+                this.renderMarker(this.rendererOptions.markerStyleMap[key], key)
             }
         }
     }
 
-    private renderMarker(config: MarkerStyle, markerId: string) {
+    private renderMarker(config: MarkerStyle, key: string) {
         const defsContainer: Selection<SVGDefsElement, unknown, null, undefined> = this.graphSvgRenderer.defs
+        const markerId = this.markerDomId(key)
 
         // If marker already exists, do nothing
-        if (!defsContainer.select(`#${markerId}`).empty()) return
+        if (!defsContainer.select(`#${CSS.escape(markerId)}`).empty()) return
 
         const marker = defsContainer.append('marker')
             .attr('id', markerId)
@@ -756,8 +773,8 @@ export class EdgeDrawer {
             .attr('d', config.pathD)
             .attr('fill', config.fill ?? 'context-stroke')
 
-        const selectedId = markerId + '_selected'
-        if (!defsContainer.select(`#${selectedId}`).empty()) return
+        const selectedId = this.markerDomId(key, true)
+        if (!defsContainer.select(`#${CSS.escape(selectedId)}`).empty()) return
 
         const selectedMarker = defsContainer.append('marker')
             .attr('id', selectedId)
@@ -794,28 +811,27 @@ export class EdgeDrawer {
             || (edge.representedEdges?.some((member) => selectedIds.has(member.id)) ?? false)
 
         edgeSelection.classed('selected', selected)
-        this.pointMarkersAtSelectedVariant(edgeSelection, selected)
+        this.pointMarkersAtSelectedVariant(edgeSelection, edge, selected)
     }
 
     /**
-     * Swap an edge's end markers between their plain and `_selected` variants.
+     * Swap an edge's end markers between their plain and selected variants.
      *
-     * Resolved from the base id each time rather than by appending to whatever is there:
-     * running on every pass, appending would grow `#m_selected_selected…` and never come
-     * back when the edge is deselected.
+     * Resolved from the marker key the edge was drawn with rather than from whatever the
+     * attribute holds: this runs on every pass, so it must land on the same id each time.
      */
     private pointMarkersAtSelectedVariant(
         edgeSelection: Selection<SVGGElement, Edge, null, undefined>,
+        edge: Edge,
         selected: boolean,
     ): void {
+        const keys = this.markerKeys.get(edge)
+        if (!keys) return
         const paths = edgeSelection.selectAll<SVGPathElement, Edge>('path')
-        for (const attribute of ['marker-start', 'marker-end'] as const) {
-            const current = paths.attr(attribute)?.match(/#.*(?=\))/)
-            if (!current) continue
-            const base = current[0].replace(/_selected$/, '')
-            paths.attr(attribute, `url(${selected ? `${base}_selected` : base})`)
+        for (const [attribute, key] of [['marker-start', keys.start], ['marker-end', keys.end]] as const) {
+            if (!key || !paths.attr(attribute)) continue
+            paths.attr(attribute, `url(#${this.markerDomId(key, selected)})`)
         }
-
     }
 }
 

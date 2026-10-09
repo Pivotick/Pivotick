@@ -83,7 +83,8 @@ export class ClusterDrawer {
             const parentColor = ClusterDrawer.buildGradientForNode(
                 theClusterSelection.node()!.querySelector('.node') as SVGCircleElement,
                 cluster,
-                node
+                node,
+                this.nodeDrawer.graph.getAppID()
             )
             if (parentColor)
                 cluster.style('stroke', `color-mix(in srgb, ${parentColor} 70%, transparent)`)
@@ -501,12 +502,14 @@ export class ClusterDrawer {
      * @param parentCircleElement - The parent node's circle element
      * @param clusterSelection - The cluster area circle selection
      * @param node - The cluster node
+     * @param appId - The graph's app id, so the gradient's id is not shared with another graph on the page
      * @returns The parent node's fill color, or undefined if not found
      */
     public static buildGradientForNode(
         parentCircleElement: SVGCircleElement,
         clusterSelection: Selection<SVGCircleElement, Node, null, undefined>,
-        node: Node
+        node: Node,
+        appId: string
     ): string | undefined {
         if (parentCircleElement) {
             const parentNodeFillColor = getComputedStyle(parentCircleElement).fill
@@ -514,7 +517,7 @@ export class ClusterDrawer {
             // between two transparents. Leave the cluster its own themed fill instead.
             if (isInvisiblePaint(parentNodeFillColor)) return
             const outerColor = `color-mix(in srgb, ${parentNodeFillColor} 40%, transparent)`
-            const id = `pvt-cluster-area-${node.id}`
+            const id = `${appId}-cluster-area-${node.domID}`
 
             const rootSvg = parentCircleElement.closest('.pvt-canvas-element')
             const defs = rootSvg?.querySelector('defs')
