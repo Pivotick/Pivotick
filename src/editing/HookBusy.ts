@@ -14,7 +14,7 @@ export type BusyAnchor = 'canvas' | Point | (() => Point | null)
 /** Wraps a context prompt so the indicator steps aside while it is open. */
 export type PromptWrap = <A extends unknown[], R>(prompt: (...args: A) => Promise<R>) => (...args: A) => Promise<R>
 
-const DEFAULTS = { delay: 200, label: 'Waiting…' }
+const DEFAULT_DELAY = 200
 
 /** Waits currently on screen, per graph, so the root carries `data-pvt-busy` while any is. */
 const shownPerGraph = new WeakMap<Graph, Set<HookBusy>>()
@@ -63,8 +63,8 @@ function resolveOptions(graph: Graph): Required<Omit<BusyIndicatorOptions, 'enab
     const options = typeof declared === 'object' ? declared : {}
     if (options.enabled === false) return null
     return {
-        delay: options.delay ?? DEFAULTS.delay,
-        label: options.label ?? DEFAULTS.label,
+        delay: options.delay ?? DEFAULT_DELAY,
+        label: options.label ?? graph.i18n.t('busy.label'),
     }
 }
 

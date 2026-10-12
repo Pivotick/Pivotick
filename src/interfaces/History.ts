@@ -17,6 +17,14 @@ import type { Node } from '../Node'
 export type HistoryKind = 'pivot' | 'delete' | 'visibility' | 'create' | 'removal' | 'group'
 
 /**
+ * Which of a kind's opposite acts an entry records, for a `visibility` or `group` entry:
+ * the label says the same thing in words, in the graph's language.
+ *
+ * @category History
+ */
+export type HistoryAct = 'hide' | 'show' | 'group' | 'ungroup' | 'rename'
+
+/**
  * One reversible thing that happened, as one row in the history.
  *
  * @category History
@@ -31,6 +39,8 @@ export interface HistoryEntry {
     kind: HistoryKind
     /** What the row says: `Correlations`, `Deleted 3 nodes`, `Hid 5 nodes`. */
     label: string
+    /** For a `visibility` or `group` entry, which act it records. */
+    act?: HistoryAct
     /**
      * The elements this entry touched — the row's counts, and what a hover highlights.
      * For a `removal`, what left the canvas: an element another source still vouches

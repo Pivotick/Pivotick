@@ -21,6 +21,7 @@ import { PivotManager } from './PivotManager'
 import { minimap } from './plugins/minimap'
 import { ClusterProjection, type ClusterPull, type ProjectedLine, type TopVisible } from './ClusterProjection'
 import { Simplification } from './Simplification/Simplification'
+import { I18n } from './i18n/I18n'
 
 export class Graph {
     private nodes: Map<string, Node> = new Map()
@@ -59,6 +60,12 @@ export class Graph {
      * are view state: `getNodes()`, `getEdges()`, the table and the history see the members.
      */
     public readonly simplify: Simplification
+    /**
+     * The language this graph writes its own text in, from `GraphOptions.i18n`: message
+     * lookup, plurals, and number, list and sort formats. A nested graph shares its
+     * parent's.
+     */
+    public readonly i18n: I18n
 
     private listeners: Record<keyof GraphEvents, Array<GraphEvents[keyof GraphEvents]>>
     /** Depth of nested {@link batchChanges} calls; > 0 means events are being collected. */
@@ -120,6 +127,9 @@ export class Graph {
 
         this.graphDepth = 0
         this.clusterOwner = this.options.clusterOwner
+        this.i18n = !this.options.i18n && this.options.parentGraph
+            ? this.options.parentGraph.i18n
+            : new I18n(this.options.i18n)
         if (this.options.parentGraph) {
             this.setParentGraph(this.options.parentGraph)
             let pg = this.parentGraph
@@ -137,6 +147,7 @@ export class Graph {
         this.app_id = generateSafeDomId(8, 'pivotick-app-')
         appContainer.id = this.app_id
         appContainer.classList.add('pivotick')
+        if (this.i18n.lang) appContainer.lang = this.i18n.lang
         container.appendChild(appContainer)
 
         this.noteManager = new NoteManager(this)
@@ -170,8 +181,8 @@ export class Graph {
         this.options.pivots?.forEach(pivot => this.pivots.register(pivot))
         // Before the UI too: the Simplify rail mode reads its rules.
         this.simplify = new Simplification(this, this.options.UI?.simplify, this.options.UI?.mode)
-        this.simplify.manualHistory = (before, label, members) =>
-            this.history.recordGroup(label, before, this.simplify.getManualGroups(), members)
+        this.simplify.manualHistory = (before, act, label, members) =>
+            this.history.recordGroup(act, label, before, this.simplify.getManualGroups(), members)
         this.UIManager = new UIManager(this, appContainer, UIManagerOptions)
         // Declared facets carry the accessor/predicate/matchMode the engine matches
         // with, so hand them over as soon as the merged UI options exist.

@@ -76,7 +76,7 @@ function buildContext(graph: Graph, request: NodeCreateRequest, wrap: PromptWrap
         position: request.position,
         origin: request.origin,
         promptData: wrap((options: NodePromptDataOptions) =>
-            promptData<NodeData>(graph, options, { title: 'Node details' })),
+            promptData<NodeData>(graph, options, { title: graph.i18n.t('prompt.nodeTitle') })),
     }
 }
 

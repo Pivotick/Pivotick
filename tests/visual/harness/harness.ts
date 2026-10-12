@@ -228,6 +228,7 @@ export interface RecordedHistoryEntry {
     id: string
     kind: string
     label: string
+    act?: string
     sealed: boolean
     persisted: boolean
     nodes: string[]
@@ -1145,6 +1146,27 @@ export interface OtherGraphSpec {
     arrowFill?: string
     /** The arrow fill the other graph configures under the same `arrow` key. */
     otherArrowFill?: string
+    /** The graph under test's `i18n` options. */
+    i18n?: PlainObject
+    /** The other graph's `i18n` options. */
+    otherI18n?: PlainObject
+}
+
+/** What {@link HarnessApi.loadTranslated}'s `translate` answers, and the `i18n` around it. */
+export interface TranslatedSpec {
+    /** The text `translate` returns per key; any other key gets `undefined`. */
+    answers?: Record<string, string>
+    /** Keys for which `translate` throws. */
+    throwing?: string[]
+    /** The rest of the `i18n` options: `locale`, `messages`. */
+    i18n?: PlainObject
+}
+
+/** One call the host's `translate` received. */
+export interface TranslateCall {
+    key: string
+    params: Record<string, string | number>
+    fallback: string
 }
 
 export interface HarnessApi {
@@ -1485,6 +1507,12 @@ export interface HarnessApi {
     shadowEdgeMarker(): MarkerResolution
     /** `<defs>` ids that more than one element on the page carries. */
     repeatedDefIds(): string[]
+    /** The `lang` on each graph's root: the tested one, and the one {@link loadBesideAnotherGraph} mounted. */
+    rootLangs(): { tested: string | null, other: string | null }
+    /** Load a fixture whose `i18n.translate` answers from `spec.answers` and records every call. */
+    loadTranslated(name: FixtureName, spec: TranslatedSpec): Promise<void>
+    /** Every call `translate` received since {@link loadTranslated}. */
+    translateCalls(): TranslateCall[]
     /**
      * Select several nodes at once (multi-selection). Renders every node's
      * selection highlight and — with focus mode on — dims the nodes/edges adjacent
@@ -2198,6 +2226,7 @@ class Harness implements HarnessApi {
     /** Legend observation state, reset per boot. */
     private legendToggles: LegendToggleState[] = []
     private recordedWarnings: string[] = []
+    private recordedTranslateCalls: TranslateCall[] = []
     /** Disposers from `addTestRailMode`, so a test can unregister the way a consumer does. */
     private railModeDisposers = new Map<string, () => void>()
     /** Rail-mode lifecycle observation: which modes were entered, left, and which tools ran. */
@@ -3000,7 +3029,8 @@ class Harness implements HarnessApi {
 
     async loadBesideAnotherGraph(name: FixtureName, spec: OtherGraphSpec = {}): Promise<void> {
         const arrow = (fill?: string) => fill ? { render: { markerStyleMap: { arrow: { fill } } } } : {}
-        await this.load(name, arrow(spec.arrowFill))
+        const i18n = (options?: PlainObject) => options ? { i18n: options } : {}
+        await this.load(name, mergeOptions(arrow(spec.arrowFill), i18n(spec.i18n)))
 
         const host = document.createElement('div')
         host.style.cssText = 'position: absolute; top: 0; left: 0; width: 320px; height: 240px;'
@@ -3014,7 +3044,26 @@ class Harness implements HarnessApi {
         const edge = new Edge('other-edge', from, to)
         this.otherHost = host
         this.otherGraph = new Pivotick(host, { nodes: [from, to], edges: [edge] } as never,
-            mergeOptions(BASE_OPTIONS, arrow(spec.otherArrowFill)) as never)
+            mergeOptions(BASE_OPTIONS, mergeOptions(arrow(spec.otherArrowFill), i18n(spec.otherI18n))) as never)
+    }
+
+    rootLangs(): { tested: string | null, other: string | null } {
+        const lang = (graph?: Pivotick) => graph ? document.getElementById(graph.getAppID())?.getAttribute('lang') ?? null : null
+        return { tested: lang(this.graph), other: lang(this.otherGraph) }
+    }
+
+    async loadTranslated(name: FixtureName, spec: TranslatedSpec): Promise<void> {
+        this.recordedTranslateCalls = []
+        const translate = (key: string, params: Record<string, string | number>, fallback: string): string | undefined => {
+            this.recordedTranslateCalls.push({ key, params: { ...params }, fallback })
+            if (spec.throwing?.includes(key)) throw new Error(`translate refused ${key}`)
+            return spec.answers?.[key]
+        }
+        await this.load(name, { i18n: { ...spec.i18n, translate } })
+    }
+
+    translateCalls(): TranslateCall[] {
+        return [...this.recordedTranslateCalls]
     }
 
     edgeEndMarker(id: string, graph: 'tested' | 'other' = 'tested'): MarkerResolution | null {
@@ -5745,6 +5794,7 @@ class Harness implements HarnessApi {
             id: entry.id,
             kind: entry.kind,
             label: entry.label,
+            act: entry.act,
             sealed: entry.sealed,
             persisted: entry.persisted,
             nodes: [...entry.nodeIds],

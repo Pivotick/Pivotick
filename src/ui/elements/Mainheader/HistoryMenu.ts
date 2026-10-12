@@ -541,8 +541,8 @@ const KIND_ICONS: Record<HistoryEntry['kind'], string> = {
 
 function kindIcon(entry: HistoryEntry): string {
     // A hide and an unhide are the same kind and opposite acts, so the eye flips.
-    if (entry.kind === 'visibility') return entry.label.startsWith('Showed') ? show : hide
-    if (entry.kind === 'group' && entry.label.startsWith('Ungrouped')) return ungroupNodes
+    if (entry.act === 'show') return show
+    if (entry.act === 'ungroup') return ungroupNodes
     return KIND_ICONS[entry.kind]
 }
 

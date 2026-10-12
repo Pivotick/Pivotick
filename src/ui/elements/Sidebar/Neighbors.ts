@@ -44,7 +44,7 @@ export class SidebarNeighbors extends UIComponent {
     constructor(uiManager: UIManager) {
         super(uiManager)
         this.renderCb = typeof this.uiManager.getOptions().neighborsPanel.render === 'function' ? this.uiManager.getOptions().neighborsPanel.render : undefined
-        this.renderScope = new AsyncRenderScope('neighbors', () => this.uiManager.getOptions().asyncContent)
+        this.renderScope = new AsyncRenderScope('neighbors', this.uiManager)
         this.track(() => this.renderScope.supersede())
     }
 
@@ -308,6 +308,7 @@ export class SidebarNeighbors extends UIComponent {
         const hostOverrides = this.uiManager.getOptions().neighborsPanel.graph
         const egoGraphOptions: GraphOptions = {
             isDirected: this.uiManager.graph.getOptions().isDirected,
+            i18n: this.uiManager.graph.getOptions().i18n,
             UI: {
                 mode: 'viewer',
                 tooltip: {

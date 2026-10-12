@@ -742,6 +742,7 @@ export class UIManager {
             // setup() and its slots vary by mode, so read it on access.
             get layout() { return this.ui.layout },
             keyManager: this.keyManager,
+            i18n: this.graph.i18n,
             addElement: (element, slot) => this.addElement(element, slot),
             addPanel: (panel) => this.addPanel(panel),
             removePanel: (id) => this.removePanel(id),

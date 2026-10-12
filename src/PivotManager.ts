@@ -1334,7 +1334,10 @@ export class PivotManager implements PivotManagerLike {
             pivotId: run.pivotId,
             signal: controller.signal,
             promptData: options => interactive
-                ? promptData(this.graph, options, { title: 'Save', submitLabel: 'Save' })
+                ? promptData(this.graph, options, {
+                    title: this.graph.i18n.t('pivot.save.promptTitle'),
+                    submitLabel: this.graph.i18n.t('pivot.save.promptSubmit'),
+                })
                 : Promise.resolve(null),
         }
 

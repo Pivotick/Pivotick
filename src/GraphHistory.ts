@@ -342,7 +342,13 @@ export class GraphHistory implements GraphHistoryLike {
      * A group made, removed or renamed by hand: the list of hand-made groups on either
      * side, and the members concerned for the row's hover.
      */
-    public recordGroup(label: string, before: ManualGroupRecord[], after: ManualGroupRecord[], nodeIds: string[]): void {
+    public recordGroup(
+        act: 'group' | 'ungroup' | 'rename',
+        label: string,
+        before: ManualGroupRecord[],
+        after: ManualGroupRecord[],
+        nodeIds: string[],
+    ): void {
         if (this.applying) return
         this.push({
             id: newId(),
@@ -350,6 +356,7 @@ export class GraphHistory implements GraphHistoryLike {
             nodeIds,
             edgeIds: [],
             label,
+            act,
             sealed: false,
             persisted: false,
             at: Date.now(),
@@ -662,6 +669,7 @@ function publicEntry(record: HistoryRecord): HistoryEntry {
         id: record.id,
         kind: record.kind,
         label: record.label,
+        act: record.act,
         nodeIds: [...record.nodeIds],
         edgeIds: [...record.edgeIds],
         sealed: record.sealed,
@@ -698,6 +706,7 @@ function visibilityRecord(hidden: boolean, nodeIds: string[]): HistoryRecord {
         nodeIds: [...nodeIds],
         edgeIds: [],
         label: `${hidden ? 'Hid' : 'Showed'} ${count(nodeIds.length, 'node')}`,
+        act: hidden ? 'hide' : 'show',
         sealed: false,
         persisted: false,
         at: Date.now(),

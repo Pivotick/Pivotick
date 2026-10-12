@@ -31,7 +31,7 @@ export class SidebarProperties extends UIComponent {
     constructor(uiManager: UIManager) {
         super(uiManager)
         this.renderCb = typeof this.uiManager.getOptions().propertiesPanel.render === 'function' ? this.uiManager.getOptions().propertiesPanel.render : undefined
-        this.renderScope = new AsyncRenderScope('properties', () => this.uiManager.getOptions().asyncContent)
+        this.renderScope = new AsyncRenderScope('properties', this.uiManager)
         this.track(() => this.renderScope.supersede())
     }
 

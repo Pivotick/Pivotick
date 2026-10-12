@@ -44,12 +44,12 @@ export function runModal<T>(
         }
 
         const modal: Modal | undefined = graph.UIManager.createModal({
-            header: config.title ?? 'Details',
+            header: config.title ?? graph.i18n.t('prompt.title'),
             body,
             rawBody: true,
             buttons: [
-                { variant: 'secondary', text: config.cancelLabel ?? 'Cancel', onClick: () => finish(null) },
-                { variant: config.submitVariant ?? 'primary', text: config.submitLabel ?? 'Add', onClick: () => finish(config.collect()) },
+                { variant: 'secondary', text: config.cancelLabel ?? graph.i18n.t('prompt.cancel'), onClick: () => finish(null) },
+                { variant: config.submitVariant ?? 'primary', text: config.submitLabel ?? graph.i18n.t('prompt.submit'), onClick: () => finish(config.collect()) },
             ],
             // Any other close path (×, overlay click, Esc) resolves as a cancel.
             onHidden: () => finish(null),
@@ -129,9 +129,9 @@ export function promptData<TData>(
 export function confirmModal(graph: Graph, options: ConfirmOptions = {}): Promise<boolean> {
 
     const result = runModal<boolean>(graph, {
-        title: options.title ?? 'Confirm',
-        submitLabel: options.confirmLabel ?? 'Confirm',
-        cancelLabel: options.cancelLabel ?? 'Cancel',
+        title: options.title ?? graph.i18n.t('confirm.title'),
+        submitLabel: options.confirmLabel ?? graph.i18n.t('confirm.submit'),
+        cancelLabel: options.cancelLabel,
         submitVariant: options.variant ?? 'danger',
         bodyClass: 'pvt-confirm-modal-body',
         populate: (body) => {

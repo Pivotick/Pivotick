@@ -242,6 +242,8 @@ export interface SimplifyOptions {
 
 /** A rule's one whole-number setting: smallest group, fewest links, core strength or level. */
 export interface SimplifyRuleSetting {
+    /** Which setting it is, whatever its label says: the smallest group, a threshold, or the Communities level. */
+    id: 'minSize' | 'threshold' | 'level'
     /** Its name on the rule's card. */
     label: string
     value: number

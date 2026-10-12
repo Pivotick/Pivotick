@@ -29,7 +29,7 @@ export class SidebarMainHeader extends UIComponent {
     constructor(uiManager: UIManager) {
         super(uiManager)
         this.renderCb = typeof this.uiManager.getOptions().mainHeader.render === 'function' ? this.uiManager.getOptions().mainHeader.render : undefined
-        this.renderScope = new AsyncRenderScope('mainHeader', () => this.uiManager.getOptions().asyncContent)
+        this.renderScope = new AsyncRenderScope('mainHeader', this.uiManager)
         this.track(() => this.renderScope.supersede())
     }
 

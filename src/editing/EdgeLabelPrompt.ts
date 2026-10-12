@@ -42,15 +42,15 @@ export function promptEdgeLabel(
  * object, or `null` on cancel.
  */
 export function promptEdgeData(graph: Graph, options: EdgePromptDataOptions): Promise<EdgeData | null> {
-    return promptData<EdgeData>(graph, options, { title: 'Edge details', bodyClass: EDGE_PROMPT_BODY_CLASS })
+    return promptData<EdgeData>(graph, options, { title: graph.i18n.t('prompt.edgeTitle'), bodyClass: EDGE_PROMPT_BODY_CLASS })
 }
 
-function makeInput(options: EdgeLabelPromptOptions): HTMLInputElement {
+function makeInput(graph: Graph, options: EdgeLabelPromptOptions): HTMLInputElement {
     const input = document.createElement('input')
     input.type = 'text'
     input.className = 'pvt-edge-label-input'
     input.value = options.initial ?? ''
-    input.placeholder = options.placeholder ?? 'Label…'
+    input.placeholder = options.placeholder ?? graph.i18n.t('prompt.edgeLabelPlaceholder')
     // Shielding graph key handlers is done by each caller: the inline prompt in its
     // own keydown handler, the modal in its body-level handler. A blanket
     // stopPropagation here would also stop the modal's Enter/Escape from bubbling.
@@ -65,7 +65,7 @@ function promptInline(graph: Graph, anchor: PromptAnchor | null, options: EdgeLa
         const canvas = graph.UIManager.layout?.canvas
         if (!canvas) return resolve(null)
 
-        const input = makeInput(options)
+        const input = makeInput(graph, options)
 
         const rect = canvas.getBoundingClientRect()
         const x = (anchor?.x ?? rect.left + rect.width / 2) - rect.left
@@ -101,9 +101,9 @@ function promptInline(graph: Graph, anchor: PromptAnchor | null, options: EdgeLa
 /** Single-field label modal — shares the generic modal runner. */
 function promptLabelModal(graph: Graph, options: EdgeLabelPromptOptions): Promise<string | null> {
 
-    const input = makeInput(options)
+    const input = makeInput(graph, options)
     return runModal<string>(graph, {
-        title: options.title ?? 'Edge label',
+        title: options.title ?? graph.i18n.t('prompt.edgeLabelTitle'),
         bodyClass: EDGE_PROMPT_BODY_CLASS,
         populate: (body) => body.appendChild(input),
         collect: () => input.value

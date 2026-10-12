@@ -7,6 +7,7 @@ import { UIComponent } from './ui/UIComponent'
 import { Flyout } from './ui/elements/Flyout/Flyout'
 import { minimap } from './plugins/minimap'
 import { tableColumns } from './ui/elements/Table/TableColumns'
+import { messagesEn } from './i18n/en'
 import './styles/style.scss'
 
 // @ts-expect-error Make usage of browser build easier
@@ -25,11 +26,13 @@ Graph.Flyout = Flyout
 Graph.minimap = minimap
 // @ts-expect-error Make usage of browser build easier
 Graph.tableColumns = tableColumns
+// @ts-expect-error Make usage of browser build easier
+Graph.messagesEn = messagesEn
 
 // export default Graph
 
 // Named exports (still available for modular imports)
-export { Graph as Pivotick, Node, Edge, Note, ColorPaletteMapper, UIComponent, Flyout, minimap, tableColumns }
+export { Graph as Pivotick, Node, Edge, Note, ColorPaletteMapper, UIComponent, Flyout, minimap, tableColumns, messagesEn }
 export type { UIPhase } from './ui/UIComponent'
 export type { PivotickPlugin, PluginContext } from './interfaces/Plugin'
 export type { MinimapOptions, MinimapPosition } from './plugins/minimap'
@@ -51,7 +54,7 @@ export type {
 } from './interfaces/Pivot'
 export type { PivotManager, PivotChange } from './PivotManager'
 export type {
-    GraphHistoryLike, HistoryEffect, HistoryEntry, HistoryKind, HistoryPreview,
+    GraphHistoryLike, HistoryAct, HistoryEffect, HistoryEntry, HistoryKind, HistoryPreview,
 } from './interfaces/History'
 export type { GraphHistory } from './GraphHistory'
 export type {
@@ -59,3 +62,5 @@ export type {
 } from './interfaces/Simplify'
 export type { Simplification } from './Simplification/Simplification'
 export type { IngestContext, IngestDecision } from './interfaces/InterractionCallbacks'
+export type { I18n } from './i18n/I18n'
+export type { I18nOptions, Messages, MessageKey, MessageValue, MessageParams, PluralForms } from './interfaces/I18n'

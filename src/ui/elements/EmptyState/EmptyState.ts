@@ -6,8 +6,6 @@ import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import './emptyState.scss'
 
-const DEFAULT_MESSAGE = 'Nothing on the canvas yet'
-
 /**
  * The card an empty canvas shows: up while the graph holds no node and no note, down
  * as soon as it holds either. Filtered-out nodes still count, since the graph is not
@@ -26,7 +24,7 @@ export class EmptyState extends UIComponent {
 
     constructor(uiManager: UIManager) {
         super(uiManager)
-        this.scope = new AsyncRenderScope('emptyState', () => this.uiManager.getOptions().asyncContent)
+        this.scope = new AsyncRenderScope('emptyState', uiManager)
     }
 
     protected onMount(container?: HTMLElement) {
@@ -76,9 +74,9 @@ export class EmptyState extends UIComponent {
         if (!this.slot) return
         this.scope.supersede()
 
-        const render = this.declared().render ?? DEFAULT_MESSAGE
-        const initial = !this.heldNode
         const graph = this.uiManager.graph
+        const render = this.declared().render ?? graph.i18n.t('emptyState.message')
+        const initial = !this.heldNode
         const content = this.scope.resolve(
             (ctx: RenderContext) => {
                 if (typeof render !== 'function') return render

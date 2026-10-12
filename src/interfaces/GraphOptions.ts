@@ -5,6 +5,7 @@ import type { Note } from '../Note'
 import type { DeepPartial } from '../utils/utils'
 import type { GraphUI, LegendToggleState } from './GraphUI'
 import type { InterractionCallbacks } from './InterractionCallbacks'
+import type { I18nOptions } from './I18n'
 import type { LayoutOptions } from './LayoutOptions'
 import type { PivotDefinition, PivotRimBadge, PivotRimBadgeVisibility } from './Pivot'
 import type { PivotickPlugin } from './Plugin'
@@ -47,6 +48,12 @@ export interface GraphOptions {
      * Options for the UI
      */
     UI?: DeepPartial<GraphUI>,
+
+    /**
+     * The language of the text the library writes itself: menus, panels, toasts,
+     * tooltips. See {@link I18nOptions}.
+     */
+    i18n?: I18nOptions,
 
     /**
      * Plugins to install after the UI is built. Each is handed a

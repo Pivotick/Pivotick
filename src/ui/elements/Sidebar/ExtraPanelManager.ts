@@ -162,7 +162,7 @@ export class ExtraPanelManager extends UIComponent {
                 refresh: () => this.uiManager.refreshPanel(panel.id),
                 remove: () => this.uiManager.removePanel(panel.id),
             },
-            scope: new AsyncRenderScope('extraPanel', () => this.uiManager.getOptions().asyncContent),
+            scope: new AsyncRenderScope('extraPanel', this.uiManager),
             rendered: false,
         }
 

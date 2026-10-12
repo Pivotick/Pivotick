@@ -1,4 +1,6 @@
 import type { AsyncContentOptions, AsyncSurface, RenderContext, RenderResult, Renderable } from '../interfaces/AsyncContent'
+import type { I18n } from '../i18n/I18n'
+import type { UIManager } from '../ui/UIManager'
 import { isThenable, toRenderedElement } from './Getters'
 
 /**
@@ -29,10 +31,10 @@ function defaultPlaceholder(): HTMLElement {
 }
 
 /** A compact themed error line — deliberately quiet, the console carries the detail. */
-function defaultError(): HTMLElement {
+function defaultError(i18n: I18n): HTMLElement {
     const error = document.createElement('div')
     error.className = 'pvt-async-error'
-    error.textContent = 'Content could not be loaded'
+    error.textContent = i18n.t('asyncContent.error')
     return error
 }
 
@@ -73,25 +75,29 @@ export class AsyncRenderScope {
     private pending = new Set<PendingRender>()
 
     private readonly surface: AsyncSurface
-    private readonly options: () => AsyncContentOptions | undefined
+    private readonly ui: UIManager
     private readonly onSettle?: () => void
 
     /**
      * @param surface - Which surface this scope renders, reported to the consumer's
      *                  placeholder / error factories.
-     * @param options - Read lazily, so a scope built at construction time still sees
-     *                  options merged later.
+     * @param ui - Its `asyncContent` options are read lazily, so a scope built at
+     *             construction time still sees options merged later.
      * @param onSettle - Run after content lands in a slot, for surfaces whose geometry
      *                   depends on their content (the tooltip repositions itself).
      */
     constructor(
         surface: AsyncSurface,
-        options: () => AsyncContentOptions | undefined,
+        ui: UIManager,
         onSettle?: () => void,
     ) {
         this.surface = surface
-        this.options = options
+        this.ui = ui
         this.onSettle = onSettle
+    }
+
+    private options(): AsyncContentOptions | undefined {
+        return this.ui.getOptions().asyncContent
     }
 
     /**
@@ -221,7 +227,7 @@ export class AsyncRenderScope {
     private errorElement(error: unknown): HTMLElement | undefined {
         const configured = this.options()?.error
         const resolved = typeof configured === 'function' ? configured(this.surface, error) : configured
-        return toRenderedElement(resolved) ?? defaultError()
+        return toRenderedElement(resolved) ?? defaultError(this.ui.graph.i18n)
     }
 
     private report(error: unknown): void {

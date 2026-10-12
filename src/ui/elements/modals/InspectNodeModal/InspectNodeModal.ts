@@ -52,7 +52,7 @@ function createNodePropertiesTab(node: Node, uiManager: UIManager): HTMLDivEleme
     const container = createHtmlTemplate('<div class="inspect-node-properties-tab"></div>') as HTMLDivElement
     // A one-shot surface: nothing supersedes the modal, it just closes — and a
     // resolution arriving after that finds no slot and is dropped.
-    const scope = new AsyncRenderScope('properties', () => uiManager.getOptions().asyncContent)
+    const scope = new AsyncRenderScope('properties', uiManager)
     const properties = scope.resolve(
         (ctx) => nodePropertiesGetter(node, uiManager.getOptions().propertiesPanel, ctx),
         (entries) => createPropertyList(entries, node, { layout: 'columns' }),

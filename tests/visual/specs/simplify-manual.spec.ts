@@ -45,6 +45,12 @@ async function groupEntries(page: Page): Promise<string[]> {
     return entries.filter((entry) => entry.kind === 'group').map((entry) => entry.label)
 }
 
+/** What each group entry records, newest first: what the history menu picks its icon from. */
+async function groupActs(page: Page): Promise<Array<string | undefined>> {
+    const entries = await harness(page, 'historyEntries') as Array<{ kind: string, act?: string }>
+    return entries.filter((entry) => entry.kind === 'group').map((entry) => entry.act)
+}
+
 const undo = (page: Page) => page.evaluate(() => { window.__pivotick.graph!.history.undo() })
 const redo = (page: Page) => page.evaluate(() => { window.__pivotick.graph!.history.redo() })
 
@@ -149,6 +155,7 @@ test.describe('grouping a selection by hand', () => {
         await panelAction(page, 'ungroup').click()
         await expect.poll(() => manualGroups(page)).toEqual([])
         expect(await groupEntries(page)).toEqual(['Ungrouped “Cleared”', 'Renamed to “Cleared”', 'Grouped “Suspects”'])
+        expect(await groupActs(page)).toEqual(['ungroup', 'rename', 'group'])
 
         await undo(page)
         await expect.poll(async () => (await manualGroups(page))[0]?.title).toBe('Cleared')

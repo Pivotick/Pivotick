@@ -82,7 +82,7 @@ export class Tooltip extends UIComponent {
         this.options = deepMerge(defaultTooltipOptions, this.uiManager.getOptions().tooltip) as TooltipOptions
         this.renderScope = new AsyncRenderScope(
             'tooltip',
-            () => this.uiManager.getOptions().asyncContent,
+            this.uiManager,
             // Content that arrives late changes the tooltip's size; keep it on screen.
             () => { if (this.tooltip?.classList.contains('shown')) this.setPosition() },
         )

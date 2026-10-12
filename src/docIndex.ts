@@ -38,6 +38,9 @@ import type * as History from './interfaces/History'
 import type { GraphHistory } from './GraphHistory'
 import type * as Simplify from './interfaces/Simplify'
 import type { Simplification } from './Simplification/Simplification'
+import type * as I18nOptions from './interfaces/I18n'
+import type { I18n } from './i18n/I18n'
+import { messagesEn } from './i18n/en'
 
 export type {
     GraphOptions,
@@ -89,6 +92,8 @@ export type {
     GraphHistory,
     Simplify,
     Simplification,
+    I18nOptions,
+    I18n,
 }
 
 export {
@@ -107,5 +112,6 @@ export {
     TREE_SPACING_RANGE,
     minimap,
     tableColumns,
+    messagesEn,
     Pivotick
 }

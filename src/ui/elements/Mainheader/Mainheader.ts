@@ -341,7 +341,7 @@ export class Mainheader extends UIComponent {
         const graph = this.uiManager.graph
         return {
             graph,
-            promptData: options => promptData(graph, options, { title: title(), submitLabel: 'OK' }),
+            promptData: options => promptData(graph, options, { title: title(), submitLabel: graph.i18n.t('topBar.promptSubmit') }),
             confirm: options => confirmModal(graph, options),
             refresh: () => this.uiManager.refreshTopBar(),
         }

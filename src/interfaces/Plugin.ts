@@ -4,6 +4,7 @@ import type { UIManager } from '../ui/UIManager'
 import type { UIComponent, UIPhase } from '../ui/UIComponent'
 import type { Layout } from '../ui/elements/Layout'
 import type { KeybindingManager } from '../ui/KeybindingManager'
+import type { I18n } from '../i18n/I18n'
 import type { DockTab, ExtraPanel, Keybinding, RailModeDefinition, TopBarAction } from './GraphUI'
 
 /**
@@ -54,6 +55,12 @@ export interface PluginContext {
      */
     layout: Layout | undefined
     keyManager: KeybindingManager
+    /**
+     * The graph's language: its locale, the number, list and sort formats, and `t` over
+     * the library's own messages. Text the plugin writes itself is the plugin's to
+     * translate, keyed on `i18n.locale`.
+     */
+    i18n: I18n
     /**
      * Add a UI element into the lifecycle. When `slot` is given the element is
      * mounted into it immediately; it then participates in every subsequent

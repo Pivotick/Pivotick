@@ -1,5 +1,6 @@
 import type { Locator, Page } from '@playwright/test'
 import { test, expect, canvas, gotoHarness, loadFixture, harness, waitForViewSettled } from '../helpers'
+import { hide, show } from '../../../src/ui/icons'
 import type {
     ForecastSnapshot, RecordedCandidates, RecordedEdgeBinding, RecordedHistoryEntry,
     RecordedHistoryPreview, RecordedRunOutcome,
@@ -135,6 +136,18 @@ const openHistory = async (page: Page, side: 'undo' | 'redo'): Promise<void> => 
     await page.locator(`#pvt-${side}-caret`).click()
     await expect(page.locator('.pvt-history')).toHaveClass(/open/)
 }
+
+/** Which of `icons` the `index`th menu row draws, by name, compared as the browser serialises them. */
+const rowIcon = (page: Page, index: number, icons: Record<string, string>): Promise<string | undefined> =>
+    page.evaluate(([n, known]) => {
+        const drawn = document.querySelectorAll('.pvt-history-row .pvt-history-icon')[n]?.innerHTML
+        const serialised = (svg: string): string => {
+            const holder = document.createElement('div')
+            holder.innerHTML = svg
+            return holder.innerHTML
+        }
+        return Object.keys(known).find((name) => serialised(known[name]) === drawn)
+    }, [index, icons] as const)
 
 /**
  * `n` visibility entries, each naming a different node, so every row is distinct
@@ -620,6 +633,17 @@ test.describe('history — the dropdown', () => {
         await gotoHarness(page)
         await loadFixture(page, 'basic', B3_FULL)
         await harness(page, 'configureWritePath', {})
+    })
+
+    test('a hide wears the closed eye and an unhide the open one, from the act the entry records', async ({ page }) => {
+        await harness(page, 'excludeNode', 'b')
+        await harness(page, 'includeNode', 'b')
+        expect((await entries(page)).map((entry) => entry.act)).toEqual(['show', 'hide'])
+
+        await openHistory(page, 'undo')
+        await expect(menuRows(page)).toHaveCount(2)
+        expect(await rowIcon(page, 0, { show, hide })).toBe('show')
+        expect(await rowIcon(page, 1, { show, hide })).toBe('hide')
     })
 
     /** A hide, a delete and a hand-drawn node — one of each of three kinds. */

@@ -221,13 +221,17 @@ export function createActionItem<TThis extends UIElement = UIElement>(thisContex
  */
 /**
  * Give an element mounted outside the graph the theme the graph was forced to, since the
- * theme's variables are scoped to `.pivotick[data-theme]`. `from` is any element inside it.
+ * theme's variables are scoped to `.pivotick[data-theme]`, and the language its text is
+ * in. `from` is any element inside the graph.
  */
 export function adoptTheme(portaled: Element, from: Element | null | undefined): void {
     portaled.classList.add('pvt-portal')
     const theme = from?.closest('.pivotick')?.getAttribute('data-theme')
     if (theme) portaled.setAttribute('data-theme', theme)
     else portaled.removeAttribute('data-theme')
+    const lang = from?.closest('[lang]')?.getAttribute('lang')
+    if (lang) portaled.setAttribute('lang', lang)
+    else portaled.removeAttribute('lang')
 }
 
 export function generateSafeDomId(length = 8, prefix = 'id-') {

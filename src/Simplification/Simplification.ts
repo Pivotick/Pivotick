@@ -107,7 +107,7 @@ export class Simplification {
     private manual: ManualGroupRecord[] = []
     private nextManualId = 1
     /** Told of every change to the hand-made groups, with the list before it. @private */
-    manualHistory?: (before: ManualGroupRecord[], label: string, members: string[]) => void
+    manualHistory?: (before: ManualGroupRecord[], act: 'group' | 'ungroup' | 'rename', label: string, members: string[]) => void
     /** Where each folded node sat relative to its group, to put it back there. */
     private readonly offsets = new Map<Node, { dx: number, dy: number }>()
     private readonly listeners = new Set<() => void>()
@@ -165,7 +165,7 @@ export class Simplification {
                 label: builtin?.label ?? custom?.label ?? state.id,
                 description: builtin?.description ?? custom?.description ?? '',
                 enabled: state.enabled,
-                minSize: setting?.label === 'Smallest group' ? setting.value : undefined,
+                minSize: setting?.id === 'minSize' ? setting.value : undefined,
                 setting,
                 custom: state.rule.kind === 'custom',
                 groups: state.groups,
@@ -179,14 +179,14 @@ export class Simplification {
     /** A rule's one setting, if it has one. */
     private settingOf(state: RuleState): SimplifyRuleSetting | undefined {
         if (state.level !== undefined) {
-            return { label: 'Level', value: state.level, min: 1, max: COMMUNITY_RESOLUTIONS.length, control: 'slider' }
+            return { id: 'level', label: 'Level', value: state.level, min: 1, max: COMMUNITY_RESOLUTIONS.length, control: 'slider' }
         }
         if (state.threshold !== undefined) {
-            return { label: THRESHOLD_LABEL[state.rule.kind as BuiltinKind]!, value: state.threshold, min: MIN_THRESHOLD, max: MAX_THRESHOLD, control: 'stepper' }
+            return { id: 'threshold', label: THRESHOLD_LABEL[state.rule.kind as BuiltinKind]!, value: state.threshold, min: MIN_THRESHOLD, max: MAX_THRESHOLD, control: 'stepper' }
         }
         if (state.rule.kind === 'manual') return undefined
         if (state.rule.kind === 'custom' && state.rule.minSize === undefined) return undefined
-        return { label: 'Smallest group', value: state.minSize, min: MIN_GROUP_SIZE, max: MAX_GROUP_SIZE, control: 'stepper' }
+        return { id: 'minSize', label: 'Smallest group', value: state.minSize, min: MIN_GROUP_SIZE, max: MAX_GROUP_SIZE, control: 'stepper' }
     }
 
     /** Switch one rule on or off. Switching a failed rule back on tries it again. */
@@ -201,7 +201,7 @@ export class Simplification {
     /** Set a rule's smallest group, clamped to 2–50. A rule with another setting has none. */
     setRuleMinSize(id: string, minSize: number): void {
         const state = this.rules.find(candidate => candidate.id === id)
-        if (state && this.settingOf(state)?.label === 'Smallest group') this.applySetting(state, minSize)
+        if (state && this.settingOf(state)?.id === 'minSize') this.applySetting(state, minSize)
     }
 
     /**
@@ -370,7 +370,7 @@ export class Simplification {
         this.manual.push(record)
         this.ensureRule('manual', true)
         this.regroup()
-        this.manualHistory?.(before, `Grouped “${this.recordName(record)}”`, ids)
+        this.manualHistory?.(before, 'group', `Grouped “${this.recordName(record)}”`, ids)
         return id
     }
 
@@ -383,7 +383,7 @@ export class Simplification {
         this.manual = this.manual.filter(record => !ids.has(record.id))
         this.regroup()
         const label = removed.length === 1 ? `Ungrouped “${this.recordName(removed[0])}”` : `Ungrouped ${removed.length} groups`
-        this.manualHistory?.(before, label, removed.flatMap(record => record.members))
+        this.manualHistory?.(before, 'ungroup', label, removed.flatMap(record => record.members))
     }
 
     /** Retitle a hand-made group; an empty title labels it by its types again. */
@@ -396,7 +396,7 @@ export class Simplification {
         const before = this.getManualGroups()
         record.title = next
         this.regroup()
-        this.manualHistory?.(before, `Renamed to “${this.recordName(record)}”`, record.members)
+        this.manualHistory?.(before, 'rename', `Renamed to “${this.recordName(record)}”`, record.members)
     }
 
     /** Whether this group was made by hand. */
@@ -477,7 +477,8 @@ export class Simplification {
     /** The name of one part of a group, `12 × ip` unless `UI.simplify.typeLabel` says otherwise. */
     typeLabel(type: string | undefined, count: number): string {
         if (this.typeLabelFn) return this.typeLabelFn(type, count)
-        return `${count} × ${type ?? 'node'}`
+        const i18n = this.graph.i18n
+        return i18n.t('simplify.typeLabel', { count, type: type ?? i18n.t('simplify.untyped') })
     }
 
     /** A group's label: its title, else its parts joined, largest first. */
