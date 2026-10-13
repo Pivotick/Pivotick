@@ -93,7 +93,7 @@ export class PivotMode extends UIComponent {
 
         this.dispose = this.uiManager.addRailMode({
             id: PIVOT_MODE,
-            label: 'Pivot',
+            label: this.i18n.t('pivot.mode.label'),
             icon: sparkles,
             shortcut: 'P',
             order: -10,
@@ -109,14 +109,14 @@ export class PivotMode extends UIComponent {
             tools: [
                 {
                     id: 'pick-origin',
-                    label: 'Pick origin',
+                    label: this.i18n.t('pivot.mode.pickOrigin'),
                     icon: selectElement,
                     kind: 'default',
                     run: () => this.lasso.set(false),
                 },
                 {
                     id: 'lasso-origin',
-                    label: 'Lasso origin',
+                    label: this.i18n.t('pivot.mode.lassoOrigin'),
                     icon: lassoTool,
                     kind: 'toggle',
                     run: armed => this.lasso.set(armed),

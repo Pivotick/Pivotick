@@ -16,6 +16,7 @@ import { runHook } from './editing/HookBusy'
 import { rawTree } from './HistoryWorld'
 import type { Notification, NotificationAction, NotificationHandle } from './ui/Notifier'
 import { NotificationLevel } from './ui/Notifier'
+import type { I18n } from './i18n/I18n'
 
 /** A summary's total, or `undefined` when the provider said it does not know. */
 export function knownTotal(summary: PivotSummary | undefined): number | undefined {
@@ -528,8 +529,8 @@ export class PivotManager implements PivotManagerLike {
             // report, with the retry the pane would have offered.
             if (mightLand) {
                 drop()
-                this.report(def, `Couldn't fetch ${def.label}`, String((error as Error)?.message ?? error), {
-                    label: 'Retry',
+                this.report(def, this.graph.i18n.t('pivot.toast.fetchFailed', { pivot: def.label }), String((error as Error)?.message ?? error), {
+                    label: this.graph.i18n.t('pivot.retry'),
                     onClick: () => void this.run(id, nodes, narrowing, options),
                 })
             } else {
@@ -554,9 +555,8 @@ export class PivotManager implements PivotManagerLike {
         if (set.refused) {
             if (mightLand) {
                 drop()
-                this.report(def, `${def.label} returned too much`,
-                    `${set.refused.count.toLocaleString()} candidates, over the ${set.refused.limit.toLocaleString()} limit.`
-                    + ' Nothing was ingested — narrow and run again.')
+                this.report(def, this.graph.i18n.t('pivot.toast.refused.title', { pivot: def.label }),
+                    this.graph.i18n.t('pivot.toast.refused.message', { count: set.refused.count, limit: set.refused.limit }))
             } else this.notify('candidates')
             return this.refuse(runId, set.refused)
         }
@@ -1419,12 +1419,13 @@ export class PivotManager implements PivotManagerLike {
         const saved = total.nodes + total.edges
         const pending = report.pendingNodes + report.pendingEdges
         const detail = message ?? errorText(report.errors[0]?.error)
+        const i18n = this.graph.i18n
 
         /** The retry takes over the toast it was clicked on, so one toast tracks one save. */
         const retry: NotificationAction = {
-            label: 'Retry',
+            label: i18n.t('pivot.retry'),
             onClick: handle => {
-                handle.update({ title: 'Saving…', message: undefined, action: null })
+                handle.update({ title: i18n.t('pivot.save.saving'), message: undefined, action: null })
                 void this.runSave(target, true, { toast: handle, sofar: total, was: result })
             },
         }
@@ -1432,21 +1433,21 @@ export class PivotManager implements PivotManagerLike {
         const result: ToastResult = !pending
             ? {
                 level: NotificationLevel.Success,
-                title: `Saved ${countText(total.nodes, total.edges)}`,
+                title: i18n.t('pivot.save.saved', { elements: countText(i18n, total.nodes, total.edges) }),
                 message: undefined,
                 action: undefined,
             }
             : !saved
                 ? {
                     level: NotificationLevel.Danger,
-                    title: `Couldn't save ${countText(report.pendingNodes, report.pendingEdges)}`,
-                    message: detail ?? 'Nothing was written, and nothing left the canvas.',
+                    title: i18n.t('pivot.save.failed', { elements: countText(i18n, report.pendingNodes, report.pendingEdges) }),
+                    message: detail ?? i18n.t('pivot.save.failedDetail'),
                     action: retry,
                 }
                 : {
                     level: NotificationLevel.Warning,
-                    title: `Saved ${saved.toLocaleString()} of ${(saved + pending).toLocaleString()}`,
-                    message: detail ?? `${pending.toLocaleString()} still unsaved.`,
+                    title: i18n.t('pivot.save.partial', { saved, total: saved + pending }),
+                    message: detail ?? i18n.t('pivot.save.partialDetail', { count: pending }),
                     action: retry,
                 }
 
@@ -1700,11 +1701,11 @@ function countOf(pending: { nodes: unknown[], children: unknown[], edges: unknow
 }
 
 /** `12 nodes`, `12 nodes and 3 edges`, `3 edges` — whichever halves are non-zero. */
-function countText(nodes: number, edges: number): string {
+function countText(i18n: I18n, nodes: number, edges: number): string {
     const parts: string[] = []
-    if (nodes) parts.push(`${nodes.toLocaleString()} ${nodes === 1 ? 'node' : 'nodes'}`)
-    if (edges) parts.push(`${edges.toLocaleString()} ${edges === 1 ? 'edge' : 'edges'}`)
-    return parts.join(' and ') || 'nothing'
+    if (nodes) parts.push(i18n.t('count.nodes', { count: nodes }))
+    if (edges) parts.push(i18n.t('count.edges', { count: edges }))
+    return parts.length ? i18n.formatList(parts) : i18n.t('pivot.save.nothing')
 }
 
 function errorText(error: unknown): string | undefined {

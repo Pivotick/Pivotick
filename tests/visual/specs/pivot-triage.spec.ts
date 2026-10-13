@@ -709,6 +709,16 @@ test.describe('pivot triage pane', () => {
         await expect(row(page, 'url-0')).not.toHaveClass(/pvt-triage-row-marked/)
     })
 
+    test('a re-run that brings back one candidate announces it in the singular', async ({ page }) => {
+        await load(page, { blindTypes: ['ip'] })
+        await harness(page, 'runPivot', 'blind', ['a'])
+        await markRow(page, 'blind-0')
+
+        await harness(page, 'runPivot', 'blind', ['a'])
+
+        await expect(banner(page)).toContainText('This pivot was run again. 1 new candidate is ready.')
+    })
+
     test('a re-run with nothing marked replaces the set outright', async ({ page }) => {
         await load(page)
         await stageUrls(page)

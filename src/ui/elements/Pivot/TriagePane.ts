@@ -5,6 +5,7 @@ import { collectDataAttributes, inferAttributeType } from '../../../utils/DataAt
 import { arrowDown, arrowUp } from '../../icons'
 import type { FilterableColumn, RowFilter } from '../Table/TableRowFilters'
 import { buildRowFilterControl, columnChoices, isRowFilterActive, rowFilterMatches } from '../Table/TableRowFilters'
+import type { I18n } from '../../../i18n/I18n'
 import './pivot.scss'
 
 /** Rows on one page. Paging rather than windowing: the pane's height is the dock's. */
@@ -37,8 +38,6 @@ const CHILD_DATA_KEYS = 3
 
 /** The track a column gets when it does not ask for a width. */
 const DEFAULT_TRACK = 'minmax(110px, 1fr)'
-
-const fmt = (value: number): string => value.toLocaleString()
 
 /** One column of the candidate table: what to call it, and how to read it off a row. */
 interface TriageColumn<T> extends FilterableColumn {
@@ -80,6 +79,8 @@ interface TriageRow {
 /** What the pane needs from whoever owns it — every one of them an act, not a query. */
 export interface TriagePaneDeps {
     pivots: PivotManager
+    /** The graph's language, for the pane's own text. */
+    i18n: I18n
     /**
      * Commit the marked rows, folded into one group per type when `group` is set, or as
      * the manager's `ingestGrouped` says when it is not. The owner reports the outcome
@@ -153,6 +154,10 @@ export class TriagePane {
         this.root.className = 'pvt-triage'
     }
 
+    private get i18n(): I18n {
+        return this.deps.i18n
+    }
+
     /* ---------- lifecycle ---------- */
 
     /** The set changed under us. Repaint if anyone is looking; catch up on activation if not. */
@@ -209,8 +214,8 @@ export class TriagePane {
         const search = document.createElement('input')
         search.type = 'text'
         search.className = 'pvt-triage-search'
-        search.placeholder = this.useRegex ? 'Match rows by pattern…' : 'Search rows…'
-        search.title = 'Narrow the candidates. Nothing here touches the graph.'
+        search.placeholder = this.i18n.t(this.useRegex ? 'pivot.triage.search.patternPlaceholder' : 'pivot.triage.search.placeholder')
+        search.title = this.i18n.t('pivot.triage.search.title')
         search.value = this.search
         search.addEventListener('input', () => {
             this.search = search.value
@@ -223,7 +228,7 @@ export class TriagePane {
         // rows already in hand, so the full facet vocabulary is available.
         const regex = document.createElement('label')
         regex.className = 'pvt-triage-regex'
-        regex.title = 'Read the search box as a regular expression'
+        regex.title = this.i18n.t('pivot.triage.regex.title')
         const box = document.createElement('input')
         box.type = 'checkbox'
         box.checked = this.useRegex
@@ -232,10 +237,10 @@ export class TriagePane {
             this.page = 0
             this.paint()
         })
-        regex.append(box, text('span', 'regex'))
+        regex.append(box, text('span', this.i18n.t('pivot.triage.regex')))
         items.push(regex)
 
-        items.push(this.toolbarButton('Re-run', 'Fetch again with the same narrowing', () => this.deps.rerun(this.set)))
+        items.push(this.toolbarButton(this.i18n.t('pivot.triage.rerun'), this.i18n.t('pivot.triage.rerun.title'), () => this.deps.rerun(this.set)))
         return items
     }
 
@@ -261,28 +266,29 @@ export class TriagePane {
         const set = this.set
         if (set.pending) this.root.appendChild(this.banner(set.pending))
 
-        if (set.loading) return this.state('loading', 'Fetching candidates…', {
-            sub: 'Nothing is on the canvas yet — candidates are staged, not merged.',
-            actions: [{ label: 'Cancel', run: () => this.deps.pivots.cancelFetch(this.pivotId) }],
+        const i18n = this.i18n
+        if (set.loading) return this.state('loading', i18n.t('pivot.triage.loading'), {
+            sub: i18n.t('pivot.triage.loading.sub'),
+            actions: [{ label: i18n.t('pivot.cancel'), run: () => this.deps.pivots.cancelFetch(this.pivotId) }],
         })
 
-        if (set.error) return this.state('error', 'Couldn\'t fetch candidates.', {
-            sub: 'Nothing was staged. Retrying runs the same request with the narrowing you already chose.',
+        if (set.error) return this.state('error', i18n.t('pivot.triage.error'), {
+            sub: i18n.t('pivot.triage.error.sub'),
             actions: [
-                { label: 'Retry', run: () => this.deps.rerun(set) },
+                { label: i18n.t('pivot.retry'), run: () => this.deps.rerun(set) },
                 // Giving up is an answer to a failed fetch, and it needs to be here
                 // rather than only in the toolbar. Nothing was staged, so it rejects
                 // nothing either way.
-                { label: 'Close', run: () => this.deps.close(this.pivotId), ghost: true },
+                { label: i18n.t('pivot.close'), run: () => this.deps.close(this.pivotId), ghost: true },
             ],
         })
 
         if (set.refused) {
             return this.state('refused',
-                `The source returned ${fmt(set.refused.count)} candidates, over the ${fmt(set.refused.limit)} limit.`,
+                i18n.t('pivot.triage.refused', { count: set.refused.count, limit: set.refused.limit }),
                 {
-                    sub: 'Nothing was staged — narrow and run again.',
-                    actions: [{ label: 'Dismiss', run: () => this.deps.close(this.pivotId) }],
+                    sub: i18n.t('pivot.triage.refused.sub'),
+                    actions: [{ label: i18n.t('pivot.dismiss'), run: () => this.deps.close(this.pivotId) }],
                 })
         }
 
@@ -307,7 +313,7 @@ export class TriagePane {
         this.pageRows = matching.slice(this.page * PAGE_SIZE, (this.page + 1) * PAGE_SIZE)
         if (actionable.length) {
             scroller.appendChild(this.grid(columns, this.pageRows,
-                split ? this.sectionHead('Nodes', matching.length) : undefined))
+                split ? this.sectionHead(i18n.t('pivot.triage.section.nodes'), matching.length) : undefined))
         }
         this.root.appendChild(scroller)
         this.scroller = scroller
@@ -323,24 +329,25 @@ export class TriagePane {
     /** The empty-ish endings: nothing came back, it was all already here, or triage is done. */
     private finishedState(): void {
         const set = this.set
+        const i18n = this.i18n
         if (set.fetched === 0) {
-            return this.state('empty', 'No candidates came back', {
-                sub: 'The narrowing may be tighter than the data.',
-                actions: [{ label: 'Close', run: () => this.deps.close(this.pivotId) }],
+            return this.state('empty', i18n.t('pivot.triage.empty'), {
+                sub: i18n.t('pivot.triage.empty.sub'),
+                actions: [{ label: i18n.t('pivot.close'), run: () => this.deps.close(this.pivotId) }],
             })
         }
 
         const ingested = set.fetched - set.suppressed - set.nodes.length
         const rejected = set.nodes.filter(c => c.state === 'rejected').length
-        const close: StateAction = { label: 'Close', run: () => this.deps.close(this.pivotId) }
+        const close: StateAction = { label: i18n.t('pivot.close'), run: () => this.deps.close(this.pivotId) }
 
         if (!set.nodes.length && set.suppressed) {
             // The run came back full and the session emptied it: everything in it had
             // been rejected before. Saying "already on the canvas" here would blame the
             // graph for a verdict the analyst made, so the list that holds them is one
             // click away rather than gone with the rows.
-            this.state('done', `All ${fmt(set.fetched)} were rejected earlier this session`, {
-                sub: 'Nothing new came back. Restoring one offers it again on the next run.',
+            this.state('done', i18n.t('pivot.triage.allRejected', { count: set.fetched }), {
+                sub: i18n.t('pivot.triage.allRejected.sub'),
                 actions: [this.revealAction(set.suppressed), { ...close, ghost: true }],
             })
             if (this.showSuppressed) this.root.appendChild(this.suppressedList(true))
@@ -349,18 +356,18 @@ export class TriagePane {
 
         if (!ingested && !rejected && !set.suppressed && set.deduped === set.nodes.length) {
             // Their data was left untouched — a normal outcome, not a failed run.
-            return this.state('done', `All ${fmt(set.fetched)} are already on the canvas — nothing to triage`, {
-                sub: 'Nothing was changed: an id already here is left exactly as it was.',
+            return this.state('done', i18n.t('pivot.triage.allOnCanvas', { count: set.fetched }), {
+                sub: i18n.t('pivot.triage.allOnCanvas.sub'),
                 actions: [close],
             })
         }
 
         const tally: string[] = []
-        if (ingested) tally.push(`${fmt(ingested)} ingested`)
-        if (rejected + set.suppressed) tally.push(`${fmt(rejected + set.suppressed)} rejected`)
-        if (set.deduped) tally.push(`${fmt(set.deduped)} already on canvas`)
+        if (ingested) tally.push(i18n.t('pivot.triage.done.ingested', { count: ingested }))
+        if (rejected + set.suppressed) tally.push(i18n.t('pivot.triage.done.rejected', { count: rejected + set.suppressed }))
+        if (set.deduped) tally.push(i18n.t('pivot.triage.done.onCanvas', { count: set.deduped }))
         const held = rejected + set.suppressed
-        this.state('done', 'Nothing left to triage', {
+        this.state('done', i18n.t('pivot.triage.done'), {
             sub: tally.join(' · '),
             actions: held ? [this.revealAction(held), { ...close, ghost: true }] : [close],
         })
@@ -370,7 +377,9 @@ export class TriagePane {
     /** Open or shut the list of what the session is holding back. */
     private revealAction(suppressed: number): StateAction {
         return {
-            label: this.showSuppressed ? 'Hide the rejected' : `Show the ${fmt(suppressed)} rejected`,
+            label: this.showSuppressed
+                ? this.i18n.t('pivot.triage.hideRejected')
+                : this.i18n.t('pivot.triage.showRejected', { count: suppressed }),
             run: () => {
                 this.showSuppressed = !this.showSuppressed
                 this.paint()
@@ -409,21 +418,22 @@ export class TriagePane {
         const bar = document.createElement('div')
         bar.className = 'pvt-triage-banner'
 
+        const i18n = this.i18n
         if (pending.loading) {
-            bar.appendChild(text('span', 'Running again…'))
-            bar.appendChild(this.bannerButton('Cancel', () => this.deps.pivots.dismissPending(this.pivotId)))
+            bar.appendChild(text('span', i18n.t('pivot.triage.banner.running')))
+            bar.appendChild(this.bannerButton(i18n.t('pivot.cancel'), () => this.deps.pivots.dismissPending(this.pivotId)))
             return bar
         }
         if (pending.error || pending.refused) {
-            bar.appendChild(text('span', 'The re-run failed. What is below is untouched.'))
-            bar.appendChild(this.bannerButton('Dismiss', () => this.deps.pivots.dismissPending(this.pivotId)))
+            bar.appendChild(text('span', i18n.t('pivot.triage.banner.failed')))
+            bar.appendChild(this.bannerButton(i18n.t('pivot.dismiss'), () => this.deps.pivots.dismissPending(this.pivotId)))
             return bar
         }
 
         const incoming = pending.nodes.length + pending.edges.length
-        bar.appendChild(text('span', `This pivot was run again. ${fmt(incoming)} new candidates are ready.`))
-        bar.appendChild(this.bannerButton('Show new', () => this.deps.pivots.showPending(this.pivotId)))
-        bar.appendChild(this.bannerButton('Keep triaging', () => this.deps.pivots.dismissPending(this.pivotId), true))
+        bar.appendChild(text('span', i18n.t('pivot.triage.banner.ready', { count: incoming })))
+        bar.appendChild(this.bannerButton(i18n.t('pivot.triage.banner.show'), () => this.deps.pivots.showPending(this.pivotId)))
+        bar.appendChild(this.bannerButton(i18n.t('pivot.triage.banner.keep'), () => this.deps.pivots.dismissPending(this.pivotId), true))
         return bar
     }
 
@@ -443,21 +453,22 @@ export class TriagePane {
      */
     private headline(): HTMLElement {
         const set = this.set
+        const i18n = this.i18n
         const line = document.createElement('div')
         line.className = 'pvt-triage-head'
 
         // `fetched` counts the nodes a provider returned, so a result made entirely of
         // edges would lead with a zero.
-        line.appendChild(text('b', `${fmt(set.fetched || set.edges.length)} fetched`))
-        if (set.deduped) line.appendChild(segment(`${fmt(set.deduped)} already on canvas (skipped)`))
+        line.appendChild(text('b', i18n.t('pivot.triage.head.fetched', { count: set.fetched || set.edges.length })))
+        if (set.deduped) line.appendChild(segment(i18n.t('pivot.triage.head.deduped', { count: set.deduped })))
 
         if (set.suppressed) {
             line.appendChild(text('span', '·', 'pvt-triage-dot'))
             const reveal = document.createElement('button')
             reveal.type = 'button'
             reveal.className = 'pvt-triage-seg'
-            reveal.textContent = `${fmt(set.suppressed)} rejected earlier`
-            reveal.title = 'Suppressed because they were rejected earlier this session'
+            reveal.textContent = i18n.t('pivot.triage.head.suppressed', { count: set.suppressed })
+            reveal.title = i18n.t('pivot.triage.head.suppressed.title')
             reveal.setAttribute('aria-expanded', String(this.showSuppressed))
             reveal.addEventListener('click', () => {
                 this.showSuppressed = !this.showSuppressed
@@ -473,23 +484,23 @@ export class TriagePane {
         const unsaved = pending.nodes + pending.edges
         if (unsaved && this.deps.pivots.saveControls) {
             line.appendChild(text('span', '·', 'pvt-triage-dot'))
-            line.appendChild(text('span', `${fmt(unsaved)} unsaved`, 'pvt-triage-seg-static'))
+            line.appendChild(text('span', i18n.t('pivot.triage.head.unsaved', { count: unsaved }), 'pvt-triage-seg-static'))
             const save = document.createElement('button')
             save.type = 'button'
             save.className = 'pvt-triage-link'
-            save.textContent = this.saving ? 'saving…' : 'save'
+            save.textContent = i18n.t(this.saving ? 'pivot.triage.head.saving' : 'pivot.triage.head.save')
             save.disabled = this.saving
-            save.title = 'Write this provider\'s ingested results back to the source system'
+            save.title = i18n.t('pivot.triage.head.save.title')
             save.addEventListener('click', () => void this.save())
             line.appendChild(save)
         }
 
         line.appendChild(text('span', '', 'pvt-triage-spacer'))
         const subtitle = set.origin.length
-            ? `${fmt(set.origin.length)} origin ${set.origin.length === 1 ? 'node' : 'nodes'}`
-            : 'no origin'
+            ? i18n.t('pivot.triage.head.origin', { count: set.origin.length })
+            : i18n.t('pivot.triage.head.noOrigin')
         const narrowed = Object.keys(set.narrowing).length
-        line.appendChild(text('span', narrowed ? `${subtitle} · narrowed` : subtitle, 'pvt-triage-muted'))
+        line.appendChild(text('span', narrowed ? `${subtitle} · ${i18n.t('pivot.triage.head.narrowed')}` : subtitle, 'pvt-triage-muted'))
 
         const wrap = document.createElement('div')
         wrap.appendChild(line)
@@ -528,7 +539,7 @@ export class TriagePane {
 
         const box = document.createElement('div')
         box.className = 'pvt-triage-suppressed'
-        box.appendChild(text('div', 'Rejected earlier, so not offered again this session. Restoring one brings it back on the next run.', 'pvt-triage-state-sub'))
+        box.appendChild(text('div', this.i18n.t('pivot.triage.suppressed.note'), 'pvt-triage-state-sub'))
 
         for (const row of rows.slice(0, REJECTED_SHOWN)) {
             const line = document.createElement('div')
@@ -538,7 +549,7 @@ export class TriagePane {
             const restore = document.createElement('button')
             restore.type = 'button'
             restore.className = 'pvt-triage-link'
-            restore.textContent = 'restore'
+            restore.textContent = this.i18n.t('pivot.triage.restore')
             restore.addEventListener('click', () => this.deps.pivots.unreject(this.pivotId, row.id))
             line.appendChild(restore)
             box.appendChild(line)
@@ -547,13 +558,13 @@ export class TriagePane {
         const foot = document.createElement('div')
         foot.className = 'pvt-triage-suppressed-foot'
         if (rows.length > REJECTED_SHOWN) {
-            foot.appendChild(text('span', `…and ${fmt(rows.length - REJECTED_SHOWN)} more`, 'pvt-triage-muted'))
+            foot.appendChild(text('span', this.i18n.t('pivot.more', { count: rows.length - REJECTED_SHOWN }), 'pvt-triage-muted'))
         }
         if (rows.length > 1) {
             const every = document.createElement('button')
             every.type = 'button'
             every.className = 'pvt-triage-link'
-            every.textContent = 'restore all'
+            every.textContent = this.i18n.t('pivot.triage.restoreAll')
             every.addEventListener('click', () => this.deps.pivots.unrejectAll(this.pivotId))
             foot.appendChild(every)
         }
@@ -572,7 +583,7 @@ export class TriagePane {
         const containers = this.set.nodes.some(row => childCount(row.raw) > 0)
         const columns: TriageColumn<PivotCandidate>[] = [{
             key: NAME_COLUMN,
-            label: 'Candidate',
+            label: this.i18n.t('pivot.triage.column.candidate'),
             type: 'text',
             read: row => row.raw.data?.label ?? row.id,
             render: containers ? row => this.nameCell(row) : undefined,
@@ -585,7 +596,7 @@ export class TriagePane {
         if (containers) {
             columns.push({
                 key: CHILDREN_COLUMN,
-                label: 'Children',
+                label: this.i18n.t('pivot.triage.column.children'),
                 type: 'numberRange',
                 width: COUNT_WIDTH,
                 align: 'right',
@@ -614,8 +625,8 @@ export class TriagePane {
         // below, an endpoint id lands under `Candidate` and two blocks read as one.
         const pair = 'minmax(90px, 0.7fr)'
         const columns: TriageColumn<PivotCandidateEdge>[] = [
-            { key: 'pvt:from', label: 'From', type: 'text', read: row => row.raw.from, width: pair },
-            { key: 'pvt:to', label: 'To', type: 'text', read: row => row.raw.to, width: pair },
+            { key: 'pvt:from', label: this.i18n.t('pivot.triage.column.from'), type: 'text', read: row => row.raw.from, width: pair },
+            { key: 'pvt:to', label: this.i18n.t('pivot.triage.column.to'), type: 'text', read: row => row.raw.to, width: pair },
         ]
         const attributes = collectDataAttributes(this.set.edges.map(row => dataOf(row.raw)))
             .sort((a, b) => b.count - a.count)
@@ -640,7 +651,7 @@ export class TriagePane {
         const column = columns.find(c => c.key === sort.key)
         if (!column) return rows
         const sign = sort.direction === 'asc' ? 1 : -1
-        return [...rows].sort((a, b) => sign * compare(column.read(a), column.read(b)))
+        return [...rows].sort((a, b) => sign * compare(this.i18n, column.read(a), column.read(b)))
     }
 
     private matches(row: PivotCandidate, columns: TriageColumn<PivotCandidate>[]): boolean {
@@ -713,7 +724,7 @@ export class TriagePane {
         const head = document.createElement('div')
         head.className = 'pvt-triage-sechead'
         head.appendChild(text('span', title, 'pvt-triage-sechead-title'))
-        head.appendChild(text('span', fmt(count), 'pvt-triage-sechead-count'))
+        head.appendChild(text('span', this.i18n.formatNumber(count), 'pvt-triage-sechead-count'))
         if (note) head.appendChild(text('span', note, 'pvt-triage-sechead-note'))
         return head
     }
@@ -831,7 +842,7 @@ export class TriagePane {
     private paintToggle(toggle: HTMLElement, open: boolean): void {
         toggle.textContent = open ? '▾' : '▸'
         toggle.setAttribute('aria-expanded', String(open))
-        toggle.title = open ? 'Hide what this row holds' : 'Show what this row holds'
+        toggle.title = this.i18n.t(open ? 'pivot.triage.children.hide.title' : 'pivot.triage.children.show.title')
     }
 
     /**
@@ -846,9 +857,7 @@ export class TriagePane {
         panel.dataset.children = candidate.id
 
         const total = children.length
-        panel.appendChild(text('div',
-            `${fmt(total)} ${total === 1 ? 'child' : 'children'} — ingesting this row takes all of them.`,
-            'pvt-triage-state-sub'))
+        panel.appendChild(text('div', this.i18n.t('pivot.triage.children.summary', { count: total }), 'pvt-triage-state-sub'))
 
         const keys = collectDataAttributes(children.map(child => dataOf(child)), ['label'])
             .sort((a, b) => b.count - a.count)
@@ -864,16 +873,16 @@ export class TriagePane {
 
             for (const key of keys) {
                 const value = cellText(child.data?.[key])
-                if (value) row.appendChild(text('span', `${key}: ${value}`, 'pvt-triage-muted'))
+                if (value) row.appendChild(text('span', this.i18n.t('pivot.triage.children.field', { key, value }), 'pvt-triage-muted'))
             }
             // A child that is itself a container says so, since the row above it counted
             // only one level and this is where the level below shows up.
             const nested = childCount(child)
-            if (nested) row.appendChild(text('span', `+${fmt(nested)} inside`, 'pvt-triage-muted'))
+            if (nested) row.appendChild(text('span', this.i18n.t('pivot.triage.children.nested', { count: nested }), 'pvt-triage-muted'))
             list.appendChild(row)
         }
         if (total > CHILDREN_SHOWN) {
-            list.appendChild(text('div', `…and ${fmt(total - CHILDREN_SHOWN)} more`, 'pvt-triage-muted'))
+            list.appendChild(text('div', this.i18n.t('pivot.more', { count: total - CHILDREN_SHOWN }), 'pvt-triage-muted'))
         }
         panel.appendChild(list)
         return panel
@@ -899,7 +908,7 @@ export class TriagePane {
             return { cell }
         }
 
-        const box = tickBox(candidate.state === 'marked', `Select ${cellText(candidate.raw.data?.label ?? candidate.id)}`)
+        const box = tickBox(candidate.state === 'marked', this.i18n.t('pivot.triage.row.select.aria', { row: cellText(candidate.raw.data?.label ?? candidate.id) }))
         cell.appendChild(box)
         return { cell, box }
     }
@@ -981,21 +990,21 @@ export class TriagePane {
 
         if (candidate.deduped) {
             cell.classList.add('pvt-triage-muted')
-            cell.textContent = 'on canvas'
+            cell.textContent = this.i18n.t('pivot.triage.row.onCanvas')
             return
         }
         if (candidate.state === 'rejected') {
             const undo = document.createElement('button')
             undo.type = 'button'
             undo.className = 'pvt-triage-link'
-            undo.textContent = 'undo'
+            undo.textContent = this.i18n.t('pivot.triage.row.undo')
             undo.addEventListener('click', () => this.deps.pivots.unreject(this.pivotId, candidate.id))
             cell.appendChild(undo)
             return
         }
         if (candidate.state === 'marked') {
             cell.classList.add('pvt-triage-strong')
-            cell.textContent = 'will ingest'
+            cell.textContent = this.i18n.t('pivot.triage.row.willIngest')
         }
     }
 
@@ -1023,7 +1032,7 @@ export class TriagePane {
         }
         head.appendChild(document.createElement('span'))
         grid.appendChild(this.cap(head, this.sectionHead(
-            'Edges', this.set.edges.length, 'both ends are already on the canvas')))
+            this.i18n.t('pivot.triage.section.edges'), this.set.edges.length, this.i18n.t('pivot.triage.section.edges.note'))))
 
         for (const edge of this.set.edges) {
             const row = document.createElement('div')
@@ -1032,10 +1041,10 @@ export class TriagePane {
 
             const cell = document.createElement('span')
             cell.className = 'pvt-triage-cell pvt-triage-tick'
-            const label = `${cellText(edge.raw.from)} → ${cellText(edge.raw.to)}`
+            const label = this.i18n.t('pivot.triage.edge.endpoints', { from: cellText(edge.raw.from), to: cellText(edge.raw.to) })
             // Rejected here means what it means in the node table: a verdict, not an
             // unticked box (C6).
-            const box = edge.state === 'rejected' ? undefined : tickBox(edge.state === 'marked', `Select ${label}`)
+            const box = edge.state === 'rejected' ? undefined : tickBox(edge.state === 'marked', this.i18n.t('pivot.triage.row.select.aria', { row: label }))
             cell.appendChild(box ?? text('span', '✕', 'pvt-triage-rejected-mark'))
             row.appendChild(cell)
 
@@ -1065,6 +1074,7 @@ export class TriagePane {
         const foot = this.footer
         if (!foot) return
         foot.replaceChildren()
+        const i18n = this.i18n
 
         const marked = this.set.nodes.filter(c => c.state === 'marked').length
             + this.set.edges.filter(e => e.state === 'marked').length
@@ -1072,7 +1082,7 @@ export class TriagePane {
         const ingest = document.createElement('button')
         ingest.type = 'button'
         ingest.className = 'pvt-triage-btn pvt-triage-ingest'
-        ingest.textContent = `Ingest selected (${fmt(marked)})`
+        ingest.textContent = i18n.t('pivot.triage.foot.ingest', { count: marked })
         ingest.disabled = marked === 0
         ingest.addEventListener('click', () => this.deps.ingest(this.pivotId))
         foot.appendChild(ingest)
@@ -1082,13 +1092,11 @@ export class TriagePane {
         if (this.deps.canGroup) {
             const loose = this.deps.pivots.ingestGrouped
             const other = this.footButton(
-                loose ? `Ingest loose (${fmt(marked)})` : `Ingest in a group (${fmt(marked)})`,
+                i18n.t(loose ? 'pivot.triage.foot.ingestLoose' : 'pivot.triage.foot.ingestGrouped', { count: marked }),
                 marked === 0,
                 () => this.deps.ingest(this.pivotId, { group: !loose }))
             other.classList.add('pvt-triage-ingest-group')
-            other.title = loose
-                ? 'Land the selected rows as separate nodes'
-                : 'Land the selected rows folded, one group per type'
+            other.title = i18n.t(loose ? 'pivot.triage.foot.ingestLoose.title' : 'pivot.triage.foot.ingestGrouped.title')
             foot.appendChild(other)
         }
 
@@ -1099,7 +1107,7 @@ export class TriagePane {
         // n matching* beside it, which is the pair that reads the table.
         const onOffer = this.untriaged().length
             + this.set.edges.filter(edge => edge.state !== 'rejected').length
-        if (onOffer > 0) foot.appendChild(this.footButton(`Ingest all ${fmt(onOffer)}`, false, () => {
+        if (onOffer > 0) foot.appendChild(this.footButton(i18n.t('pivot.triage.foot.ingestAll', { count: onOffer }), false, () => {
             this.deps.pivots.markAll(this.pivotId, true)
             this.deps.ingest(this.pivotId)
         }))
@@ -1111,7 +1119,7 @@ export class TriagePane {
         const selectable = matching.filter(c => c.state === 'candidate' && !c.deduped)
         const narrowed = this.narrowing()
         if (hasNodes) foot.appendChild(this.footButton(
-            narrowed ? `Select all ${fmt(selectable.length)} matching` : `Select all ${fmt(selectable.length)}`,
+            i18n.t(narrowed ? 'pivot.triage.foot.selectMatching' : 'pivot.triage.foot.selectAll', { count: selectable.length }),
             selectable.length === 0,
             () => {
                 if (narrowed) for (const row of selectable) this.deps.pivots.mark(this.pivotId, row.id, true)
@@ -1120,11 +1128,11 @@ export class TriagePane {
             },
         ))
 
-        foot.appendChild(this.footButton('Reject selected', marked === 0, () => {
+        foot.appendChild(this.footButton(i18n.t('pivot.triage.foot.rejectSelected'), marked === 0, () => {
             const ids = [...this.set.nodes, ...this.set.edges].filter(r => r.state === 'marked').map(r => r.id)
             this.deps.pivots.reject(this.pivotId, ids)
         }))
-        foot.appendChild(this.footButton('Reject all remaining', false, () => this.deps.pivots.rejectRemaining(this.pivotId)))
+        foot.appendChild(this.footButton(i18n.t('pivot.triage.foot.rejectRemaining'), false, () => this.deps.pivots.rejectRemaining(this.pivotId)))
 
         foot.appendChild(text('span', '', 'pvt-triage-spacer'))
 
@@ -1132,13 +1140,13 @@ export class TriagePane {
             const from = this.page * PAGE_SIZE + 1
             const to = Math.min(matching.length, (this.page + 1) * PAGE_SIZE)
             foot.appendChild(this.footButton('‹', this.page === 0, () => { this.page--; this.paint() }))
-            foot.appendChild(text('span', `${fmt(from)}–${fmt(to)} of ${fmt(matching.length)}`, 'pvt-triage-muted'))
+            foot.appendChild(text('span', i18n.t('pivot.triage.foot.page', { from, to, count: matching.length }), 'pvt-triage-muted'))
             foot.appendChild(this.footButton('›', this.page >= pages - 1, () => { this.page++; this.paint() }))
         } else if (hasNodes) {
-            foot.appendChild(text('span', `${fmt(matching.length)} shown`, 'pvt-triage-muted'))
+            foot.appendChild(text('span', i18n.t('pivot.triage.foot.shown', { count: matching.length }), 'pvt-triage-muted'))
         }
 
-        foot.appendChild(text('span', 'closing this pane rejects nothing — leftovers are re-offered next run', 'pvt-triage-muted pvt-triage-note'))
+        foot.appendChild(text('span', i18n.t('pivot.triage.foot.note'), 'pvt-triage-muted pvt-triage-note'))
     }
 
     private footButton(label: string, disabled: boolean, run: () => void): HTMLButtonElement {
@@ -1225,7 +1233,7 @@ function cellText(value: unknown): string {
     return Array.isArray(value) ? value.join(', ') : String(value)
 }
 
-function compare(a: unknown, b: unknown): number {
+function compare(i18n: I18n, a: unknown, b: unknown): number {
     if (typeof a === 'number' && typeof b === 'number') return a - b
-    return String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true })
+    return i18n.collator({ numeric: true }).compare(String(a ?? ''), String(b ?? ''))
 }

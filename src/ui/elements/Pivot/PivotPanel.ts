@@ -7,8 +7,7 @@ import type { FieldConfig, FieldOption, FormValues } from '../../../utils/FormFa
 import { FormFactory } from '../../../utils/FormFactory'
 import { tryResolveString } from '../../../utils/Getters'
 import type { UIManager } from '../../UIManager'
-
-const fmt = (value: number): string => value.toLocaleString()
+import type { I18n } from '../../../i18n/I18n'
 
 /** How long a typed narrowing field waits before it re-asks the provider. */
 const TYPED_DELAY_MS = 400
@@ -55,6 +54,7 @@ export class PivotPanel {
     private active = false
     private readonly unsubscribe: () => void
     private readonly uiManager: UIManager
+    private readonly i18n: I18n
 
     /* ---------- the bulk controls, live only past {@link BULK_MIN} ---------- */
 
@@ -90,6 +90,7 @@ export class PivotPanel {
 
     constructor(uiManager: UIManager) {
         this.uiManager = uiManager
+        this.i18n = uiManager.graph.i18n
         this.root = el('div', 'pvt-pivot-panel')
 
         this.originBlock = el('div', 'pvt-pivot-origin')
@@ -105,10 +106,10 @@ export class PivotPanel {
         this.filterInput = document.createElement('input')
         this.filterInput.type = 'text'
         this.filterInput.className = 'pvt-pivot-filter-input'
-        this.filterInput.placeholder = 'Filter pivots'
-        this.filterInput.setAttribute('aria-label', 'Filter pivots')
+        this.filterInput.placeholder = this.i18n.t('pivot.panel.filter.placeholder')
+        this.filterInput.setAttribute('aria-label', this.i18n.t('pivot.panel.filter.aria'))
 
-        this.filterClear = button('Clear the filter', () => {
+        this.filterClear = button(this.i18n.t('pivot.panel.filter.clear.title'), () => {
             this.query = ''
             this.filterInput.value = ''
             this.reveal = false
@@ -143,14 +144,14 @@ export class PivotPanel {
             this.rebuild()
         })
         this.trayCount.className = 'pvt-pivot-tray-count'
-        this.trayClear = button('Clear the selection', () => {
+        this.trayClear = button(this.i18n.t('pivot.panel.tray.clear.title'), () => {
             this.selected.clear()
             this.reveal = false
             this.rebuild()
         })
         this.trayClear.className = 'pvt-pivot-button'
-        this.trayClear.textContent = 'Clear'
-        this.trayRun = button('Run every selected pivot', () => this.runSelected())
+        this.trayClear.textContent = this.i18n.t('pivot.panel.tray.clear')
+        this.trayRun = button(this.i18n.t('pivot.panel.tray.run.title'), () => this.runSelected())
         this.trayRun.className = 'pvt-pivot-button pvt-pivot-button-primary'
         this.trayCaution = el('div', 'pvt-pivot-tray-caution')
         this.tray = el('div', 'pvt-pivot-tray')
@@ -160,7 +161,7 @@ export class PivotPanel {
         // hidden whenever the number is zero: an always-present "0 unsaved" is a
         // permanent reminder of nothing.
         this.saveCount = el('span', 'pvt-pivot-unsaved-count')
-        this.saveButton = button('Write these back to the source system', () => void this.save())
+        this.saveButton = button(this.i18n.t('pivot.panel.save.title'), () => void this.save())
         this.saveButton.className = 'pvt-pivot-button pvt-pivot-button-primary'
         this.saveBar = el('div', 'pvt-pivot-unsaved')
         this.saveBar.append(this.saveCount, this.saveButton)
@@ -212,11 +213,14 @@ export class PivotPanel {
         this.saveBar.hidden = !pivots.saveControls || (!total && !this.saving)
         if (this.saveBar.hidden) return
 
-        this.saveCount.textContent = `${fmt(total)} unsaved`
+        this.saveCount.textContent = this.i18n.t('pivot.panel.unsaved', { count: total })
         this.saveCount.title = edges
-            ? `${fmt(nodes)} ${nodes === 1 ? 'node' : 'nodes'} and ${fmt(edges)} ${edges === 1 ? 'edge' : 'edges'} this session's pivots brought in and have not written back`
-            : 'Brought in by a pivot this session, and not written back'
-        this.saveButton.textContent = this.saving ? 'Saving…' : 'Save'
+            ? this.i18n.t('pivot.panel.unsaved.titleCounts', {
+                nodes: this.i18n.t('count.nodes', { count: nodes }),
+                edges: this.i18n.t('count.edges', { count: edges }),
+            })
+            : this.i18n.t('pivot.panel.unsaved.title')
+        this.saveButton.textContent = this.i18n.t(this.saving ? 'pivot.panel.save.saving' : 'pivot.panel.save')
         this.saveButton.disabled = this.saving || !total
     }
 
@@ -331,12 +335,12 @@ export class PivotPanel {
         // A detached group that is entirely filtered out is a disclosure onto nothing.
         this.originless.hidden = shownDetached.length === 0
         const summary = this.originless.querySelector('summary')
-        if (summary) summary.textContent = `Without an origin (${shownDetached.length})`
+        if (summary) summary.textContent = this.i18n.t('pivot.panel.originless', { count: shownDetached.length })
 
         this.noMatches.hidden = !bulk || shownApplicable.length + shownDetached.length > 0
         this.noMatches.textContent = this.reveal
-            ? 'Nothing selected.'
-            : `No pivot matches “${this.query.trim()}”.`
+            ? this.i18n.t('pivot.panel.noMatch.reveal')
+            : this.i18n.t('pivot.panel.noMatch', { query: this.query.trim() })
 
         // Anything no longer in either list is gone for good — drop its state with it.
         const live = new Set([...applicable, ...detached].map(def => def.id))
@@ -370,19 +374,20 @@ export class PivotPanel {
         // Revealing ignores the query, so the box must not go on looking like it is in
         // force. Focusing it is the way back out, and it says so by waking up.
         this.filterBar.classList.toggle('pvt-pivot-filter-inert', this.reveal)
+        const i18n = this.i18n
         this.hits.textContent = this.reveal
-            ? `Showing your ${fmt(this.selected.size)} selected`
-            : filtering ? `${fmt(shownDefs.length)} match` : ''
+            ? i18n.t('pivot.panel.hits.selected', { count: this.selected.size })
+            : filtering ? i18n.t('pivot.panel.hits.matching', { count: shownDefs.length }) : ''
 
         // The verb names the number it will actually add, and that number is always
         // scoped to what is on screen: an unscoped "select all" in a list this long is a
         // way to fire fifty requests by accident.
         const unpicked = shownDefs.filter(def => !this.selected.has(def.id)).length
         this.selectAll.disabled = shownDefs.length === 0
-        this.selectAll.textContent = shownDefs.length === 0 ? 'Select none'
-            : unpicked === 0 ? `Deselect ${fmt(shownDefs.length)}`
-            : filtering ? `Select ${fmt(unpicked)} matching`
-            : `Select all ${fmt(unpicked)}`
+        this.selectAll.textContent = shownDefs.length === 0 ? i18n.t('pivot.panel.selectNone')
+            : unpicked === 0 ? i18n.t('pivot.panel.deselect', { count: shownDefs.length })
+            : filtering ? i18n.t('pivot.panel.selectMatching', { count: unpicked })
+            : i18n.t('pivot.panel.selectAll', { count: unpicked })
 
         const picked = this.selected.size
         // Empty selection has nothing to reveal; staying in the mode would strand the
@@ -399,29 +404,29 @@ export class PivotPanel {
 
         this.trayCount.replaceChildren()
         if (picked) {
-            this.trayCount.append(strong(fmt(picked)), document.createTextNode(' selected'))
+            this.trayCount.append(...withStrongNumber(i18n.t('pivot.panel.tray.selected', { count: picked }), i18n.formatNumber(picked)))
             if (hidden) {
                 const away = el('span', 'pvt-pivot-tray-hidden')
-                away.textContent = `${fmt(hidden)} hidden`
+                away.textContent = i18n.t('pivot.panel.tray.hidden', { count: hidden })
                 this.trayCount.append(document.createTextNode(' · '), away)
             }
         } else {
-            this.trayCount.textContent = 'Nothing selected'
+            this.trayCount.textContent = i18n.t('pivot.panel.tray.none')
         }
         this.trayCount.disabled = !picked
         this.trayCount.setAttribute('aria-pressed', String(this.reveal))
         this.trayCount.title = !picked ? ''
-            : this.reveal ? 'Back to the filtered list'
-            : 'Show only what is selected'
+            : this.reveal ? i18n.t('pivot.panel.tray.unreveal.title')
+            : i18n.t('pivot.panel.tray.reveal.title')
 
         this.trayClear.hidden = !picked
         this.trayRun.disabled = !picked
-        this.trayRun.textContent = picked ? `Run ${fmt(picked)}` : 'Run'
+        this.trayRun.textContent = picked ? i18n.t('pivot.panel.tray.runCount', { count: picked }) : i18n.t('pivot.panel.tray.run')
         const over = picked > BATCH_CAUTION
         this.tray.classList.toggle('pvt-pivot-tray-over', over)
         this.trayCaution.hidden = !over
         this.trayCaution.textContent = over
-            ? `${fmt(picked)} pivots is over ${fmt(BATCH_CAUTION)} — this asks every one of them at once.`
+            ? i18n.t('pivot.panel.tray.caution', { count: picked, limit: BATCH_CAUTION })
             : ''
     }
 
@@ -488,16 +493,16 @@ export class PivotPanel {
     private paintOrigin(): void {
         this.originBlock.replaceChildren()
         const label = el('div', 'pvt-pivot-section pvt-pivot-origin-label')
-        label.textContent = 'Origin'
+        label.textContent = this.i18n.t('pivot.panel.origin')
         this.originBlock.appendChild(label)
 
         if (!this.origin.length) {
             const empty = el('div', 'pvt-pivot-origin-empty')
             // Only offer what is actually there: with no origin-less pivots registered,
             // the list below is empty and pointing at it is a dead end.
-            empty.textContent = this.uiManager.graph.pivots.for([]).length
-                ? 'Nothing picked — click a node on the canvas, or run one of the pivots below'
-                : 'Nothing picked — click a node on the canvas to see what can be run on it'
+            empty.textContent = this.i18n.t(this.uiManager.graph.pivots.for([]).length
+                ? 'pivot.panel.origin.emptyOriginless'
+                : 'pivot.panel.origin.empty')
             this.originBlock.appendChild(empty)
             return
         }
@@ -523,14 +528,14 @@ export class PivotPanel {
         }
         if (this.origin.length > shown.length) {
             const rest = el('span', 'pvt-pivot-chip pvt-pivot-chip-more')
-            rest.textContent = `+${fmt(this.origin.length - shown.length)}`
+            rest.textContent = this.i18n.t('pivot.panel.origin.more', { count: this.origin.length - shown.length })
             chips.appendChild(rest)
         }
 
         const clear = document.createElement('button')
         clear.type = 'button'
         clear.className = 'pvt-pivot-clear'
-        clear.textContent = 'Clear'
+        clear.textContent = this.i18n.t('pivot.panel.origin.clear')
         clear.addEventListener('click', () => {
             this.uiManager.graph.renderer.getGraphInteraction().unselectAll()
             this.setOrigin([])
@@ -548,8 +553,8 @@ export class PivotPanel {
         }
         this.heading.hidden = false
         this.heading.textContent = applicable
-            ? `${applicable} pivot${applicable === 1 ? '' : 's'} appl${applicable === 1 ? 'ies' : 'y'}`
-            : 'No pivots apply to this origin'
+            ? this.i18n.t('pivot.panel.heading', { count: applicable })
+            : this.i18n.t('pivot.panel.heading.none')
     }
 
     /**
@@ -644,6 +649,7 @@ class PivotEntry {
     private askedFor?: string
 
     private readonly uiManager: UIManager
+    private readonly i18n: I18n
     private readonly def: PivotDefinition
     private readonly origin: () => Node[]
     /** Everything the analyst picked, which `origin` is this pivot's share of. */
@@ -664,6 +670,7 @@ class PivotEntry {
         selection: { toggle: (on: boolean) => void, key: (event: KeyboardEvent, box: HTMLInputElement) => void },
     ) {
         this.uiManager = uiManager
+        this.i18n = uiManager.graph.i18n
         this.def = def
         this.origin = origin
         this.offered = offered
@@ -679,7 +686,7 @@ class PivotEntry {
         this.checkInput = document.createElement('input')
         this.checkInput.type = 'checkbox'
         this.checkInput.value = def.id
-        this.checkInput.setAttribute('aria-label', `Select ${def.label}`)
+        this.checkInput.setAttribute('aria-label', this.i18n.t('pivot.entry.select.aria', { pivot: def.label }))
         this.checkInput.addEventListener('keydown', event => selection.key(event, this.checkInput))
         this.check.appendChild(this.checkInput)
         this.check.hidden = true
@@ -941,7 +948,9 @@ class PivotEntry {
         if (this.phase === 'fetching') {
             slot.classList.add('pvt-pivot-muted')
             const total = knownTotal(this.summary)
-            slot.textContent = total !== undefined ? `Fetching ~${fmt(total)}…` : 'Fetching…'
+            slot.textContent = total !== undefined
+                ? this.i18n.t('pivot.entry.fetchingCount', { count: total })
+                : this.i18n.t('pivot.entry.fetching')
             return
         }
 
@@ -961,13 +970,13 @@ class PivotEntry {
 
         if (this.ingested !== undefined) {
             slot.classList.add('pvt-pivot-ingested')
-            slot.textContent = `${fmt(this.ingested)} ingested`
+            slot.textContent = this.i18n.t('pivot.entry.ingested', { count: this.ingested })
             return
         }
 
         if (this.verbInHead()) {
-            slot.appendChild(this.button('Run', true, () => void this.fetch()))
-            if (this.offersIngest()) slot.appendChild(this.ingestButton('Run'))
+            slot.appendChild(this.button(this.i18n.t('pivot.entry.run'), true, () => void this.fetch()))
+            if (this.offersIngest()) slot.appendChild(this.ingestButton('run'))
             return
         }
 
@@ -976,7 +985,7 @@ class PivotEntry {
         const declared = this.declared()
         if (!declared) return
         slot.classList.add('pvt-pivot-hint')
-        slot.textContent = `~${fmt(declared)} declared`
+        slot.textContent = this.i18n.t('pivot.entry.declared', { count: declared })
     }
 
     /**
@@ -1003,7 +1012,9 @@ class PivotEntry {
     private countText(total: number | undefined): string {
         if (total === undefined) return ''
         const nodes = this.origin().length
-        return nodes > 1 ? `~${fmt(total)} across ${fmt(nodes)} nodes` : `~${fmt(total)}`
+        return nodes > 1
+            ? this.i18n.t('pivot.entry.countAcross', { total, count: nodes })
+            : this.i18n.t('pivot.entry.count', { count: total })
     }
 
     /**
@@ -1017,7 +1028,7 @@ class PivotEntry {
         const partial = this.def.origin !== 'none' && offered > 0 && taken < offered
         this.scopeLine.hidden = !partial
         this.scopeLine.textContent = partial
-            ? `Applies to ${fmt(taken)} of the ${fmt(offered)} picked`
+            ? this.i18n.t('pivot.entry.scope', { taken, count: offered })
             : ''
     }
 
@@ -1054,7 +1065,7 @@ class PivotEntry {
         // The label is the provider's, used verbatim like every other label in the
         // library — lower-casing one would mangle a translated noun.
         this.breakdown.textContent = counted
-            .map(option => `${fmt(option.count as number)} ${option.label}`)
+            .map(option => this.i18n.t('pivot.entry.breakdownItem', { count: option.count as number, label: option.label }))
             .join(' · ')
         this.breakdown.hidden = counted.length === 0
     }
@@ -1066,8 +1077,8 @@ class PivotEntry {
         if (this.phase !== 'failed') return
 
         const text = el('span', 'pvt-pivot-error-text')
-        text.textContent = 'Couldn\'t reach the source.'
-        const retry = this.button('Retry', false, () => {
+        text.textContent = this.i18n.t('pivot.entry.error')
+        const retry = this.button(this.i18n.t('pivot.retry'), false, () => {
             this.uiManager.graph.pivots.invalidate(this.def.id, this.origin())
             void this.ask(false)
         })
@@ -1092,13 +1103,12 @@ class PivotEntry {
             // The count itself is in the head row directly above, so the line says what
             // it means rather than repeating it — and stays one line wide, which is what
             // holds the height equal to the cleared state.
-            this.gateLine.textContent = `Over the cap of ${fmt(cap as number)} — narrow further to fetch`
+            this.gateLine.textContent = this.i18n.t('pivot.entry.gate.over', { count: cap as number })
         } else if (this.refusal?.kind === 'ceiling') {
             this.gateLine.textContent =
-                `The source returned ${fmt(this.refusal.count)} candidates, over the ${fmt(this.refusal.limit)} limit.`
-                + ' Nothing was staged — narrow and run again.'
+                this.i18n.t('pivot.entry.gate.refused', { count: this.refusal.count, limit: this.refusal.limit })
         } else if (cap !== undefined && knownTotal(this.summary) !== undefined) {
-            this.gateLine.textContent = `Within the cap of ${fmt(cap)}`
+            this.gateLine.textContent = this.i18n.t('pivot.entry.gate.within', { count: cap })
         } else {
             this.gateLine.textContent = ''
         }
@@ -1156,7 +1166,7 @@ class PivotEntry {
         this.form = undefined
         if (!facets.length) return
 
-        const form = FormFactory.createForm({ fields: facets.map(facetToField) })
+        const form = FormFactory.createForm({ fields: facets.map(facet => facetToField(facet, this.i18n)) })
         FormFactory.setValues(form, { ...facetDefaults(facets), ...this.narrowing } as FormValues)
         this.form = form
         this.narrowingHost.appendChild(form)
@@ -1194,7 +1204,7 @@ class PivotEntry {
 
         const patched = facets
             .filter(facet => facet.type === 'multiselect')
-            .map(facet => FormFactory.updateCheckboxOptions(form, facet.key, facetToField(facet).options ?? []))
+            .map(facet => FormFactory.updateCheckboxOptions(form, facet.key, facetToField(facet, this.i18n).options ?? []))
             .every(Boolean)
 
         const elsewhere = facets.some((facet, index) => facet.type !== 'multiselect'
@@ -1219,7 +1229,7 @@ class PivotEntry {
         this.progress.hidden = this.phase !== 'fetching'
 
         if (this.phase === 'fetching') {
-            this.actions.appendChild(this.button('Cancel', false, () => {
+            this.actions.appendChild(this.button(this.i18n.t('pivot.cancel'), false, () => {
                 this.uiManager.graph.pivots.cancelFetch(this.def.id)
             }))
             return
@@ -1229,7 +1239,7 @@ class PivotEntry {
         if (this.phase === 'failed') return
 
         if (Object.keys(this.narrowing).length) {
-            this.actions.appendChild(this.button('Clear narrowing', false, () => {
+            this.actions.appendChild(this.button(this.i18n.t('pivot.entry.clearNarrowing'), false, () => {
                 if (this.form) FormFactory.setValues(this.form, facetDefaults(this.drawnFacets))
                 this.narrowing = {}
                 this.refusal = undefined
@@ -1238,9 +1248,9 @@ class PivotEntry {
         }
 
         if (!this.verbInHead()) {
-            const primary = this.def.summarize ? 'Fetch' : 'Run'
+            const primary = this.def.summarize ? 'fetch' : 'run'
             const busy = this.phase === 'summarizing' || this.phase === 'resummarizing'
-            const fetch = this.button(primary, true, () => void this.fetch())
+            const fetch = this.button(this.i18n.t(primary === 'fetch' ? 'pivot.entry.fetch' : 'pivot.entry.run'), true, () => void this.fetch())
             fetch.disabled = busy || this.overCap()
             this.actions.appendChild(fetch)
             if (this.offersIngest()) {
@@ -1253,7 +1263,7 @@ class PivotEntry {
         const staged = this.uiManager.graph.pivots.candidates(this.def.id)
         const waiting = staged?.nodes.filter(c => c.state !== 'rejected' && !c.deduped).length ?? 0
         if (staged && !staged.loading && waiting) {
-            const link = this.button(`${fmt(waiting)} in triage ▸`, false, () => {
+            const link = this.button(`${this.i18n.t('pivot.entry.inTriage', { count: waiting })} ▸`, false, () => {
                 // One review tab holds every staged provider, so this reveals a row in
                 // its strip rather than activating a tab of its own.
                 this.uiManager.pivotTriage?.reveal(this.def.id)
@@ -1268,7 +1278,7 @@ class PivotEntry {
         const rejected = this.uiManager.graph.pivots.rejectedRows(this.def.id)
         if (rejected.length) {
             const link = this.button(
-                `${fmt(rejected.length)} rejected ${this.showRejected ? '▾' : '▸'}`,
+                `${this.i18n.t('pivot.entry.rejected', { count: rejected.length })} ${this.showRejected ? '▾' : '▸'}`,
                 false,
                 () => {
                     this.showRejected = !this.showRejected
@@ -1276,7 +1286,7 @@ class PivotEntry {
                     this.paintDensity()
                 })
             link.classList.add('pvt-pivot-rejected-link')
-            link.title = 'What you rejected here this session. It is not offered again until restored.'
+            link.title = this.i18n.t('pivot.entry.rejected.title')
             link.setAttribute('aria-expanded', String(this.showRejected))
             this.actions.appendChild(link)
         }
@@ -1294,7 +1304,7 @@ class PivotEntry {
         if (this.rejectedHost.hidden) return
 
         const note = el('div', 'pvt-pivot-rejected-note')
-        note.textContent = 'Not offered again this session. Restoring one brings it back on the next run.'
+        note.textContent = this.i18n.t('pivot.entry.rejected.note')
         this.rejectedHost.appendChild(note)
 
         for (const row of rows.slice(0, REJECTED_SHOWN)) {
@@ -1303,11 +1313,11 @@ class PivotEntry {
             const label = el('span', 'pvt-pivot-rejected-label')
             label.textContent = row.label
             label.title = row.label === row.id ? row.id : `${row.label} · ${row.id}`
-            const restore = button('Offer this again on the next run', () => {
+            const restore = button(this.i18n.t('pivot.entry.restore.title'), () => {
                 this.uiManager.graph.pivots.unreject(this.def.id, row.id)
             })
             restore.className = 'pvt-pivot-rejected-restore'
-            restore.textContent = 'restore'
+            restore.textContent = this.i18n.t('pivot.entry.restore')
             line.append(label, restore)
             this.rejectedHost.appendChild(line)
         }
@@ -1315,15 +1325,15 @@ class PivotEntry {
         const foot = el('div', 'pvt-pivot-rejected-foot')
         if (rows.length > REJECTED_SHOWN) {
             const more = el('span', 'pvt-pivot-rejected-more')
-            more.textContent = `…and ${fmt(rows.length - REJECTED_SHOWN)} more`
+            more.textContent = this.i18n.t('pivot.more', { count: rows.length - REJECTED_SHOWN })
             foot.appendChild(more)
         }
         if (rows.length > 1) {
-            const all = button('Take back every rejection this pivot holds', () => {
+            const all = button(this.i18n.t('pivot.entry.restoreAll.title'), () => {
                 this.uiManager.graph.pivots.unrejectAll(this.def.id)
             })
             all.className = 'pvt-pivot-rejected-restore'
-            all.textContent = 'Restore all'
+            all.textContent = this.i18n.t('pivot.entry.restoreAll')
             foot.appendChild(all)
         }
         if (foot.childElementCount) this.rejectedHost.appendChild(foot)
@@ -1338,10 +1348,12 @@ class PivotEntry {
         return this.def.autoIngest === undefined
     }
 
-    private ingestButton(verb: string): HTMLButtonElement {
-        const ingest = this.button(`${verb} & ingest`, false, () => void this.fetch(true))
+    /** The run verb with "& ingest", in the words of the button beside it. */
+    private ingestButton(verb: 'run' | 'fetch'): HTMLButtonElement {
+        const label = this.i18n.t(verb === 'fetch' ? 'pivot.entry.fetchIngest' : 'pivot.entry.runIngest')
+        const ingest = this.button(label, false, () => void this.fetch(true))
         ingest.classList.add('pvt-pivot-ingest-button')
-        ingest.title = 'Add every result to the graph without reviewing it first'
+        ingest.title = this.i18n.t('pivot.entry.ingest.title')
         return ingest
     }
 
@@ -1371,10 +1383,13 @@ function button(title: string, onClick: () => void): HTMLButtonElement {
     return element
 }
 
-function strong(text: string): HTMLElement {
+/** `text` with the first `number` in it drawn bold; plain text when the message dropped it. */
+function withStrongNumber(text: string, number: string): (HTMLElement | string)[] {
+    const at = text.indexOf(number)
+    if (at < 0) return [text]
     const element = document.createElement('strong')
-    element.textContent = text
-    return element
+    element.textContent = number
+    return [text.slice(0, at), element, text.slice(at + number.length)].filter(part => part !== '')
 }
 
 function sameIds(a: Node[], b: Node[]): boolean {
@@ -1420,7 +1435,7 @@ function facetShape(facets: PivotFacet[]): string {
  * the numbers the analyst is narrowing by. A single-choice `select` stays a dropdown —
  * one line is all it ever shows.
  */
-function facetToField(facet: PivotFacet): FieldConfig {
+function facetToField(facet: PivotFacet, i18n: I18n): FieldConfig {
     const label = facet.label ?? FormFactory.niceLabelFromKey(facet.key)
     if (facet.type === 'boolean') {
         return {
@@ -1442,7 +1457,7 @@ function facetToField(facet: PivotFacet): FieldConfig {
                 : {
                     label: option.count === undefined
                         ? option.label
-                        : `${option.label}  ${fmt(option.count)}`,
+                        : `${option.label}  ${i18n.formatNumber(option.count)}`,
                     value: option.value,
                 }
         ))

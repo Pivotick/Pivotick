@@ -3,14 +3,13 @@ import { closeIcon, sparkles } from '../../icons'
 import { UIComponent } from '../../UIComponent'
 import type { UIManager } from '../../UIManager'
 import { TriagePane } from './TriagePane'
+import type { I18n } from '../../../i18n/I18n'
 
 /** The one dock tab every staged set shares. Providers are tabs *inside* it. */
 export const TRIAGE_TAB_ID = 'pivot-triage'
 
 /** The review tab sits after the built-in table rather than in front of it. */
 const TAB_ORDER = 10
-
-const fmt = (value: number): string => value.toLocaleString()
 
 /** One provider in the strip: the row, and the parts of it that change on their own. */
 interface StripItem {
@@ -168,6 +167,7 @@ export class PivotTriage extends UIComponent {
     private build(set: PivotCandidateSet): TriagePane {
         return new TriagePane(set, {
             pivots: this.pivots,
+            i18n: this.i18n,
             ingest: (pivotId, options) => void this.ingest(pivotId, options?.group),
             canGroup: this.uiManager.graph.simplify.isEnabled(),
             rerun: from => void this.pivots.run(from.pivotId, from.origin, from.narrowing),
@@ -226,11 +226,11 @@ export class PivotTriage extends UIComponent {
     private tabLabel(): string {
         let waiting = 0
         for (const pane of this.panes.values()) waiting += pane.waiting()
-        if (waiting > 0) return `Review (${fmt(waiting)})`
+        if (waiting > 0) return this.i18n.t('pivot.review.tabWaiting', { count: waiting })
         // A run in flight is the only reason this tab exists before there is anything to
         // review, and the folded dock shows this strip and little else — so the label is
         // where a one-click run says it is still working.
-        return this.pivots.staged().some(set => set.loading) ? 'Review…' : 'Review'
+        return this.i18n.t(this.pivots.staged().some(set => set.loading) ? 'pivot.review.tabLoading' : 'pivot.review.tab')
     }
 
     private pane(): TriagePane | undefined {
@@ -252,7 +252,7 @@ export class PivotTriage extends UIComponent {
             this.strip.className = 'pvt-review-strip'
             this.strip.setAttribute('role', 'tablist')
             this.strip.setAttribute('aria-orientation', 'vertical')
-            this.strip.setAttribute('aria-label', 'Staged providers')
+            this.strip.setAttribute('aria-label', this.i18n.t('pivot.review.strip.aria'))
             // Delegated: the strip is redrawn as providers come and go, and a listener
             // per row would accumulate behind it.
             this.listen(this.strip, 'click', event => {
@@ -399,9 +399,9 @@ export class PivotTriage extends UIComponent {
         const actions = document.createElement('div')
         actions.className = 'pvt-review-actions'
         actions.hidden = true
-        this.closeFailed = this.action('Close failed', () => this.closeMany(failed))
+        this.closeFailed = this.action(this.i18n.t('pivot.review.closeFailed'), () => this.closeMany(failed))
         this.closeFailed.classList.add('pvt-review-action-danger')
-        this.closeAll = this.action('Close all', () => this.closeMany(() => true))
+        this.closeAll = this.action(this.i18n.t('pivot.review.closeAll'), () => this.closeMany(() => true))
         actions.append(this.closeFailed, this.closeAll)
         this.actions = actions
         return actions
@@ -424,10 +424,8 @@ export class PivotTriage extends UIComponent {
         // dressed as a shortcut.
         this.actions.hidden = staged.length < 2
         this.closeFailed.hidden = broken === 0
-        this.closeFailed.title = broken === 1
-            ? 'Drop the one provider whose fetch brought nothing back'
-            : `Drop the ${fmt(broken)} providers whose fetches brought nothing back`
-        this.closeAll.title = `Drop all ${fmt(staged.length)} staged providers. Nothing is rejected.`
+        this.closeFailed.title = this.i18n.t('pivot.review.closeFailed.title', { count: broken })
+        this.closeAll.title = this.i18n.t('pivot.review.closeAll.title', { count: staged.length })
     }
 
     /**
@@ -499,17 +497,18 @@ export class PivotTriage extends UIComponent {
         // A set with no rows to count is in one of two states, and the row says which.
         const broken = failed(set)
         item.root.classList.toggle('pvt-review-tab-failed', broken)
-        item.count.textContent = set.loading ? '…' : broken ? '!' : waiting ? fmt(waiting) : ''
+        item.count.textContent = set.loading ? '…' : broken ? '!' : waiting ? this.i18n.formatNumber(waiting) : ''
 
         // Also the accessible name, since '…' and '!' are marks rather than words.
-        const summary = set.loading ? 'fetching'
-            : broken ? 'the fetch failed'
-                : waiting ? `${fmt(waiting)} waiting for a verdict`
-                    : 'nothing waiting'
-        item.main.title = `${set.label} — ${summary}`
-        item.main.setAttribute('aria-label', `${set.label} — ${summary}`)
-        item.close.setAttribute('aria-label', `Close ${set.label}`)
-        item.close.title = 'Drop these candidates. Nothing is rejected.'
+        const provider = set.label
+        const summary = set.loading ? this.i18n.t('pivot.review.item.fetching', { provider })
+            : broken ? this.i18n.t('pivot.review.item.failed', { provider })
+                : waiting ? this.i18n.t('pivot.review.item.waiting', { provider, count: waiting })
+                    : this.i18n.t('pivot.review.item.idle', { provider })
+        item.main.title = summary
+        item.main.setAttribute('aria-label', summary)
+        item.close.setAttribute('aria-label', this.i18n.t('pivot.review.item.close.aria', { provider }))
+        item.close.title = this.i18n.t('pivot.review.item.close.title')
     }
 
     /* ---------- ingest, and the report that follows it ---------- */
@@ -538,12 +537,12 @@ export class PivotTriage extends UIComponent {
         try {
             outcome = await this.pivots.ingest(pivotId, 'triage', { group })
         } catch (error) {
-            this.uiManager.graph.notifier.error('Ingest failed', String((error as Error)?.message ?? error))
+            this.uiManager.graph.notifier.error(this.i18n.t('pivot.ingest.failed'), String((error as Error)?.message ?? error))
             return
         }
 
         if (outcome.status === 'vetoed') {
-            this.uiManager.graph.notifier.info('Ingest cancelled')
+            this.uiManager.graph.notifier.info(this.i18n.t('pivot.ingest.cancelled'))
             return
         }
 
@@ -572,10 +571,10 @@ export class PivotTriage extends UIComponent {
      */
     private toastIngest(landed: number, asked: number, edges: number): void {
         if (!landed && !edges) {
-            this.uiManager.graph.notifier.info('Nothing was ingested')
+            this.uiManager.graph.notifier.info(this.i18n.t('pivot.ingest.nothing'))
             return
         }
-        this.uiManager.graph.notifier.success(ingestTitle(landed, asked, edges))
+        this.uiManager.graph.notifier.success(ingestTitle(this.i18n, landed, asked, edges))
     }
 }
 
@@ -586,13 +585,20 @@ export class PivotTriage extends UIComponent {
 const failed = (set: PivotCandidateSet): boolean => Boolean(set.error || set.refused)
 
 /** `Ingested 12 nodes, 14 edges` — or `9 of 12` when a hook landed fewer than asked. */
-function ingestTitle(landed: number, asked: number, edges: number): string {
+function ingestTitle(i18n: I18n, landed: number, asked: number, edges: number): string {
     // A run whose whole result was edges between nodes already on canvas. Saying
     // `0 nodes` first would lead with the half that never had anything in it.
-    if (!landed && edges) return `Ingested ${edges.toLocaleString()} ${edges === 1 ? 'edge' : 'edges'}`
-    const nodes = asked && landed < asked
-        ? `Ingested ${landed.toLocaleString()} of ${asked.toLocaleString()} nodes`
-        : `Ingested ${landed.toLocaleString()} ${landed === 1 ? 'node' : 'nodes'}`
-    if (!edges) return nodes
-    return `${nodes}, ${edges.toLocaleString()} ${edges === 1 ? 'edge' : 'edges'}`
+    if (!landed && edges) return i18n.t('pivot.ingest.edges', { count: edges })
+    const fewer = asked && landed < asked
+    if (!edges) {
+        return fewer
+            ? i18n.t('pivot.ingest.someNodes', { landed, count: asked })
+            : i18n.t('pivot.ingest.nodes', { count: landed })
+    }
+    return i18n.t('pivot.ingest.nodesAndEdges', {
+        nodes: fewer
+            ? i18n.t('pivot.ingest.nodesOfAsked', { landed, count: asked })
+            : i18n.t('count.nodes', { count: landed }),
+        edges: i18n.t('count.edges', { count: edges }),
+    })
 }
