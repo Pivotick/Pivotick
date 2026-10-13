@@ -64,6 +64,7 @@ function renderValue(
     value: JsonValue,
     container: HTMLElement,
     lineCounter: { value: number },
+    i18n: I18n,
     depth = 0,
     key?: string,
     isLast = true,
@@ -129,10 +130,10 @@ function renderValue(
 
     summaryContent.innerHTML += `
         <span class="json-bracket">${isArray ? '[' : '{'}</span>
-        <span class="pvt-json-viewer__meta">
-            ${entries.length} ${isArray ? 'items' : 'properties'}
-        </span>
+        <span class="pvt-json-viewer__meta"></span>
     `
+    summaryContent.querySelector('.pvt-json-viewer__meta')!.textContent =
+        i18n.t(isArray ? 'jsonViewer.items' : 'jsonViewer.properties', { count: entries.length })
 
     const summary = document.createElement('summary')
     summary.className = 'pvt-json-viewer__summary'
@@ -152,6 +153,7 @@ function renderValue(
             childValue,
             children,
             lineCounter,
+            i18n,
             depth + 1,
             isArray ? undefined : childKey,
             index === entries.length - 1,
@@ -221,7 +223,7 @@ export function createJsonViewer(data: JsonValue, i18n: I18n): HTMLDivElement {
     const body = document.createElement('div')
     body.className = 'pvt-json-viewer__body'
 
-    renderValue(data, body, { value: 1 })
+    renderValue(data, body, { value: 1 }, i18n)
 
     container.appendChild(toolbar)
     container.appendChild(body)

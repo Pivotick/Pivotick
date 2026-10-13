@@ -358,7 +358,7 @@ export class HistoryMenu extends UIComponent {
             const ghost = armedRow.querySelector('.pvt-history-ghost')
             if (ghost) {
                 ghost.innerHTML = direction === 'undo' ? arrowDown : arrowUp
-                ghost.append('NOW')
+                ghost.append(this.i18n.t('history.menu.now'))
             }
             if (!preview.entries.length || preview.skipped.length === preview.entries.length) {
                 armedRow.classList.add('noop')

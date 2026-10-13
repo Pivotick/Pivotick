@@ -73,6 +73,8 @@ export const shellMessages = {
     // JSON viewer
     'jsonViewer.copy': 'Copy JSON',
     'jsonViewer.copied': 'Copied!',
+    'jsonViewer.items': { one: '{count} item', other: '{count} items' },
+    'jsonViewer.properties': { one: '{count} property', other: '{count} properties' },
 
     // Modals
     'modal.ok': 'Ok',
