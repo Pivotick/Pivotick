@@ -573,10 +573,15 @@ export class LegendSectionView {
     private applyFilter(emitEvent = true) {
         const engine = this.uiManager.graph.queryEngine
         const visible = this.entries.filter(entry => !this.hiddenIds.has(entry.id)).map(entry => entry.id)
+        // An adopted filter the panel switched to "is not" stays that way round: it then
+        // names what is hidden, and a value nobody listed yet keeps showing.
+        const negated = this.adoptedFacet !== undefined && engine.getFilters()[this.engineKey]?.negate === true
 
         this.applyingFilter = true
         try {
-            const config = { value: visible, matchMode: this.adoptedFacet?.matchMode ?? 'exact' as const }
+            const config = negated
+                ? { value: [...this.hiddenIds], matchMode: this.adoptedFacet?.matchMode ?? 'exact' as const, negate: true }
+                : { value: visible, matchMode: this.adoptedFacet?.matchMode ?? 'exact' as const }
             if (this.hiddenIds.size === 0) this.removeOwnFilter(this.filterKey)
             else if (this.scope === 'edge') engine.setEdgeFilter(this.filterKey, config)
             else engine.setFilter(this.filterKey, config)
@@ -612,6 +617,14 @@ export class LegendSectionView {
         if (config === undefined) {
             if (this.hiddenIds.size === 0) return
             this.hiddenIds.clear()
+            this.applyEntryStates()
+            return
+        }
+
+        if (config.negate) {
+            // "Is not" names the hidden entries rather than the shown ones.
+            const hidden = new Set(this.toIdArray(config.value))
+            this.hiddenIds = new Set(this.entries.filter(entry => hidden.has(entry.id)).map(entry => entry.id))
             this.applyEntryStates()
             return
         }

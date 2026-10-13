@@ -30,6 +30,16 @@ export interface FilterFieldConfig {
     /** @default 'exact' — or the declared facet's `matchMode`, when there is one. */
     matchMode?: FilterMatchMode
     value: FilterValue
+    /**
+     * Keep the elements that do **not** match: a list reads *none of*, a text field
+     * *doesn't contain*, a pattern *doesn't match*, a range *outside*.
+     *
+     * An element with no value for the key is kept, so `negate` splits the graph
+     * exactly against the same filter without it. A value that constrains nothing
+     * (an empty list, a blank string, an open range) still constrains nothing.
+     * @default false
+     */
+    negate?: boolean
 }
 
 export type GraphFilters = Record<string, FilterFieldConfig>

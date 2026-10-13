@@ -15,6 +15,8 @@ const MANUALLY_HIDDEN_FILTER_KEY = 'manually_hidden'
  * strip it, and it never reaches consumer code.
  */
 export const EDGE_FILTER_PREFIX = 'edge:'
+/** What a facet function that threw answers, told apart from any value it could return. */
+const FACET_THREW = Symbol('facetThrew')
 export class GraphQueryEngine {
     private graph: Graph
     private listeners: Record<keyof GraphQueryEvents, Array<GraphQueryEvents[keyof GraphQueryEvents]>>
@@ -481,12 +483,13 @@ export class GraphQueryEngine {
             // An empty pick hides the layer outright. A node multiselect reads an empty
             // list as "no constraint" — that is how the panel's form says *unset* — but a
             // layer control writes exactly what stays on, so nothing has to mean nothing.
-            if (Array.isArray(value.value) && value.value.length === 0) return false
+            // "None of nothing" excludes nothing, so a negated empty pick is left alone.
+            if (Array.isArray(value.value) && value.value.length === 0 && !value.negate) return false
 
             const bareKey = key.slice(EDGE_FILTER_PREFIX.length)
             const facet = this.edgeFacetFor(bareKey)
             if (facet?.predicate) {
-                if (!this.runFacetFn(key, () => facet.predicate!(edge, value.value))) return false
+                if (!this.predicatePasses(key, value, () => facet.predicate!(edge, value.value))) return false
                 continue
             }
 
@@ -498,7 +501,7 @@ export class GraphQueryEngine {
                 type: facet?.type ?? 'multiselect',
                 matchMode: facet?.matchMode,
             }
-            if (!this.matches(edgeValue, value, matching)) return false
+            if (!this.passes(edgeValue, value, matching)) return false
         }
         return true
     }
@@ -556,16 +559,52 @@ export class GraphQueryEngine {
 
             const facet = this.facetFor(key)
             if (facet?.predicate) {
-                if (!this.runFacetFn(key, () => facet.predicate!(node, value.value))) return false
+                if (!this.predicatePasses(key, value, () => facet.predicate!(node, value.value))) return false
                 continue
             }
 
             const nodeValue = facet?.accessor
                 ? this.runFacetFn(key, () => facet.accessor!(node))
                 : node.getData()[key]
-            if (!this.matches(nodeValue, value, facet)) return false
+            if (!this.passes(nodeValue, value, facet)) return false
         }
         return true
+    }
+
+    /**
+     * Does a value survive one filter, `negate` included? A negated filter keeps what
+     * {@link matches} rejects, plus the elements with no value at all: a node with no
+     * type is not a domain.
+     */
+    private passes(value: unknown, filterConfig: FilterFieldConfig, facet?: FacetMatching): boolean {
+        if (!filterConfig.negate) return this.matches(value, filterConfig, facet)
+        if (value === undefined || value === null) return true
+        // Inverting "no constraint" would hide everything.
+        if (this.constrainsNothing(filterConfig, facet)) return true
+        return !this.matches(value, filterConfig, facet)
+    }
+
+    /**
+     * A predicate facet under `negate`: its answer is inverted, except when it threw —
+     * a broken facet hides what it hid before rather than suddenly hiding the rest.
+     */
+    private predicatePasses(key: string, filterConfig: FilterFieldConfig, run: () => boolean): boolean {
+        const hit = this.runFacetFn(key, run, FACET_THREW)
+        if (hit === FACET_THREW) return false
+        return filterConfig.negate ? !hit : Boolean(hit)
+    }
+
+    /** Whether a filter's value narrows nothing, so it means the same either way round. */
+    private constrainsNothing(filterConfig: FilterFieldConfig, facet?: FacetMatching): boolean {
+        const filterValue = filterConfig.value
+        if (filterValue === undefined || filterValue === null) return true
+        if (Array.isArray(filterValue)) return filterValue.length === 0
+        if (typeof filterValue === 'string') {
+            if (filterValue.trim() === '') return true
+            return facet?.type === 'regex' && this.compileRegex(filterValue) === null
+        }
+        if (typeof filterValue === 'object') return filterValue.min === undefined && filterValue.max === undefined
+        return false
     }
 
     /**
@@ -574,7 +613,7 @@ export class GraphQueryEngine {
      * Keyed by the *filter* key, so a node and an edge facet of the same name are
      * reported apart.
      */
-    private runFacetFn<T>(key: string, fn: () => T): T | undefined {
+    private runFacetFn<T, F = undefined>(key: string, fn: () => T, onThrow?: F): T | F {
         try {
             return fn()
         } catch (error) {
@@ -582,7 +621,7 @@ export class GraphQueryEngine {
                 this.brokenFacets.add(key)
                 console.warn(`Pivotick: filter facet '${key}' threw; it will not match anything.`, error)
             }
-            return undefined
+            return onThrow as F
         }
     }
 
