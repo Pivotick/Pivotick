@@ -57,6 +57,7 @@ import {
     buildAutoFixture, fixtures, HUB_PICKS,
     type AutoFixtureSpec, type BuiltFixture, type FixtureName, type RawNote,
 } from './fixtures'
+import { pseudoMessages, PSEUDO_CLOSE, PSEUDO_OPEN } from './pseudoLocale'
 import { measureLayout, type MeasuredLayout } from '../../../src/AutoPhysics'
 import type { PhysicsKnobs } from '../../../src/Simulation'
 
@@ -907,6 +908,62 @@ function panelButton(className: string, label: string, onClick: () => void): HTM
 
 type PlainObject = Record<string, unknown>
 
+/** Attributes a person perceives: read aloud, shown on hover, or written in an empty field. */
+const PERCEIVED_ATTRIBUTES = ['title', 'aria-label', 'placeholder', 'alt']
+const LATIN = /[A-Za-z]/
+const UNREAD_ELEMENTS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE'])
+
+/**
+ * `text` with the pseudo-locale's marked spans taken out, innermost first. A span cut
+ * short by a truncation runs to the end, and one whose start is in another text node
+ * runs from the start.
+ */
+function outsideMarks(text: string): string {
+    const span = new RegExp(`${PSEUDO_OPEN}[^${PSEUDO_OPEN}${PSEUDO_CLOSE}]*${PSEUDO_CLOSE}`, 'g')
+    let rest = text
+    let previous
+    do {
+        previous = rest
+        rest = rest.replace(span, '')
+    } while (rest !== previous)
+    rest = rest.slice(rest.lastIndexOf(PSEUDO_CLOSE) + 1)
+    const open = rest.indexOf(PSEUDO_OPEN)
+    return open === -1 ? rest : rest.slice(0, open)
+}
+
+/** An element as `tag.class`, under up to three ancestors or up to one with an id: enough to find it again. */
+function describe(element: Element): string {
+    const parts: string[] = []
+    for (let at: Element | null = element; at && at !== document.body && parts.length < 4; at = at.parentElement) {
+        const cls = at.classList[0]
+        parts.unshift(at.id ? `${at.localName}#${at.id}` : cls ? `${at.localName}.${cls}` : at.localName)
+        if (at.id) break
+    }
+    return parts.join(' > ')
+}
+
+/** See {@link HarnessApi.untranslatedText}. */
+function findUntranslatedText(root: Element): UntranslatedText[] {
+    const found: UntranslatedText[] = []
+    const visit = (element: Element): void => {
+        if (UNREAD_ELEMENTS.has(element.tagName)) return
+        for (const attribute of PERCEIVED_ATTRIBUTES) {
+            const value = element.getAttribute(attribute)
+            if (value && LATIN.test(outsideMarks(value))) found.push({ text: `@${attribute}: ${value}`, where: describe(element) })
+        }
+        for (const child of element.childNodes) {
+            if (child.nodeType === child.TEXT_NODE) {
+                const text = child.textContent ?? ''
+                if (LATIN.test(outsideMarks(text))) found.push({ text: text.trim(), where: describe(element) })
+            } else if (child instanceof Element) {
+                visit(child)
+            }
+        }
+    }
+    visit(root)
+    return found
+}
+
 function isPlainObject(value: unknown): value is PlainObject {
     return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -1160,6 +1217,14 @@ export interface TranslatedSpec {
     throwing?: string[]
     /** The rest of the `i18n` options: `locale`, `messages`. */
     i18n?: PlainObject
+}
+
+/** A piece of text {@link HarnessApi.untranslatedText} found outside the catalogue. */
+export interface UntranslatedText {
+    /** The text as found, or `@title: …` for an attribute. */
+    text: string
+    /** Where: the element's tag and first class, with up to three ancestors. */
+    where: string
 }
 
 /** One call the host's `translate` received. */
@@ -1513,6 +1578,18 @@ export interface HarnessApi {
     loadTranslated(name: FixtureName, spec: TranslatedSpec): Promise<void>
     /** Every call `translate` received since {@link loadTranslated}. */
     translateCalls(): TranslateCall[]
+    /**
+     * Load the {@link fixtures.greek} scene in full mode under the pseudo-locale: the
+     * library's text from {@link pseudoMessages}, the host's in Greek, `locale: 'el'` so
+     * the `Intl` formats write Greek too. Two Greek pivots are registered.
+     */
+    loadPseudo(overrides?: PlainObject): Promise<void>
+    /**
+     * Every piece of text on the page, in text nodes and in the attributes a person
+     * perceives, that still holds a Latin letter once the pseudo-locale's marked spans
+     * are taken out. Under {@link loadPseudo} that is text that skipped the catalogue.
+     */
+    untranslatedText(): UntranslatedText[]
     /**
      * Select several nodes at once (multi-selection). Renders every node's
      * selection highlight and — with focus mode on — dims the nodes/edges adjacent
@@ -3064,6 +3141,84 @@ class Harness implements HarnessApi {
 
     translateCalls(): TranslateCall[] {
         return [...this.recordedTranslateCalls]
+    }
+
+    async loadPseudo(overrides: PlainObject = {}): Promise<void> {
+        const typeOf = (node: Node) => node.getData()?.['είδος'] as string | undefined
+        const pivots: PivotDefinition[] = [
+            {
+                id: 'συσχετίσεις',
+                label: 'Συσχετίσεις',
+                autoIngest: false,
+                summarize: () => ({
+                    total: 3,
+                    facets: [
+                        {
+                            key: 'είδος', label: 'Είδος', type: 'multiselect', options: [
+                                { label: 'τομέας', value: 'τομέας', count: 2 },
+                                { label: 'υπολογιστής', value: 'υπολογιστής', count: 1 },
+                            ],
+                        },
+                        { key: 'πρώτη', label: 'Πρώτη εμφάνιση', type: 'numberRange' },
+                    ],
+                }),
+                fetch: (nodes) => ({
+                    nodes: [1, 2, 3].map((i) => ({ id: `σ${i}`, data: { label: `συσχέτιση ${i}`, 'είδος': i === 3 ? 'υπολογιστής' : 'τομέας' } })),
+                    edges: nodes.flatMap((origin) => [1, 2, 3].map((i) => ({ from: origin.id, to: `σ${i}`, data: { label: 'σχετίζεται' } }))),
+                }),
+                save: (payload) => ({ savedNodeIds: payload.nodes.map((node) => node.id) }),
+            },
+            {
+                id: 'αρχείο',
+                label: 'Αναζήτηση στο αρχείο',
+                origin: 'none',
+                summarize: () => ({ total: 2, facets: [{ key: 'ερώτημα', label: 'Ερώτημα', type: 'text' }] }),
+                fetch: () => ({
+                    nodes: [1, 2].map((i) => ({ id: `ρ${i}`, data: { label: `εύρημα ${i}`, 'είδος': 'αρχείο' } })),
+                    edges: [],
+                }),
+            },
+            {
+                // More than it may take: its gate refuses the run.
+                id: 'πληθώρα',
+                label: 'Όλα τα συμβάντα',
+                maxCandidates: 5,
+                summarize: () => ({ total: 40 }),
+                fetch: () => ({ nodes: [], edges: [] }),
+            },
+            {
+                // The source fails; its message is the host's, in Greek.
+                id: 'αποτυχία',
+                label: 'Απομακρυσμένη πηγή',
+                summarize: () => { throw new Error('η πηγή δεν απαντά') },
+                fetch: () => { throw new Error('η πηγή δεν απαντά') },
+            },
+        ]
+        await this.boot('greek', mergeOptions({
+            UI: {
+                mode: 'full',
+                sidebar: { collapsed: false },
+                legend: { key: 'είδος', title: 'Είδη' },
+                filter: { edgeFacets: [{ key: 'label', label: 'Σχέση' }] },
+            },
+            render: { nodeTypeAccessor: typeOf },
+            pivots,
+            // The library's confirm and prompt modals, around host fields written in Greek.
+            callbacks: {
+                onBeforeDelete: (ctx: DeleteContext) => ctx.confirm(),
+                onBeforeNodeCreate: async (ctx: NodeCreateContext) => {
+                    const data = await ctx.promptData({ fields: [{ key: 'label', label: 'Όνομα', type: 'text' }] })
+                    return data ? { accept: true, data } : false
+                },
+                // Slow, so the busy indicator shows while it is awaited.
+                onBeforeEdgeCreate: () => new Promise<boolean>((resolve) => setTimeout(() => resolve(true), 4000)),
+            },
+            i18n: { locale: 'el', messages: pseudoMessages() },
+        }, overrides))
+    }
+
+    untranslatedText(): UntranslatedText[] {
+        return findUntranslatedText(document.body)
     }
 
     edgeEndMarker(id: string, graph: 'tested' | 'other' = 'tested'): MarkerResolution | null {

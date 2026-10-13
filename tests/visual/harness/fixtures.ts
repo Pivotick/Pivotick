@@ -1151,6 +1151,39 @@ export const fixtures = {
         return { nodes: [hub, pg, redis, auth, web, mobile, admin, health], edges, notes: [] }
     },
 
+    /**
+     * A network whose every host string is Greek: ids, labels, types, property keys and
+     * values, edge labels, the note and the cluster. Under the pseudo-locale the library's
+     * own text is accented Latin inside markers, so any plain Latin letter on screen is
+     * text that skipped the catalogue. Two routers, two hosts, a domain and a cluster
+     * holding two files.
+     */
+    greek(): BuiltFixture {
+        const node = (id: string, x: number, y: number, label: string, type: string, extra: Record<string, unknown> = {}) =>
+            mkNode(id, x, y, { label, 'είδος': type, 'περιγραφή': `${label} του δικτύου`, 'θύρες': 48.5, ...extra })
+        const n = {
+            α: node('α', 0, -120, 'Κεντρικός δρομολογητής', 'δρομολογητής', { 'ετικέτες': ['κρίσιμο', 'δίκτυο'] }),
+            β: node('β', -150, -20, 'Δευτερεύων δρομολογητής', 'δρομολογητής'),
+            γ: node('γ', 150, -20, 'Σταθμός εργασίας', 'υπολογιστής'),
+            δ: node('δ', -150, 110, 'Διακομιστής αρχείων', 'υπολογιστής'),
+            ε: node('ε', 150, 110, 'παράδειγμα.ελ', 'τομέας'),
+        }
+        const ζ = mkCluster('ζ', 0, 200, [
+            mkNode('η', -40, 200, { label: 'αναφορά', 'είδος': 'αρχείο' }),
+            mkNode('θ', 40, 200, { label: 'σημειώσεις', 'είδος': 'αρχείο' }),
+        ], { label: 'Συνημμένα', 'είδος': 'ομάδα' })
+        markCluster(ζ)
+        const edges = [
+            mkEdge('α-β', n.α, n.β, { label: 'συνδέεται' }),
+            mkEdge('α-γ', n.α, n.γ, { label: 'συνδέεται' }),
+            mkEdge('β-δ', n.β, n.δ, { label: 'εξυπηρετεί' }),
+            mkEdge('γ-ε', n.γ, n.ε, { label: 'επιλύει' }),
+            mkEdge('δ-ζ', n.δ, ζ),
+        ]
+        const notes: RawNote[] = [{ id: 'σημείωμα', x: 260, y: -140, content: 'Ελέγξτε τον **δρομολογητή**.' }]
+        return { nodes: [...Object.values(n), ζ], edges, notes }
+    },
+
     filterable(): BuiltFixture {
         const node = (id: string, x: number, y: number, type: string, ports: number) =>
             mkNode(id, x, y, { type, ports })

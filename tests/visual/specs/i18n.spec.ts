@@ -102,6 +102,13 @@ test.describe('i18n: messages', () => {
         const english = { one: '{count} node', other: '{count} nodes' }
         expect(await countedUnder(page, 'en', english, [0, 1, 2])).toEqual(['0 nodes', '1 node', '2 nodes'])
     })
+
+    test('a built-in English message keeps English plurals under a locale that has no translation for it', async ({ page }) => {
+        await loadFixture(page, 'empty', { i18n: { locale: 'fr' } })
+        // French counts zero as one; the English left in its place must not say "0 node".
+        expect(await message(page, 'count.nodes', { count: 0 })).toBe('0 nodes')
+        expect(await message(page, 'count.nodes', { count: 1 })).toBe('1 node')
+    })
 })
 
 test.describe('i18n: translate', () => {
