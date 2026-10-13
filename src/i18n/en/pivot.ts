@@ -165,9 +165,15 @@ export const pivotMessages = {
     'pivot.triage.refused.sub': 'Nothing was staged — narrow and run again.',
     'pivot.triage.empty': 'No candidates came back',
     'pivot.triage.empty.sub': 'The narrowing may be tighter than the data.',
-    'pivot.triage.allRejected': 'All {count} were rejected earlier this session',
+    'pivot.triage.allRejected': {
+        one: 'The only candidate was rejected earlier this session',
+        other: 'All {count} were rejected earlier this session',
+    },
     'pivot.triage.allRejected.sub': 'Nothing new came back. Restoring one offers it again on the next run.',
-    'pivot.triage.allOnCanvas': 'All {count} are already on the canvas — nothing to triage',
+    'pivot.triage.allOnCanvas': {
+        one: 'The only candidate is already on the canvas — nothing to triage',
+        other: 'All {count} are already on the canvas — nothing to triage',
+    },
     'pivot.triage.allOnCanvas.sub': 'Nothing was changed: an id already here is left exactly as it was.',
     'pivot.triage.done': 'Nothing left to triage',
     'pivot.triage.done.ingested': '{count} ingested',
