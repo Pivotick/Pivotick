@@ -108,6 +108,9 @@ export const shellMessages = {
     'rail.simplify.groups': { one: '{count} group', other: '{count} groups' },
     'rail.simplify.folded': { one: '{count} node folded', other: '{count} nodes folded' },
 
+    // Slide panel
+    'slidePanel.empty': '- empty panel -',
+
     // Search
     'search.placeholder': 'Search',
     'search.hint.navigate': 'to navigate',

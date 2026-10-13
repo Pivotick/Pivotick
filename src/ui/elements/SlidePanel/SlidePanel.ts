@@ -50,7 +50,6 @@ export class SlidePanel extends UIComponent {
     private isOpen = false
 
     private DEFAULT_HEADER = null
-    private DEFAULT_BODY = '- empty panel -'
 
     constructor(uiManager: UIManager, options: SlidepanelOptions = {}) {
         super(uiManager)
@@ -61,7 +60,7 @@ export class SlidePanel extends UIComponent {
         }
 
         if (!this.options.body) {
-            this.options.body = this.DEFAULT_BODY
+            this.options.body = this.i18n.t('slidePanel.empty')
         }
     }
 
