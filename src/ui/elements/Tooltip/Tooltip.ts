@@ -160,7 +160,7 @@ export class Tooltip extends UIComponent {
     protected onAfterMount() {
         // Refit the live tooltip's title whenever it's resized (content change).
         if (this.tooltip) {
-            this.titleFit = new TitleFitController(this.tooltip)
+            this.titleFit = new TitleFitController(this.tooltip, this.i18n)
         }
     }
 
@@ -306,7 +306,7 @@ export class Tooltip extends UIComponent {
 
     /** A drawn node's name: a group's label, else what the header shows. */
     private drawnName(node: Node): string {
-        return node.isGroup ? this.uiManager.graph.simplify.labelOf((node as GroupNode).info) : nodeNameGetter(node, this.headerOptions())
+        return node.isGroup ? this.uiManager.graph.simplify.labelOf((node as GroupNode).info) : nodeNameGetter(node, this.headerOptions(), this.i18n)
     }
 
     public buildNodeTooltip(node: Node): HTMLDivElement {
@@ -337,12 +337,14 @@ export class Tooltip extends UIComponent {
 
         const group = node.isGroup ? (node as GroupNode).info : undefined
         const simplify = this.uiManager.graph.simplify
-        this.renderTitle(nameElem as HTMLElement, actionElem, group ? simplify.labelOf(group) : nodeNameGetter(node, this.headerOptions()))
-        subtitleElem.textContent = group ? `Group · ${simplify.ruleLabel(group.rule)}` : nodeDescriptionGetter(node, this.headerOptions())
+        this.renderTitle(nameElem as HTMLElement, actionElem, group ? simplify.labelOf(group) : nodeNameGetter(node, this.headerOptions(), this.i18n))
+        subtitleElem.textContent = group
+            ? this.i18n.t('groupSummary.subtitle', { rule: simplify.ruleLabel(group.rule) })
+            : nodeDescriptionGetter(node, this.headerOptions(), this.i18n)
 
         if (this.options.allowPinning) {
             const pinButton = createButton({
-                title: 'Pin Tooltip',
+                title: this.i18n.t('tooltip.pin'),
                 variant: 'outline-primary',
                 size: 'sm',
                 class: 'pin-button',
@@ -359,8 +361,8 @@ export class Tooltip extends UIComponent {
             tooltipContainer.appendChild(mainheaderContent)
             tooltipContainer.appendChild(buildGroupSummary(simplify, group, {
                 nameOf: (anchor) => this.drawnName(anchor),
-                hint: 'Double-click to open · Select for the member list',
-            }))
+                hint: this.i18n.t('tooltip.groupHint'),
+            }, this.i18n))
             const extra = this.renderScope.content(this.uiManager.getOptions().tooltip.renderGroupExtra, group)
             if (extra) {
                 tooltipContainer.appendChild(createHtmlElement('div', { class: 'pivotick-extra-content-container' }, [extra]))
@@ -385,7 +387,7 @@ export class Tooltip extends UIComponent {
         const propertiesContainer = this.renderScope.resolve(
             (ctx) => nodePropertiesGetter(node, this.propertiesOptions(), ctx),
             (properties) => createHtmlElement('div', { class: 'pvt-properties-container' }, [
-                createPropertyList(properties, node)
+                createPropertyList(properties, node, this.i18n)
             ]) as HTMLDivElement,
         )
 
@@ -395,7 +397,7 @@ export class Tooltip extends UIComponent {
         // a pinned copy) opens the full-resolution lightbox — see the delegated handler below.
         const imageHref = getNodeImageHref(node)
         if (imageHref) {
-            tooltipContainer.appendChild(this.buildTooltipImage(imageHref, nodeNameGetter(node, this.headerOptions())))
+            tooltipContainer.appendChild(this.buildTooltipImage(imageHref, nodeNameGetter(node, this.headerOptions(), this.i18n)))
         }
         if (propertiesContainer) tooltipContainer.appendChild(propertiesContainer)
 
@@ -420,10 +422,10 @@ export class Tooltip extends UIComponent {
             class: 'pvt-tooltip-image',
             src,
             alt: title ?? '',
-            title: 'Click to view full size',
+            title: this.i18n.t('tooltip.image.title'),
             'data-pvt-lightbox-src': src,
         }) as HTMLImageElement
-        attachHtmlImageFallback(image)
+        attachHtmlImageFallback(image, this.i18n)
         return createHtmlElement('div', { class: 'pvt-tooltip-image-container' }, [image]) as HTMLDivElement
     }
 
@@ -478,7 +480,7 @@ export class Tooltip extends UIComponent {
         const actionElem = tooltipContainer.querySelector('.pvt-mainheader-nodeinfo-action') as HTMLElement | null
 
         const pinButton = createButton({
-            title: 'Pin Tooltip',
+            title: this.i18n.t('tooltip.pin'),
             variant: 'outline-primary',
             size: 'sm',
             class: 'pin-button',
@@ -502,13 +504,13 @@ export class Tooltip extends UIComponent {
             return
         }
 
-        this.renderTitle(nameElem as HTMLElement, actionElem, edgeNameGetter(edge, this.headerOptions()))
-        subtitleElem.textContent = edgeDescriptionGetter(edge, this.headerOptions())
+        this.renderTitle(nameElem as HTMLElement, actionElem, edgeNameGetter(edge, this.headerOptions(), this.i18n))
+        subtitleElem.textContent = edgeDescriptionGetter(edge, this.headerOptions(), this.i18n)
 
         const propertiesContainer = this.renderScope.resolve(
             (ctx) => edgePropertiesGetter(edge, this.propertiesOptions(), ctx),
             (properties) => createHtmlElement('div', { class: 'pvt-properties-container' }, [
-                createPropertyList(properties, edge)
+                createPropertyList(properties, edge, this.i18n)
             ]) as HTMLDivElement,
         )
 
@@ -645,14 +647,14 @@ export class Tooltip extends UIComponent {
         // cloneNode() also dropped the copy buttons' listeners (property values and the
         // fitted title). Rebuild each from its stashed text, keeping its layout classes.
         clonedTooltip.querySelectorAll<HTMLElement>('.pvt-prop-copy').forEach((dead) => {
-            const fresh = createCopyButton(dead.dataset.copyText ?? '')
+            const fresh = createCopyButton(dead.dataset.copyText ?? '', this.i18n)
             fresh.className = dead.className
             dead.replaceWith(fresh)
         })
 
         clonedTooltip.querySelector('.pin-button')?.remove()
         const closeButton = createButton({
-            title: 'Close Tooltip',
+            title: this.i18n.t('tooltip.close'),
             variant: 'outline-danger',
             size: 'sm',
             class: ['close-button'],
@@ -669,7 +671,7 @@ export class Tooltip extends UIComponent {
             },
         })
         const focusElementButton = createButton({
-            title: 'Focus Element in Graph',
+            title: this.i18n.t('tooltip.focus'),
             variant: 'outline-primary',
             size: 'sm',
             class: ['focus-element'],
@@ -681,7 +683,7 @@ export class Tooltip extends UIComponent {
             },
         })
         const selectElementButton = createButton({
-            title: 'Select Element in Graph',
+            title: this.i18n.t('tooltip.select'),
             variant: 'outline-primary',
             size: 'sm',
             class: ['select-element'],
@@ -723,7 +725,7 @@ export class Tooltip extends UIComponent {
         const pinnedAction = clonedTooltip.querySelector<HTMLElement>('.pvt-mainheader-nodeinfo-action')
         const titleText = pinnedName?.dataset.titleText
         if (pinnedName && titleText !== undefined) {
-            pinnedTitleFit = new TitleFitController(clonedTooltip)
+            pinnedTitleFit = new TitleFitController(clonedTooltip, this.i18n)
             this.pinnedTitleFits.add(pinnedTitleFit)
             pinnedTitleFit.render(pinnedName, pinnedAction, titleText)
         }

@@ -2,6 +2,7 @@ import type { Node } from '../../../Node'
 import type { GroupInfo } from '../../../interfaces/Simplify'
 import type { Simplification } from '../../../Simplification/Simplification'
 import { createHtmlElement } from '../../../utils/ElementCreation'
+import type { I18n } from '../../../i18n/I18n'
 import './groupsummary.scss'
 
 /** Past this many anchors the list ends in "N more". */
@@ -36,20 +37,22 @@ function section(title: string, chips: HTMLElement[]): HTMLElement {
  * What a group stands for, for the tooltip and the sidebar: its members by type when it
  * mixes them, and the nodes it links to.
  */
-export function buildGroupSummary(simplify: Simplification, info: GroupInfo, options: GroupSummaryOptions): HTMLElement {
+export function buildGroupSummary(simplify: Simplification, info: GroupInfo, options: GroupSummaryOptions, i18n: I18n): HTMLElement {
     const container = createHtmlElement('div', { class: 'pvt-group-summary' })
 
     const matched = simplify.matchesIn(info)
     if (matched > 0) {
         const line = createHtmlElement('div', { class: 'pvt-group-summary-match' })
         const query = simplify.matchQuery
-        line.textContent = `${matched} of ${info.members.length} match${query ? ` "${query}"` : ''}`
+        line.textContent = query
+            ? i18n.t('groupSummary.matchQuery', { count: matched, total: info.members.length, query })
+            : i18n.t('groupSummary.match', { count: matched, total: info.members.length })
         container.append(line)
     }
 
     const types = Object.entries(info.typeCounts).sort((a, b) => b[1] - a[1])
     if (types.length > 1) {
-        container.append(section('Members', types.map(([type, count]) =>
+        container.append(section(i18n.t('groupSummary.members'), types.map(([type, count]) =>
             chip(simplify.typeLabel(type === '' ? undefined : type, count), simplify.typeColor(info, type)))))
     }
 
@@ -59,10 +62,10 @@ export function buildGroupSummary(simplify: Simplification, info: GroupInfo, opt
         const rest = info.anchors.length - shown.length
         if (rest > 0) {
             const more = createHtmlElement('span', { class: 'pvt-group-summary-more' })
-            more.textContent = `${rest} more`
+            more.textContent = i18n.t('groupSummary.more', { count: rest })
             chips.push(more)
         }
-        container.append(section('Linked to', chips))
+        container.append(section(i18n.t('groupSummary.linkedTo'), chips))
     }
 
     if (options.hint) {

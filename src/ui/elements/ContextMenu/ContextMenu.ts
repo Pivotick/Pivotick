@@ -101,7 +101,7 @@ const defaultMenuNode = (i18n: I18n) => ({
             visible: (node: Node) => !!getNodeImageHref(node),
             onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 const src = getNodeImageHref(node)
-                if (src) openImageLightbox(this.uiManager, src, nodeNameGetter(node, this.uiManager.getOptions().mainHeader))
+                if (src) openImageLightbox(this.uiManager, src, nodeNameGetter(node, this.uiManager.getOptions().mainHeader, this.i18n))
             },
         },
         {
@@ -144,7 +144,7 @@ const defaultMenuNode = (i18n: I18n) => ({
                 return node.visible
             },
             async onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
-                const mainLabel = nodeNameGetter(node, this.uiManager.graph.UIManager.getOptions().mainHeader).trim()
+                const mainLabel = nodeNameGetter(node, this.uiManager.graph.UIManager.getOptions().mainHeader, this.i18n).trim()
                 const title = document.createElement('div')
                 title.textContent = this.i18n.t('contextMenu.node.connect.picker')
                 const pre = document.createElement('b')

@@ -65,28 +65,28 @@ export class SidebarBulkActions extends UIComponent {
 
     private specs(): BulkActionSpec[] {
         return [
-            { id: 'pin', label: 'Pin', icon: pin, kind: 'action', run: () => this.pinSelection() },
-            { id: 'unpin', label: 'Unpin', icon: unpin, kind: 'action', run: () => this.unpinSelection() },
-            { id: 'hide', label: 'Hide', icon: hide, kind: 'action', run: () => this.hideSelection() },
-            { id: 'isolate', label: 'Isolate', icon: focusElement, kind: 'soon' },
+            { id: 'pin', label: this.i18n.t('sidebar.bulk.pin'), icon: pin, kind: 'action', run: () => this.pinSelection() },
+            { id: 'unpin', label: this.i18n.t('sidebar.bulk.unpin'), icon: unpin, kind: 'action', run: () => this.unpinSelection() },
+            { id: 'hide', label: this.i18n.t('sidebar.bulk.hide'), icon: hide, kind: 'action', run: () => this.hideSelection() },
+            { id: 'isolate', label: this.i18n.t('sidebar.bulk.isolate'), icon: focusElement, kind: 'soon' },
             // Dropped with the feature: no simplify, no groups to make.
             ...(this.uiManager.graph.simplify.isEnabled() ? [
                 {
-                    id: 'group', label: 'Group', icon: groupNodes, kind: 'action', divider: true,
+                    id: 'group', label: this.i18n.t('sidebar.bulk.group'), icon: groupNodes, kind: 'action', divider: true,
                     run: () => void this.groupSelected(),
                     enabled: () => this.uiManager.graph.simplify.groupableIds(this.selectedNodes()).length >= 2,
                 },
                 {
-                    id: 'ungroup', label: 'Ungroup', icon: ungroupNodes, kind: 'action',
+                    id: 'ungroup', label: this.i18n.t('sidebar.bulk.ungroup'), icon: ungroupNodes, kind: 'action',
                     run: () => this.ungroupSelected(),
                     enabled: () => manualGroupsIn(this.uiManager, this.selectedNodes()).length > 0,
                 },
             ] as BulkActionSpec[] : []),
-            { id: 'bulk-edit', label: 'Bulk edit', icon: bulkEdit, kind: 'soon' },
+            { id: 'bulk-edit', label: this.i18n.t('sidebar.bulk.bulkEdit'), icon: bulkEdit, kind: 'soon' },
             // Dropped entirely when deletion is disabled — a read-only integration
             // wants no Delete button, not one that always refuses.
             ...(this.uiManager.isEditorEnabled('deletion')
-                ? [{ id: 'delete', label: 'Delete', icon: trash, kind: 'danger', divider: true, run: () => void this.deleteSelection() } as BulkActionSpec]
+                ? [{ id: 'delete', label: this.i18n.t('sidebar.bulk.delete'), icon: trash, kind: 'danger', divider: true, run: () => void this.deleteSelection() } as BulkActionSpec]
                 : []),
         ]
     }
@@ -105,7 +105,7 @@ export class SidebarBulkActions extends UIComponent {
             button.className = 'pvt-sidebar-bulkaction'
             button.dataset.action = spec.id
             button.setAttribute('aria-label', spec.label)
-            button.title = spec.kind === 'soon' ? `${spec.label} — coming soon` : spec.label
+            button.title = spec.kind === 'soon' ? this.i18n.t('sidebar.bulk.soon.title', { action: spec.label }) : spec.label
             button.innerHTML = `<span class="pvt-sidebar-bulkaction-icon">${spec.icon}</span>`
             if (spec.kind === 'soon') {
                 button.disabled = true

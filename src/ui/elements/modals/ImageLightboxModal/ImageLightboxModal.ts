@@ -21,7 +21,7 @@ export function openImageLightbox(uiManager: UIManager, src: string, title?: str
     previousInstance?.__modalInstance?.destroy()
 
     const image = createHtmlElement('img', { class: 'pvt-image-lightbox__img', src, alt: title ?? '' }) as HTMLImageElement
-    attachHtmlImageFallback(image)
+    attachHtmlImageFallback(image, uiManager.graph.i18n)
     const body = createHtmlElement('div', { class: 'pvt-image-lightbox' }, [image]) as HTMLDivElement
 
     // No explicit `size`: the CSS below lets the modal shrink-wrap the picture (capped to

@@ -6,6 +6,7 @@ import { UIComponent } from '../../UIComponent'
 import type { NoteManager } from '../../../NoteManager'
 import { Note } from '../../../Note'
 import { createHtmlTemplate } from '../../../utils/ElementCreation'
+import { applyMessages, i18nText } from '../../../i18n/dom'
 import type { Graph } from '../../../Graph'
 import { renderMarkdownInline } from '../../../plugins/noteContentRenderers/markdown/markdown'
 import { resolveReferences } from '../../../plugins/noteContentRenderers/markdown/markdownResolvers'
@@ -78,7 +79,7 @@ export class NoteSidebar extends UIComponent {
         if (notes.length === 0) {
             const emptyState = document.createElement('div')
             emptyState.classList.add('pvt-note-sidebar-empty')
-            emptyState.textContent = 'No notes yet'
+            emptyState.textContent = this.i18n.t('noteSidebar.empty')
             container.appendChild(emptyState)
             return
         }
@@ -104,12 +105,15 @@ export class NoteSidebar extends UIComponent {
         const textEl = document.createElement('span')
         textEl.classList.add('pvt-note-sidebar-text')
         textEl.classList.add('pvt-markdown')
-        const firstLine = note.content?.split('\n').find(line => line.trim().length > 0) ?? 'Untitled note'
-        const safeHtml = renderMarkdownInline(firstLine)
-        textEl.innerHTML = safeHtml
-        // Resolve `[[node]]` references so they pick up their node color, matching the
-        // main canvas rendering (NoteContentRenderer.render also calls resolveReferences).
-        resolveReferences(textEl, this.graph)
+        const firstLine = note.content?.split('\n').find(line => line.trim().length > 0)
+        if (firstLine === undefined) {
+            textEl.textContent = this.i18n.t('noteSidebar.untitled')
+        } else {
+            textEl.innerHTML = renderMarkdownInline(firstLine)
+            // Resolve `[[node]]` references so they pick up their node color, matching the
+            // main canvas rendering (NoteContentRenderer.render also calls resolveReferences).
+            resolveReferences(textEl, this.graph)
+        }
 
         const buttonWrapper = document.createElement('div')
         buttonWrapper.classList.add('pvt-note-sidebar-button-wrapper')
@@ -122,7 +126,7 @@ export class NoteSidebar extends UIComponent {
             showHideButton = createButton({
                 variant: 'outline-secondary',
                 size: 'sm',
-                title: 'Hide note',
+                title: this.i18n.t('noteSidebar.hide.title'),
                 svgIcon: hide,
                 onClick: () => {
                     this.noteManager.hideNote(note)
@@ -132,7 +136,7 @@ export class NoteSidebar extends UIComponent {
             showHideButton = createButton({
                 variant: 'outline-secondary',
                 size: 'sm',
-                title: 'Restore hidden note',
+                title: this.i18n.t('noteSidebar.restore.title'),
                 svgIcon: show,
                 onClick: () => {
                     this.noteManager.showNote(note)
@@ -142,7 +146,7 @@ export class NoteSidebar extends UIComponent {
         const removeButton = createButton({
             variant: 'outline-danger',
             size: 'sm',
-            title: 'Remove note',
+            title: this.i18n.t('noteSidebar.remove.title'),
             svgIcon: trash,
             onClick: () => {
                 this.noteManager.removeNote(note)
@@ -194,7 +198,7 @@ export class NoteSidebar extends UIComponent {
 
         header.appendChild(createButton({
             variant: 'secondary',
-            text: 'Add Note',
+            text: this.i18n.t('noteSidebar.add'),
             size: 'sm',
             svgIcon: stickyNote,
             onClick: () => {
@@ -215,9 +219,9 @@ export class NoteSidebar extends UIComponent {
 
         header.appendChild(createButton({
             variant: 'secondary',
-            text: 'Hide all',
+            text: this.i18n.t('noteSidebar.hideAll'),
             size: 'sm',
-            title: 'Hide all notes',
+            title: this.i18n.t('noteSidebar.hideAll.title'),
             svgIcon: hide,
             onClick: () => {
                 this.noteManager.hideAll()
@@ -238,20 +242,21 @@ export class NoteSidebar extends UIComponent {
 
     private createHiddenContainer(): HTMLDivElement {
         const hiddenContainer = createHtmlTemplate(`<div class="pvt-hidden-nodes-container">
-                <h4>Hidden notes</h4>
+                <h4 ${i18nText('noteSidebar.hidden.heading')}></h4>
                 <div class="pvt-hidden-nodes-container-list"></div>
             </div>`) as HTMLDivElement
+        applyMessages(hiddenContainer, this.i18n)
 
         const resetHiddenButton = createButton({
             variant: 'secondary',
-            text: 'Show all notes',
+            text: this.i18n.t('noteSidebar.showAll'),
             size: 'sm',
             style: 'align-self: end;',
             svgIcon: show,
             onClick: () => {
                 this.noteManager.showAll()
             },
-            title: 'Restore hidden notes',
+            title: this.i18n.t('noteSidebar.showAll.title'),
         })
         hiddenContainer.querySelector('h4')?.appendChild(resetHiddenButton)
 

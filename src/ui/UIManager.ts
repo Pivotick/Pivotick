@@ -57,7 +57,8 @@ const basicStringGetter = (element: Node | Edge, key: string, fallbackStr: strin
     return typeof str === 'string' ? str : fallbackStr
 }
 
-const defaultHeaderMapNodeTitle = (node: Node): string => basicStringGetter(node, 'label', 'Could not resolve title')
+// No label resolves to '', which `nodeNameGetter` turns into "Could not resolve title" in the graph's language.
+const defaultHeaderMapNodeTitle = (node: Node): string => basicStringGetter(node, 'label')
 const defaultHeaderMapNodeSubtitle = (node: Node): string => basicStringGetter(node, 'description')
 const defaultHeaderMapEdgeTitle = (edge: Edge): string => basicStringGetter(edge, 'label', '')
 const defaultHeaderMapEdgeSubtitle = (edge: Edge): string => basicStringGetter(edge, 'description')

@@ -89,8 +89,8 @@ export function createEdgeEditModal(
 /** "Alice → Project Atlas", falling back to node ids when there's nothing to show. */
 function describeEndpoints(edge: Edge, uiManager: UIManager): string {
     const mainHeader = uiManager.getOptions().mainHeader
-    const from = nodeNameGetter(edge.from, mainHeader).trim() || edge.from.id
-    const to = nodeNameGetter(edge.to, mainHeader).trim() || edge.to.id
+    const from = nodeNameGetter(edge.from, mainHeader, uiManager.graph.i18n).trim() || edge.from.id
+    const to = nodeNameGetter(edge.to, mainHeader, uiManager.graph.i18n).trim() || edge.to.id
     return uiManager.graph.i18n.t('modal.editEdge.endpoints', { from, to })
 }
 

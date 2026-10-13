@@ -98,7 +98,7 @@ export class Sidebar extends UIComponent {
             class: 'pvt-sidebar-collapse-container',
             role: 'button',
             tabindex: '0',
-            'aria-label': 'Collapse sidebar',
+            'aria-label': this.i18n.t('sidebar.collapse.aria'),
             'aria-expanded': 'true',
         }, [
             createHtmlElement('span', { class: 'pvt-sidebar-collapse-button pvt-sidebar-collapse-button-collapse' }, [createIcon({ svgIcon: sidebarCollapse })]) as HTMLSpanElement,
@@ -111,8 +111,8 @@ export class Sidebar extends UIComponent {
         this.clearSelectionButton = createHtmlElement('button', {
             class: 'pvt-sidebar-clear',
             type: 'button',
-            title: 'Clear selection',
-            'aria-label': 'Clear selection',
+            title: this.i18n.t('sidebar.clearSelection'),
+            'aria-label': this.i18n.t('sidebar.clearSelection'),
         }, [createIcon({ svgIcon: closeIcon })]) as HTMLButtonElement
         this.sidebar.appendChild(this.clearSelectionButton)
 
@@ -293,6 +293,6 @@ export class Sidebar extends UIComponent {
     private syncCollapseA11y(): void {
         if (!this.collapse) return
         this.collapse.setAttribute('aria-expanded', String(this.sidebarOpen))
-        this.collapse.setAttribute('aria-label', this.sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar')
+        this.collapse.setAttribute('aria-label', this.i18n.t(this.sidebarOpen ? 'sidebar.collapse.aria' : 'sidebar.expand.aria'))
     }
 }

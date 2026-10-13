@@ -5,6 +5,7 @@ import type { MainHeader, TableColumn, TableTab } from '../../../interfaces/Grap
 import type { UIManager } from '../../UIManager'
 import { collectDataAttributes, inferAttributeType } from '../../../utils/DataAttributes'
 import { edgeNameGetter, nodeNameGetter } from '../../../utils/GraphGetters'
+import type { I18n } from '../../../i18n/I18n'
 import { FormFactory } from '../../../utils/FormFactory'
 import { nestedOffered } from './TableNested'
 
@@ -171,20 +172,21 @@ export function edgeVisibility(edge: Edge): TableVisibility {
 function bindReservedAccessors(columns: TableColumn<Node | Edge>[], uiManager: UIManager): TableColumn<Node | Edge>[] {
     const graph = uiManager.graph
     const mainHeader = uiManager.getOptions().mainHeader
+    const i18n = graph.i18n
 
     return columns.map((column) => {
         if (column.accessor) return column
         switch (column.key) {
             case RESERVED.label:
-                return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? edgeNameGetter(element, mainHeader) : nodeNameGetter(element, mainHeader) }
+                return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? edgeNameGetter(element, mainHeader, i18n) : nodeNameGetter(element, mainHeader, i18n) }
             case RESERVED.visibility:
                 return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? edgeVisibility(element) : nodeVisibility(element, graph) }
             case RESERVED.source:
-                return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? nodeNameGetter(element.from, mainHeader) : '' }
+                return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? nodeNameGetter(element.from, mainHeader, i18n) : '' }
             case RESERVED.target:
-                return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? nodeNameGetter(element.to, mainHeader) : '' }
+                return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? nodeNameGetter(element.to, mainHeader, i18n) : '' }
             case RESERVED.cluster:
-                return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? '' : clusterPath(element, mainHeader) }
+                return { ...column, accessor: (element: Node | Edge) => isEdge(element) ? '' : clusterPath(element, mainHeader, i18n) }
             case RESERVED.group:
                 return { ...column, accessor: (element: Node | Edge) => {
                     const group = isEdge(element) ? undefined : graph.simplify.groupOf(element)
@@ -200,8 +202,8 @@ function bindReservedAccessors(columns: TableColumn<Node | Edge>[], uiManager: U
 export const CLUSTER_PATH_SEPARATOR = ' / '
 
 /** A nested node's clusters as one readable string; `''` for a node of the root graph. */
-export function clusterPath(node: Node, mainHeader: MainHeader): string {
-    return node.ancestorChain().map((ancestor) => nodeNameGetter(ancestor, mainHeader)).join(CLUSTER_PATH_SEPARATOR)
+export function clusterPath(node: Node, mainHeader: MainHeader, i18n: I18n): string {
+    return node.ancestorChain().map((ancestor) => nodeNameGetter(ancestor, mainHeader, i18n)).join(CLUSTER_PATH_SEPARATOR)
 }
 
 /** `Edge` has a `from`; `Node` does not. Cheaper and safer here than an `instanceof`. */

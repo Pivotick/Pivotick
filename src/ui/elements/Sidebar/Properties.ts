@@ -99,19 +99,19 @@ export class SidebarProperties extends UIComponent {
     }
 
     private setHeaderBasicNode() {
-        this.header!.textContent = 'Basic Node Properties'
+        this.header!.textContent = this.i18n.t('sidebar.properties.nodeHeading')
     }
 
     private setHeaderBasicEdge() {
-        this.header!.textContent = 'Basic Edge Properties'
+        this.header!.textContent = this.i18n.t('sidebar.properties.edgeHeading')
     }
 
     private setHeaderMultiSelectNode() {
-        this.header!.textContent = 'Aggregated Node Properties'
+        this.header!.textContent = this.i18n.t('sidebar.properties.nodesHeading')
     }
 
     private setHeaderMultiSelectEdge() {
-        this.header!.textContent = 'Aggregated Edge Properties'
+        this.header!.textContent = this.i18n.t('sidebar.properties.edgesHeading')
     }
 
     private showPanel() {
@@ -133,7 +133,7 @@ export class SidebarProperties extends UIComponent {
             node,
             (ctx) => nodePropertiesGetter(node, this.uiManager.getOptions().propertiesPanel, ctx),
             (properties) => createHtmlElement('div', { class: 'pvt-properties-container' }, [
-                createPropertyList(properties, node),
+                createPropertyList(properties, node, this.i18n),
             ]) as HTMLDivElement,
         )
     }
@@ -147,7 +147,7 @@ export class SidebarProperties extends UIComponent {
             edge,
             (ctx) => edgePropertiesGetter(edge, this.uiManager.getOptions().propertiesPanel, ctx),
             (properties) => createHtmlElement('div', { class: 'pvt-properties-container' }, [
-                createPropertyList(properties, edge),
+                createPropertyList(properties, edge, this.i18n),
             ]) as HTMLDivElement,
         )
     }
@@ -191,6 +191,7 @@ export class SidebarProperties extends UIComponent {
 
         if (div) {
             div.appendChild(createTableForAggregatedProperties(
+                this.i18n,
                 aggregateProperties(allProperties),
                 count,
                 this.genActionButtons.bind(this),
@@ -257,13 +258,13 @@ export class SidebarProperties extends UIComponent {
 
     private genActionButtons(key: string, value: string): HTMLDivElement {
         const buttonKeep = createHtmlElement('button', {
-            title: 'Keep only nodes with this value',
+            title: this.i18n.t('sidebar.properties.keep.title'),
             class: 'pvt-facet-action-select',
         }, [createIcon({ svgIcon: filterAdd }) ])
         buttonKeep.addEventListener('click', () => this.applyNodeFacetFilter(key, value, 'keep'))
 
         const buttonExclude = createHtmlElement('button', {
-            title: 'Exclude nodes with this value',
+            title: this.i18n.t('sidebar.properties.exclude.title'),
             class: 'pvt-facet-action-exclude',
         }, [createIcon({ svgIcon: filterRemove }) ])
         buttonExclude.addEventListener('click', () => this.applyNodeFacetFilter(key, value, 'exclude'))

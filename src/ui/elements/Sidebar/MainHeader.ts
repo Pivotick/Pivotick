@@ -40,7 +40,7 @@ export class SidebarMainHeader extends UIComponent {
 
         // The title fit depends on the panel width; recompute it on resize
         // (sidebar collapse/expand, responsive layout) rather than only on select.
-        this.titleFit = new TitleFitController(this.panel)
+        this.titleFit = new TitleFitController(this.panel, this.i18n)
         this.track(() => this.titleFit?.destroy())
     }
 
@@ -118,13 +118,13 @@ export class SidebarMainHeader extends UIComponent {
                 this.renderTitle(
                     nameElem as HTMLElement,
                     actionElem as HTMLElement | null,
-                    group ? this.uiManager.graph.simplify.labelOf(group) : nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
+                    group ? this.uiManager.graph.simplify.labelOf(group) : nodeNameGetter(node, this.uiManager.getOptions().mainHeader, this.i18n)
                 )
             }
             if (subtitleElem) {
                 const description = group
-                    ? `Group · ${this.uiManager.graph.simplify.ruleLabel(group.rule)}`
-                    : nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader)
+                    ? this.i18n.t('groupSummary.subtitle', { rule: this.uiManager.graph.simplify.ruleLabel(group.rule) })
+                    : nodeDescriptionGetter(node, this.uiManager.getOptions().mainHeader, this.i18n)
                 subtitleElem.textContent = description ?? ''
             }
             return enter(mainheaderContent)
@@ -154,15 +154,15 @@ export class SidebarMainHeader extends UIComponent {
                 this.renderTitle(
                     nameElem as HTMLElement,
                     actionElem as HTMLElement | null,
-                    edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
+                    edgeNameGetter(edge, this.uiManager.getOptions().mainHeader, this.i18n)
                 )
             }
             if (subtitleElem) {
                 // A line folded onto a closed cluster for several edges has no data of its own.
                 const represented = edge.representedEdges?.length ?? 0
                 subtitleElem.textContent = represented > 1
-                    ? `Stands for ${represented} edges`
-                    : edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader)
+                    ? this.i18n.t('sidebar.header.representedEdges', { count: represented })
+                    : edgeDescriptionGetter(edge, this.uiManager.getOptions().mainHeader, this.i18n)
             }
             return enter(mainheaderContent)
         })
@@ -194,10 +194,10 @@ export class SidebarMainHeader extends UIComponent {
                 iconElem.appendChild(selectionIcon)
             }
             if (nameElem) {
-                nameElem.textContent = `${nodes.length} nodes selected`
+                nameElem.textContent = this.i18n.t('sidebar.header.nodesSelected', { count: nodes.length })
             }
             if (subtitleElem) {
-                subtitleElem.textContent = `Out of ${this.uiManager.graph.getNodeCount()} total`
+                subtitleElem.textContent = this.i18n.t('sidebar.header.nodesTotal', { count: this.uiManager.graph.getNodeCount() })
             }
             return enter(mainheaderContent)
         })
@@ -222,10 +222,10 @@ export class SidebarMainHeader extends UIComponent {
             const subtitleElem = mainheaderContent.querySelector('.pvt-mainheader-nodeinfo-subtitle')
 
             if (nameElem) {
-                nameElem.textContent = `${edges.length} edges selected`
+                nameElem.textContent = this.i18n.t('sidebar.header.edgesSelected', { count: edges.length })
             }
             if (subtitleElem) {
-                subtitleElem.textContent = `Out of ${this.uiManager.graph.getEdgeCount() } total`
+                subtitleElem.textContent = this.i18n.t('sidebar.header.edgesTotal', { count: this.uiManager.graph.getEdgeCount() })
             }
             return enter(mainheaderContent)
         })
@@ -254,7 +254,10 @@ export class SidebarMainHeader extends UIComponent {
         const totalEdgeCount = this.uiManager.graph.getMutableVisibleEdges().length
         const count = document.createElement('span')
         count.className = 'pvt-mainheader-count'
-        count.textContent = `Showing ${totalNodeCount} nodes and ${totalEdgeCount} edges`
+        count.textContent = this.i18n.t('sidebar.header.showing', {
+            nodes: this.i18n.t('count.nodes', { count: totalNodeCount }),
+            edges: this.i18n.t('count.edges', { count: totalEdgeCount }),
+        })
         return count
     }
 

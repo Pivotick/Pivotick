@@ -486,7 +486,7 @@ export class GraphFilter extends UIComponent {
                     ]
                 )
 
-                const nodeName = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
+                const nodeName = nodeNameGetter(node, this.uiManager.getOptions().mainHeader, this.i18n)
                 const nodeElement = createHtmlElement('div',
                     {
                         'class': 'hidden-node',

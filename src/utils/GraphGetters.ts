@@ -4,38 +4,39 @@ import type { Node } from '../Node'
 import type { Edge } from '../Edge'
 import type { MainHeader, PropertiesPanel, PropertyEntry } from '../interfaces/GraphUI'
 import type { RenderContext } from '../interfaces/AsyncContent'
+import type { I18n } from '../i18n/I18n'
 
 
-export function nodeNameGetter(node: Node, mainHeader: MainHeader): string {
+export function nodeNameGetter(node: Node, mainHeader: MainHeader, i18n: I18n): string {
     if (mainHeader.nodeHeaderMap.title) {
-        return tryResolveString(mainHeader.nodeHeaderMap.title, node) || 'Could not resolve title'
+        return tryResolveString(mainHeader.nodeHeaderMap.title, node) || i18n.t('headerMap.untitled')
     }
     const text = node.getData()?.label
-    return typeof text === 'string' ? text : 'Optional name or label'
+    return typeof text === 'string' ? text : i18n.t('headerMap.nameFallback')
 }
 
-export function nodeDescriptionGetter(node: Node, mainHeader: MainHeader): string | null {
+export function nodeDescriptionGetter(node: Node, mainHeader: MainHeader, i18n: I18n): string | null {
     if (mainHeader.nodeHeaderMap.subtitle) {
         return tryResolveString(mainHeader.nodeHeaderMap.subtitle, node) || null
     }
     const text = node.getData()?.description
-    return typeof text === 'string' ? text : 'Optional subtitle or description'
+    return typeof text === 'string' ? text : i18n.t('headerMap.descriptionFallback')
 }
 
-export function edgeNameGetter(edge: Edge, mainHeader: MainHeader): string {
+export function edgeNameGetter(edge: Edge, mainHeader: MainHeader, i18n: I18n): string {
     if (mainHeader.edgeHeaderMap.title) {
         return tryResolveString(mainHeader.edgeHeaderMap.title, edge) || ''
     }
     const text = edge.getData()?.label
-    return typeof text === 'string' ? text : 'Optional name or label'
+    return typeof text === 'string' ? text : i18n.t('headerMap.nameFallback')
 }
 
-export function edgeDescriptionGetter(edge: Edge, mainHeader: MainHeader): string | null {
+export function edgeDescriptionGetter(edge: Edge, mainHeader: MainHeader, i18n: I18n): string | null {
     if (mainHeader.edgeHeaderMap.subtitle) {
         return tryResolveString(mainHeader.edgeHeaderMap.subtitle, edge) || null
     }
     const text = edge.getData()?.label
-    return typeof text === 'string' ? text : 'Optional subtitle or description'
+    return typeof text === 'string' ? text : i18n.t('headerMap.descriptionFallback')
 }
 
 export function edgeLabelGetter(edge: Edge): string {
@@ -134,7 +135,7 @@ export function edgePropertiesGetter(
     return properties
 }
 
-export function resolveNodeByName(nodeName: string, nodes: Node[], mainHeaderOptions: MainHeader): Node | undefined {
+export function resolveNodeByName(nodeName: string, nodes: Node[], mainHeaderOptions: MainHeader, i18n: I18n): Node | undefined {
     const normalizedSearch = nodeName.trim().toLowerCase()
     return nodes.find(n => {
 
@@ -144,7 +145,7 @@ export function resolveNodeByName(nodeName: string, nodes: Node[], mainHeaderOpt
         }
 
         // Match by main label
-        const mainLabel = nodeNameGetter(n, mainHeaderOptions)
+        const mainLabel = nodeNameGetter(n, mainHeaderOptions, i18n)
 
         return (
             typeof mainLabel === 'string'

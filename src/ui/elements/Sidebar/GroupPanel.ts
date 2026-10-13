@@ -73,7 +73,7 @@ export class SidebarGroupPanel extends UIComponent {
         this.grid?.dispose()
         root.replaceChildren(
             this.buildActions(group),
-            buildGroupSummary(simplify, group.info, { nameOf: node => this.nameOf(node) }),
+            buildGroupSummary(simplify, group.info, { nameOf: node => this.nameOf(node) }, this.i18n),
             this.buildMembers(group),
         )
     }
@@ -81,7 +81,7 @@ export class SidebarGroupPanel extends UIComponent {
     private nameOf(node: Node): string {
         return node.isGroup
             ? this.uiManager.graph.simplify.labelOf((node as GroupNode).info)
-            : nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
+            : nodeNameGetter(node, this.uiManager.getOptions().mainHeader, this.i18n)
     }
 
     private button(label: string, onClick: () => void, options: { primary?: boolean, danger?: boolean, disabled?: boolean, action: string, title?: string }): HTMLButtonElement {
@@ -107,15 +107,15 @@ export class SidebarGroupPanel extends UIComponent {
         if (this.asking === group.id) {
             const question = document.createElement('span')
             question.className = 'pvt-sidebar-group-ask'
-            question.textContent = `Put ${simplify.labelOf(info)} on the canvas?`
+            question.textContent = this.i18n.t('groupActions.openAsk', { group: simplify.labelOf(info) })
             row.classList.add('pvt-sidebar-group-asking')
             row.append(
                 question,
-                this.button('Open', () => {
+                this.button(this.i18n.t('sidebar.group.open'), () => {
                     this.asking = undefined
                     simplify.open(group)
                 }, { primary: true, action: 'confirm-open' }),
-                this.button('Cancel', () => {
+                this.button(this.i18n.t('sidebar.group.cancel'), () => {
                     this.asking = undefined
                     this.render()
                 }, { action: 'cancel-open' }),
@@ -124,39 +124,43 @@ export class SidebarGroupPanel extends UIComponent {
         }
 
         if (info.open) {
-            row.append(this.button('Close', () => simplify.close(group), { primary: true, action: 'close' }))
+            row.append(this.button(this.i18n.t('sidebar.group.close'), () => simplify.close(group), { primary: true, action: 'close' }))
         } else {
-            row.append(this.button('Open', () => {
+            row.append(this.button(this.i18n.t('sidebar.group.open'), () => {
                 if (openGroup(this.uiManager, group) === 'ask') {
                     this.asking = group.id
                     this.render()
                 }
             }, { primary: true, action: 'open' }))
         }
-        row.append(this.button('Select members', () => selectGroupMembers(this.uiManager, group), { action: 'select-members' }))
+        row.append(this.button(this.i18n.t('sidebar.group.selectMembers'), () => selectGroupMembers(this.uiManager, group), { action: 'select-members' }))
         if (simplify.isManual(group)) {
             row.append(
-                this.button('Rename', () => void renameGroupPrompt(this.uiManager, group), { action: 'rename' }),
-                this.button('Ungroup', () => simplify.ungroup(group), { action: 'ungroup', title: 'Draw the members as they were before this group' }),
+                this.button(this.i18n.t('sidebar.group.rename'), () => void renameGroupPrompt(this.uiManager, group), { action: 'rename' }),
+                this.button(this.i18n.t('sidebar.group.ungroup'), () => simplify.ungroup(group), {
+                    action: 'ungroup', title: this.i18n.t('sidebar.group.ungroup.title'),
+                }),
             )
         }
         if (this.uiManager.table) {
-            row.append(this.button('View in table', () => showGroupMembersInTable(this.uiManager, group), {
-                action: 'view-in-table', title: 'List the members in the data dock, to filter and search them',
+            row.append(this.button(this.i18n.t('sidebar.group.viewInTable'), () => showGroupMembersInTable(this.uiManager, group), {
+                action: 'view-in-table', title: this.i18n.t('sidebar.group.viewInTable.title'),
             }))
         }
 
         const pivots = this.uiManager.graph.pivots
         if (this.uiManager.pivotMode && pivots.for(info.members).length > 0) {
-            row.append(this.button('Pivot ▸', () => this.uiManager.openPivotMode(info.members), { action: 'pivot' }))
+            row.append(this.button(this.i18n.t('sidebar.group.pivot'), () => this.uiManager.openPivotMode(info.members), { action: 'pivot' }))
         }
         if (this.uiManager.isEditorEnabled('deletion')) {
-            row.append(this.button(`Delete ${info.members.length}`, () => {
+            row.append(this.button(this.i18n.t('sidebar.group.delete', { count: info.members.length }), () => {
                 void this.uiManager.graph.editing.requestDelete({ nodes: info.members, origin: 'bulk-action' })
             }, { danger: true, action: 'delete' }))
         }
         if (this.uiManager.isEditorEnabled('nodeEditor')) {
-            row.append(this.button('Edit', () => {}, { disabled: true, action: 'edit', title: 'A group has no data of its own to edit' }))
+            row.append(this.button(this.i18n.t('sidebar.group.edit'), () => {}, {
+                disabled: true, action: 'edit', title: this.i18n.t('sidebar.group.edit.title'),
+            }))
         }
         return row
     }
@@ -166,7 +170,7 @@ export class SidebarGroupPanel extends UIComponent {
         section.className = 'pvt-sidebar-group-members'
         const heading = document.createElement('div')
         heading.className = 'pvt-sidebar-group-heading'
-        heading.textContent = 'Members'
+        heading.textContent = this.i18n.t('sidebar.group.members')
         const scroller = document.createElement('div')
         scroller.className = 'pvt-sidebar-group-scroller'
         section.append(heading, scroller)
@@ -175,7 +179,11 @@ export class SidebarGroupPanel extends UIComponent {
         this.grid = new TableGrid(this.uiManager, 'nodes', undefined, 'select', 200, {
             rows: () => group.info.members,
             shownColumns: [LABEL_COLUMN_KEY, DEGREE_COLUMN_KEY],
-            rowAction: { label: 'Pull out', title: 'Keep this node out of the group', run: node => simplify.pullOut(node) },
+            rowAction: {
+                label: this.i18n.t('sidebar.group.pullOut'),
+                title: this.i18n.t('sidebar.group.pullOut.title'),
+                run: node => simplify.pullOut(node),
+            },
         })
         scroller.appendChild(this.grid.getRoot())
         // Once in the page: the grid windows its rows against its scroller.

@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test'
-import { test, expect, gotoHarness, harness } from '../helpers'
+import { test, expect, gotoHarness, harness, loadFixture } from '../helpers'
 import type { FallbackSurface, PropertiesFallbackSpec } from '../harness/harness'
 
 // ── A custom main header `render` hands a selection back to the default ──────
@@ -188,5 +188,26 @@ test.describe('an extra panel render returning null', () => {
 
         await harness(page, 'settlePropertiesRender', 'node a')
         await expectEmpty(extraPanelBody(page))
+    })
+})
+
+test.describe('the default header counts', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoHarness(page)
+    })
+
+    test('a count of one reads in the singular', async ({ page }) => {
+        await loadFixture(page, 'pair', FULL)
+        await expect(header(page)).toHaveText('Showing 2 nodes and 0 edges')
+        await harness(page, 'connect', 'a', 'b')
+        await expect(header(page)).toHaveText('Showing 2 nodes and 1 edge')
+    })
+
+    test('a single selected edge reads in the singular', async ({ page }) => {
+        await loadFixture(page, 'basic', FULL)
+        await harness(page, 'multiSelectEdges', ['a-b', 'b-c'])
+        await expect(defaultTitle(page)).toHaveText('2 edges selected')
+        await harness(page, 'multiSelectEdges', ['a-b'])
+        await expect(defaultTitle(page)).toHaveText('1 edge selected')
     })
 })

@@ -1,5 +1,6 @@
 import type { PropertyEntry } from '../interfaces/GraphUI'
 import { createHtmlElement } from './ElementCreation'
+import type { I18n } from '../i18n/I18n'
 
 
 const UNIQUE_PROPERTY_KEY = '4dfd89de5d25fc9cc4b66c23d84b443af631c7dc' // Value to cheat to aggregate unique properties
@@ -37,9 +38,6 @@ function classifyFacet(valueCountMap: Map<string, number>): FacetKind {
     return 'unique'
 }
 
-// Tooltip hint shared by clickable bar segments and value chips.
-const FILTER_HINT = 'Click to keep only · Alt-click to exclude'
-
 /**
  * Wires a distribution-bar segment or a value chip so a plain click keeps only
  * nodes carrying that value and Alt/Ctrl/Cmd-click excludes them — the same
@@ -66,6 +64,7 @@ function makeFacetValueFilterable(
  *  - `unique`  — every value differs (a wrapped list of value chips).
  */
 export function createTableForAggregatedProperties(
+    i18n: I18n,
     aggregatedProperties: AggregatedProperties,
     selectedNodeCount: number,
     actionButtonCallback?: actionButtonCallback,
@@ -77,13 +76,14 @@ export function createTableForAggregatedProperties(
 
     for (const [propName, valueCountMap] of sortedAggregatedProperties) {
         root.appendChild(
-            createFacetCard(propName, valueCountMap, selectedNodeCount, multiValued.has(propName), actionButtonCallback, facetFilterCallback)
+            createFacetCard(i18n, propName, valueCountMap, selectedNodeCount, multiValued.has(propName), actionButtonCallback, facetFilterCallback)
         )
     }
     return root
 }
 
 function createFacetCard(
+    i18n: I18n,
     propName: string,
     valueCountMap: Map<string, number>,
     selectedNodeCount: number,
@@ -96,13 +96,13 @@ function createFacetCard(
 
     let badgeText: string
     if (kind === 'unique') {
-        badgeText = `${distinct} unique`
+        badgeText = i18n.t('sidebar.facets.unique', { count: distinct })
     } else if (kind === 'values') {
-        badgeText = `${distinct} values`
+        badgeText = i18n.t('sidebar.facets.values', { count: distinct })
     } else {
         // A single value: "shared" only when every selected node carries it.
         const onlyCount = valueCountMap.values().next().value ?? 0
-        badgeText = onlyCount === selectedNodeCount ? 'shared' : '1 value'
+        badgeText = onlyCount === selectedNodeCount ? i18n.t('sidebar.facets.shared') : i18n.t('sidebar.facets.values', { count: 1 })
     }
     const header = createHtmlElement('div', { class: 'pvt-facet-header' }, [
         createHtmlElement('div', { class: 'pvt-facet-label' }, [
@@ -113,14 +113,15 @@ function createFacetCard(
     ])
 
     const body = kind === 'unique'
-        ? createUniqueFacetBody(propName, valueCountMap, facetFilterCallback)
-        : createDistributionFacetBody(propName, valueCountMap, selectedNodeCount, kind, multiValued, actionButtonCallback, facetFilterCallback)
+        ? createUniqueFacetBody(i18n, propName, valueCountMap, facetFilterCallback)
+        : createDistributionFacetBody(i18n, propName, valueCountMap, selectedNodeCount, kind, multiValued, actionButtonCallback, facetFilterCallback)
 
     return createHtmlElement('div', { class: 'pvt-facet-card' }, [header, body])
 }
 
 /** One value's bar segment: `count / selectedNodeCount` wide, and clickable when a filter is wired. */
 function createBarSegment(
+    i18n: I18n,
     propName: string,
     value: string,
     count: number,
@@ -133,9 +134,9 @@ function createBarSegment(
     const seg = createHtmlElement('div', { class: 'pvt-facet-bar-seg' })
     seg.style.width = `${pct}%`
     seg.style.background = valueSwatchColor(value, index, kind)
-    seg.title = `${displayValue(value)} — ${count} (${Math.round(pct)}%)`
+    seg.title = i18n.t('sidebar.facets.segment.title', { value: displayValue(value), count, percent: Math.round(pct) })
     if (facetFilterCallback && !isValueEmpty(value)) {
-        seg.title += `\n${FILTER_HINT}`
+        seg.title += `\n${i18n.t('sidebar.facets.filterHint')}`
         makeFacetValueFilterable(seg, propName, value, facetFilterCallback)
     }
     return seg
@@ -148,6 +149,7 @@ function createBarSegment(
  * property's values overlap, so each gets its own bar instead of a segment of one.
  */
 function createDistributionFacetBody(
+    i18n: I18n,
     propName: string,
     valueCountMap: Map<string, number>,
     selectedNodeCount: number,
@@ -166,32 +168,36 @@ function createDistributionFacetBody(
         const rows = createHtmlElement('div', { class: 'pvt-facet-rows' })
         shown.forEach(([value, count], i) => {
             const pct = selectedNodeCount > 0 ? Math.round((count / selectedNodeCount) * 100) : 0
-            const row = createFacetRow(propName, value, count, pct, i, selectedNodeCount, kind, actionButtonCallback)
+            const row = createFacetRow(i18n, propName, value, count, pct, i, selectedNodeCount, kind, actionButtonCallback)
             row.classList.add('pvt-facet-row--meter')
             if (count === selectedNodeCount) {
-                row.insertBefore(createHtmlElement('span', { class: 'pvt-facet-shared-tag' }, ['shared']), row.querySelector('.pvt-facet-count'))
+                row.insertBefore(createHtmlElement('span', { class: 'pvt-facet-shared-tag' }, [i18n.t('sidebar.facets.shared')]), row.querySelector('.pvt-facet-count'))
             }
             row.appendChild(createHtmlElement('div', { class: 'pvt-facet-bar pvt-facet-bar--meter' }, [
-                createBarSegment(propName, value, count, i, selectedNodeCount, kind, facetFilterCallback),
+                createBarSegment(i18n, propName, value, count, i, selectedNodeCount, kind, facetFilterCallback),
             ]))
             rows.appendChild(row)
         })
         // Overlapping values have no meaningful node total for the tail.
-        if (overflow.length > 0) rows.appendChild(createFacetMoreRow(overflow.length))
+        if (overflow.length > 0) rows.appendChild(createFacetMoreRow(i18n, overflow.length))
         return createHtmlElement('div', { class: 'pvt-facet-body' }, [rows])
     }
 
     // Segmented proportion bar — one coloured segment per value.
     const bar = createHtmlElement('div', { class: 'pvt-facet-bar' })
     shown.forEach(([value, count], i) => {
-        bar.appendChild(createBarSegment(propName, value, count, i, selectedNodeCount, kind, facetFilterCallback))
+        bar.appendChild(createBarSegment(i18n, propName, value, count, i, selectedNodeCount, kind, facetFilterCallback))
     })
     if (overflow.length > 0) {
         const pct = selectedNodeCount > 0 ? (overflowCount / selectedNodeCount) * 100 : 0
         const seg = createHtmlElement('div', { class: 'pvt-facet-bar-seg pvt-facet-bar-seg--other' })
         seg.style.width = `${pct}%`
         seg.style.background = 'var(--pvt-text-color-3)'
-        seg.title = `${overflow.length} other values — ${overflowCount} (${Math.round(pct)}%)`
+        seg.title = i18n.t('sidebar.facets.other.title', {
+            values: i18n.t('sidebar.facets.otherValues', { count: overflow.length }),
+            count: overflowCount,
+            percent: Math.round(pct),
+        })
         bar.appendChild(seg)
     }
 
@@ -199,18 +205,19 @@ function createDistributionFacetBody(
     shown.forEach(([value, count], i) => {
         const pct = selectedNodeCount > 0 ? Math.round((count / selectedNodeCount) * 100) : 0
         rows.appendChild(
-            createFacetRow(propName, value, count, pct, i, selectedNodeCount, kind, actionButtonCallback)
+            createFacetRow(i18n, propName, value, count, pct, i, selectedNodeCount, kind, actionButtonCallback)
         )
     })
     if (overflow.length > 0) {
         const pct = selectedNodeCount > 0 ? Math.round((overflowCount / selectedNodeCount) * 100) : 0
-        rows.appendChild(createFacetMoreRow(overflow.length, overflowCount, pct))
+        rows.appendChild(createFacetMoreRow(i18n, overflow.length, overflowCount, pct))
     }
 
     return createHtmlElement('div', { class: 'pvt-facet-body' }, [bar, rows])
 }
 
 function createFacetRow(
+    i18n: I18n,
     propName: string,
     value: string,
     count: number,
@@ -226,16 +233,18 @@ function createFacetRow(
     const empty = isValueEmpty(value)
     const valueEl = createHtmlElement('span', {
         class: ['pvt-facet-value', empty ? 'pvt-facet-value--empty' : 'code-container'],
-    }, [empty ? '— empty —' : displayValue(value)])
+    }, [empty ? i18n.t('sidebar.facets.empty') : displayValue(value)])
 
     const children: Array<HTMLElement | string> = [dot, valueEl]
     if (kind === 'shared') {
-        const caption = count === selectedNodeCount ? `all ${count} nodes` : `${count} of ${selectedNodeCount}`
+        const caption = count === selectedNodeCount
+            ? i18n.t('sidebar.facets.allNodes', { count })
+            : i18n.t('sidebar.facets.someNodes', { count, total: selectedNodeCount })
         children.push(createHtmlElement('span', { class: 'pvt-facet-caption' }, [caption]))
     } else {
-        children.push(createHtmlElement('span', { class: 'pvt-facet-count' }, [String(count)]))
+        children.push(createHtmlElement('span', { class: 'pvt-facet-count' }, [i18n.formatNumber(count)]))
     }
-    children.push(createHtmlElement('span', { class: 'pvt-facet-percent' }, [`${pct}%`]))
+    children.push(createHtmlElement('span', { class: 'pvt-facet-percent' }, [i18n.t('sidebar.facets.percent', { count: pct })]))
 
     const row = createHtmlElement('div', { class: 'pvt-facet-row' }, children)
 
@@ -248,29 +257,30 @@ function createFacetRow(
 }
 
 /** Summary row standing in for the collapsed long tail of a distribution facet. */
-function createFacetMoreRow(otherCount: number, nodeCount?: number, pct?: number): HTMLElement {
+function createFacetMoreRow(i18n: I18n, otherCount: number, nodeCount?: number, pct?: number): HTMLElement {
     const dot = createHtmlElement('span', { class: 'pvt-facet-dot' })
     dot.style.background = 'var(--pvt-text-color-3)'
     const children: HTMLElement[] = [
         dot,
-        createHtmlElement('span', { class: 'pvt-facet-value' }, [`+${otherCount} more values`]),
+        createHtmlElement('span', { class: 'pvt-facet-value' }, [i18n.t('sidebar.facets.moreValues', { count: otherCount })]),
     ]
     if (nodeCount !== undefined && pct !== undefined) {
         children.push(
-            createHtmlElement('span', { class: 'pvt-facet-count' }, [String(nodeCount)]),
-            createHtmlElement('span', { class: 'pvt-facet-percent' }, [`${pct}%`]),
+            createHtmlElement('span', { class: 'pvt-facet-count' }, [i18n.formatNumber(nodeCount)]),
+            createHtmlElement('span', { class: 'pvt-facet-percent' }, [i18n.t('sidebar.facets.percent', { count: pct })]),
         )
     }
     return createHtmlElement('div', { class: 'pvt-facet-row pvt-facet-row--more' }, children)
 }
 
 function createUniqueFacetBody(
+    i18n: I18n,
     propName: string,
     valueCountMap: Map<string, number>,
     facetFilterCallback?: facetFilterCallback
 ): HTMLElement {
     const caption = createHtmlElement('div', { class: 'pvt-facet-caption pvt-facet-caption--block' }, [
-        'no repeated values',
+        i18n.t('sidebar.facets.noRepeats'),
     ])
     const chipsWrap = createHtmlElement('div', { class: 'pvt-facet-chips' })
 
@@ -279,9 +289,9 @@ function createUniqueFacetBody(
         const empty = isValueEmpty(value)
         const chip = createHtmlElement('span', {
             class: ['pvt-facet-chip', empty ? 'pvt-facet-value--empty' : ''],
-        }, [empty ? '— empty —' : displayValue(value)])
+        }, [empty ? i18n.t('sidebar.facets.empty') : displayValue(value)])
         if (facetFilterCallback && !empty) {
-            chip.title = `${displayValue(value)}\n${FILTER_HINT}`
+            chip.title = `${displayValue(value)}\n${i18n.t('sidebar.facets.filterHint')}`
             makeFacetValueFilterable(chip, propName, value, facetFilterCallback)
         }
         chipsWrap.appendChild(chip)
@@ -289,7 +299,7 @@ function createUniqueFacetBody(
     if (values.length > MAX_UNIQUE_CHIPS) {
         chipsWrap.appendChild(
             createHtmlElement('span', { class: 'pvt-facet-chip pvt-facet-chip--more' }, [
-                `+${values.length - MAX_UNIQUE_CHIPS} more`,
+                i18n.t('sidebar.facets.moreChips', { count: values.length - MAX_UNIQUE_CHIPS }),
             ])
         )
     }

@@ -12,14 +12,14 @@ export function resolveReferences(container: HTMLElement, graph: Graph): void {
             const nodeName = ref.dataset.nodeName
             if (!nodeName) return
 
-            const node: Node | undefined = resolveNodeByName(nodeName, graph.getMutableNodes(), graph.UIManager.getOptions().mainHeader)
+            const node: Node | undefined = resolveNodeByName(nodeName, graph.getMutableNodes(), graph.UIManager.getOptions().mainHeader, graph.i18n)
             if (!node) {
                 ref.classList.add('unresolved')
                 ref.title = 'Could not resolve node'
                 return
             }
 
-            const mainLabel = nodeNameGetter(node, graph.UIManager.getOptions().mainHeader).trim()
+            const mainLabel = nodeNameGetter(node, graph.UIManager.getOptions().mainHeader, graph.i18n).trim()
             ref.textContent = mainLabel
             ref.dataset.nodeId = node.id
             ref.classList.add('resolved')

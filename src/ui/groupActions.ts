@@ -21,8 +21,9 @@ export function openGroup(uiManager: UIManager, group: GroupNode): 'opened' | 'a
 export function openGroupFromCanvas(uiManager: UIManager, group: GroupNode): void {
     if (openGroup(uiManager, group) === 'opened') return
     const simplify = uiManager.graph.simplify
-    const asked = uiManager.graph.notifier.info(`Put ${simplify.labelOf(group.info)} on the canvas?`, undefined, {
-        action: { label: 'Open', onClick: () => simplify.open(group) },
+    const i18n = uiManager.graph.i18n
+    const asked = uiManager.graph.notifier.info(i18n.t('groupActions.openAsk', { group: simplify.labelOf(group.info) }), undefined, {
+        action: { label: i18n.t('groupActions.open'), onClick: () => simplify.open(group) },
     })
     if (!asked) simplify.open(group)
 }
@@ -81,7 +82,7 @@ async function askTitle(uiManager: UIManager, heading: string, submitLabel: stri
     input.type = 'text'
     input.className = 'pvt-group-title-input'
     input.value = value
-    input.setAttribute('aria-label', 'Group title')
+    input.setAttribute('aria-label', uiManager.graph.i18n.t('groupActions.titleField.aria'))
     return runModal<string>(uiManager.graph, {
         title: heading,
         submitLabel,
@@ -109,8 +110,8 @@ export async function groupSelection(uiManager: UIManager, nodes: Node[]): Promi
     const ids = simplify.groupableIds(nodes)
     if (ids.length < 2) return undefined
     const left = expandGroups(nodes).length - ids.length
-    const note = left > 0 ? `${left} of the selected ${left === 1 ? 'node stays' : 'nodes stay'} out: annotated, or an open cluster.` : undefined
-    const title = await askTitle(uiManager, 'Group nodes', 'Group', simplify.defaultTitle(ids), note)
+    const note = left > 0 ? graph.i18n.t('groupActions.group.left', { count: left }) : undefined
+    const title = await askTitle(uiManager, graph.i18n.t('groupActions.group.heading'), graph.i18n.t('groupActions.group.submit'), simplify.defaultTitle(ids), note)
     if (title === null) return undefined
     const id = simplify.groupNodes(ids, title)
     const group = id ? simplify.getGroupNode(id) : undefined
@@ -120,8 +121,8 @@ export async function groupSelection(uiManager: UIManager, nodes: Node[]): Promi
 
 /** Retitle a hand-made group, after asking. An empty title labels it by its types again. */
 export async function renameGroupPrompt(uiManager: UIManager, group: GroupNode): Promise<void> {
-    const simplify = uiManager.graph.simplify
-    const title = await askTitle(uiManager, 'Rename group', 'Rename', simplify.labelOf(group.info))
+    const { simplify, i18n } = uiManager.graph
+    const title = await askTitle(uiManager, i18n.t('groupActions.rename.heading'), i18n.t('groupActions.rename.submit'), simplify.labelOf(group.info))
     if (title !== null) simplify.renameGroup(group, title)
 }
 
@@ -148,7 +149,7 @@ export function showGroupMembersInTable(uiManager: UIManager, group: GroupNode):
         label: () => {
             const current = simplify.getGroupNode(group.id)
             if (current) name = simplify.labelOf(current.info)
-            return `Members of ${name}`
+            return uiManager.graph.i18n.t('groupActions.tableScope', { group: name })
         },
         ids: () => simplify.getGroupNode(group.id)?.info.members.map(member => member.id) ?? [],
     })

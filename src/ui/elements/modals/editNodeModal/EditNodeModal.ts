@@ -25,7 +25,7 @@ export function createNodeEditModal(node: Node, session: NodeEditSession, uiMana
     applyMessages(header, uiManager.graph.i18n)
     // The label is graph data: assign it as text, never interpolate as markup.
     const nameEl = header.querySelector('.nodeinfo-name')
-    if (nameEl) nameEl.textContent = nodeNameGetter(node, uiManager.getOptions().mainHeader)
+    if (nameEl) nameEl.textContent = nodeNameGetter(node, uiManager.getOptions().mainHeader, uiManager.graph.i18n)
     header.querySelector('.icon-container')?.appendChild(createNodePreview(node, { size: fixedPreviewSize, className: 'icon' }))
 
     let body, form: HTMLFormElement

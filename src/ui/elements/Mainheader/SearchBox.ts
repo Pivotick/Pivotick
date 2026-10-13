@@ -180,7 +180,7 @@ export class SearchBox extends UIComponent {
         container.addEventListener('click', () => { this.clickHandler(node) })
 
         preview?.appendChild(createNodePreview(node, { size: fixedPreviewSize }))
-        name!.textContent = nodeNameGetter(node, this.uiManager.getOptions().mainHeader)
+        name!.textContent = nodeNameGetter(node, this.uiManager.getOptions().mainHeader, this.i18n)
         infoKey!.textContent = `.${match.key}: `
         infoValue!.textContent = match.value
 

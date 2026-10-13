@@ -63,3 +63,21 @@ test.describe('connection list', () => {
         expect(await selectedIds(page)).toEqual(['web'])
     })
 })
+
+test.describe('connection count', () => {
+    /** The line above the tabs that says how many connections the selected node has. */
+    const connectionCount = (page: import('@playwright/test').Page) => page.locator('.pvt-neighbors-count')
+
+    test('one connection reads in the singular, none in the plural', async ({ page }) => {
+        await gotoHarness(page)
+        await loadFixture(page, 'neighbors', FULL)
+        await harness(page, 'addNode', 'lonely', 300, 200, 'Lonely')
+
+        await harness(page, 'selectNode', 'hub')
+        await expect(connectionCount(page)).toHaveText('7 connections')
+        await harness(page, 'selectNode', 'health')
+        await expect(connectionCount(page)).toHaveText('1 connection')
+        await harness(page, 'selectNode', 'lonely')
+        await expect(connectionCount(page)).toHaveText('0 connections')
+    })
+})

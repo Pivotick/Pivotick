@@ -1,5 +1,6 @@
 import { createCopyButton } from './PropertyList'
 import { middleTruncate } from '../../../utils/TextFit'
+import type { I18n } from '../../../i18n/I18n'
 
 // Title auto-fit bounds: shrink a long title from MAX down to MIN px, wrapped
 // over at most MAX_LINES lines, before giving up and switching to the
@@ -36,7 +37,7 @@ function looksLikeIdentifier(text: string): boolean {
  * Requires the element to be laid out (clientWidth > 0); callers should invoke
  * it once the slot has a width and re-invoke whenever that width changes.
  */
-export function fitEntityTitle(nameElem: HTMLElement, actionElem: HTMLElement | null, text: string): void {
+export function fitEntityTitle(nameElem: HTMLElement, actionElem: HTMLElement | null, text: string, i18n: I18n): void {
     // Reset to the auto-fit base state (normal wrap, no clamp, full text).
     nameElem.className = TITLE_BASE_CLASS
     nameElem.style.fontSize = ''
@@ -61,7 +62,7 @@ export function fitEntityTitle(nameElem: HTMLElement, actionElem: HTMLElement | 
         // Add the copy button first so it claims its cell, then middle-elide to the
         // width that's actually left — otherwise the elided text is a touch too wide
         // and the button spills past the edge.
-        actionElem?.appendChild(createCopyButton(text))
+        actionElem?.appendChild(createCopyButton(text, i18n))
         nameElem.textContent = middleTruncate(text, nameElem.clientWidth, elementFont(nameElem))
     } else {
         nameElem.classList.add('is-clamp')
@@ -76,12 +77,14 @@ export function fitEntityTitle(nameElem: HTMLElement, actionElem: HTMLElement | 
  */
 export class TitleFitController {
     private slot: HTMLElement
+    private i18n: I18n
     private fit?: () => void
     private lastWidth = -1
     private observer?: ResizeObserver
 
-    constructor(slot: HTMLElement) {
+    constructor(slot: HTMLElement, i18n: I18n) {
         this.slot = slot
+        this.i18n = i18n
         if (typeof ResizeObserver !== 'undefined') {
             this.observer = new ResizeObserver(() => this.refit())
             this.observer.observe(slot)
@@ -92,7 +95,7 @@ export class TitleFitController {
     render(nameElem: HTMLElement, actionElem: HTMLElement | null, text: string): void {
         // Stash the untruncated text so a cloned copy (pinned tooltip) can re-fit.
         nameElem.dataset.titleText = text
-        this.fit = () => fitEntityTitle(nameElem, actionElem, text)
+        this.fit = () => fitEntityTitle(nameElem, actionElem, text, this.i18n)
         this.lastWidth = -1
         requestAnimationFrame(() => this.refit())
     }

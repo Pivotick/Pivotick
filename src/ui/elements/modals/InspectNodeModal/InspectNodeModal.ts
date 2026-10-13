@@ -24,8 +24,8 @@ export function createInspectModal(node: Node, uiManager: UIManager): void {
     // Label and description are graph data: assign them as text, never interpolate as markup.
     const nameEl = header.querySelector('.nodeinfo-name')
     const subtitleEl = header.querySelector('.nodeinfo-subtitle')
-    if (nameEl) nameEl.textContent = nodeNameGetter(node, uiManager.getOptions().mainHeader)
-    if (subtitleEl) subtitleEl.textContent = nodeDescriptionGetter(node, uiManager.getOptions().mainHeader) ?? ''
+    if (nameEl) nameEl.textContent = nodeNameGetter(node, uiManager.getOptions().mainHeader, uiManager.graph.i18n)
+    if (subtitleEl) subtitleEl.textContent = nodeDescriptionGetter(node, uiManager.getOptions().mainHeader, uiManager.graph.i18n) ?? ''
     header.querySelector('.icon-container')?.appendChild(createNodePreview(node, { size: fixedPreviewSize, className: 'icon' }))
 
     const body = createInspectModalBody(node, uiManager)
@@ -55,7 +55,7 @@ function createNodePropertiesTab(node: Node, uiManager: UIManager): HTMLDivEleme
     const scope = new AsyncRenderScope('properties', uiManager)
     const properties = scope.resolve(
         (ctx) => nodePropertiesGetter(node, uiManager.getOptions().propertiesPanel, ctx),
-        (entries) => createPropertyList(entries, node, { layout: 'columns' }),
+        (entries) => createPropertyList(entries, node, uiManager.graph.i18n, { layout: 'columns' }),
     )
     if (properties) container.appendChild(properties)
     return container

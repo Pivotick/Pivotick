@@ -7,6 +7,7 @@ import { checkmark, copy as copyIcon, externalLink } from '../../icons'
 import { createPrimitive } from '../../components/JsonViewer'
 import { escapeHtml } from '../../../utils/utils'
 import { hasAllowedScheme, isProtocolRelative, SAFE_LINK_SCHEMES } from '../../../utils/urlSafety'
+import type { I18n } from '../../../i18n/I18n'
 import './properties.scss'
 
 // Keys whose value we render as a link even when the value isn't an absolute URL
@@ -62,18 +63,18 @@ function jsonToHtml(value: unknown, depth: number, seen: WeakSet<object> = new W
     return `<span class="json-bracket">${open}</span>\n${lines.join('\n')}\n${closePad}<span class="json-bracket">${close}</span>`
 }
 
-function objectBadgeText(value: object): string {
+// The `[ ]` and `{ }` glyphs are JSON syntax and stay as they are.
+function objectBadgeText(i18n: I18n, value: object): string {
     if (Array.isArray(value)) {
-        return `[ ] ${value.length} ${value.length === 1 ? 'item' : 'items'}`
+        return `[ ] ${i18n.t('propertyList.items', { count: value.length })}`
     }
-    const n = Object.keys(value).length
-    return `{ } ${n} ${n === 1 ? 'key' : 'keys'}`
+    return `{ } ${i18n.t('propertyList.keys', { count: Object.keys(value).length })}`
 }
 
-export function createCopyButton(text: string): HTMLElement {
+export function createCopyButton(text: string, i18n: I18n): HTMLElement {
     // Stash the copy text as an attribute (not just the closure) so a cloneNode()'d
     // copy — e.g. a pinned tooltip — can be re-wired from it (see Tooltip.pinTooltip).
-    const btn = createHtmlElement('span', { class: 'pvt-prop-copy', title: 'Copy', role: 'button', tabindex: '0', 'data-copy-text': text }, [
+    const btn = createHtmlElement('span', { class: 'pvt-prop-copy', title: i18n.t('propertyList.copy.title'), role: 'button', tabindex: '0', 'data-copy-text': text }, [
         createIcon({ svgIcon: copyIcon }),
     ])
     const doCopy = async () => {
@@ -133,7 +134,7 @@ function createScalarValue(text: string, mono: boolean): HTMLElement {
  * A custom `nodePropertiesMap` may hand us a pre-built `HTMLElement` (or a
  * function returning one); those are rendered verbatim, with no copy affordance.
  */
-function createPropertyRow(entry: PropertyEntry, element: Node | Edge | null): HTMLElement {
+function createPropertyRow(entry: PropertyEntry, element: Node | Edge | null, i18n: I18n): HTMLElement {
     const key = keyToText(entry.name, element)
 
     // Resolve a function value to its string/HTMLElement result; leave everything
@@ -157,7 +158,7 @@ function createPropertyRow(entry: PropertyEntry, element: Node | Edge | null): H
     }
 
     if (value !== null && typeof value === 'object') {
-        row.appendChild(createHtmlElement('span', { class: 'pvt-prop-affordance pvt-prop-badge' }, [objectBadgeText(value)]))
+        row.appendChild(createHtmlElement('span', { class: 'pvt-prop-affordance pvt-prop-badge' }, [objectBadgeText(i18n, value)]))
         const box = createHtmlElement('div', { class: 'pvt-prop-value pvt-prop-value--json' }, [
             createHtmlElement('pre', { class: 'pvt-prop-json' }, []),
         ])
@@ -173,7 +174,7 @@ function createPropertyRow(entry: PropertyEntry, element: Node | Edge | null): H
         return row
     }
 
-    const copy = createCopyButton(text)
+    const copy = createCopyButton(text, i18n)
     copy.classList.add('pvt-prop-affordance')
     row.appendChild(copy)
     // `id`-like keys read best in monospace, matching the design's code aesthetic.
@@ -192,7 +193,8 @@ function createPropertyRow(entry: PropertyEntry, element: Node | Edge | null): H
 export function createPropertyList(
     properties: PropertyEntry[],
     element: Node | Edge | null,
-    { label = 'PROPERTIES', layout = 'stacked' }: { label?: string; layout?: 'stacked' | 'columns' } = {}
+    i18n: I18n,
+    { label = i18n.t('propertyList.label'), layout = 'stacked' }: { label?: string; layout?: 'stacked' | 'columns' } = {}
 ): HTMLElement {
     const container = createHtmlElement('div', {
         class: layout === 'columns' ? 'pvt-node-props pvt-node-props--columns' : 'pvt-node-props',
@@ -204,13 +206,13 @@ export function createPropertyList(
             createHtmlElement('span', { class: 'pvt-node-props-label-name' }, [label]),
         ]),
         createHtmlElement('span', { class: 'pvt-node-props-count' }, [
-            `${properties.length} ${properties.length === 1 ? 'field' : 'fields'}`,
+            i18n.t('propertyList.fields', { count: properties.length }),
         ]),
     ])
     container.appendChild(header)
 
     for (const entry of properties) {
-        container.appendChild(createPropertyRow(entry, element))
+        container.appendChild(createPropertyRow(entry, element, i18n))
     }
 
     return container

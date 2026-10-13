@@ -1,6 +1,7 @@
 import type { Node } from '../Node'
 import { imageOff } from '../ui/icons'
 import { createHtmlElement } from './ElementCreation'
+import type { I18n } from '../i18n/I18n'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 const XLINK_NS = 'http://www.w3.org/1999/xlink'
@@ -109,16 +110,16 @@ function parseIconSvg(markup: string): SVGSVGElement | null {
  * picture whose source failed to load. Shared by the tooltip preview and the lightbox so a
  * missing image degrades gracefully rather than showing the browser's broken-image glyph.
  */
-export function createImageUnavailablePlaceholder(): HTMLDivElement {
+export function createImageUnavailablePlaceholder(i18n: I18n): HTMLDivElement {
     const icon = createHtmlElement('div', { class: 'pvt-image-unavailable__icon' })
     icon.innerHTML = imageOff
-    const label = createHtmlElement('div', { class: 'pvt-image-unavailable__label' }, ['Image unavailable'])
+    const label = createHtmlElement('div', { class: 'pvt-image-unavailable__label' }, [i18n.t('nodePreview.imageUnavailable')])
     return createHtmlElement('div', { class: 'pvt-image-unavailable' }, [icon, label]) as HTMLDivElement
 }
 
 /** Swap a broken `<img>` for the {@link createImageUnavailablePlaceholder} placeholder on load error. */
-export function attachHtmlImageFallback(image: HTMLImageElement): void {
-    image.addEventListener('error', () => image.replaceWith(createImageUnavailablePlaceholder()), { once: true })
+export function attachHtmlImageFallback(image: HTMLImageElement, i18n: I18n): void {
+    image.addEventListener('error', () => image.replaceWith(createImageUnavailablePlaceholder(i18n)), { once: true })
 }
 
 /** The SVG-native fallback for a broken preview `<image>`: the crossed-out picture icon, centred. */

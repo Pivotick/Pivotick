@@ -15,6 +15,7 @@ import { arrowLeft, arrowRight, dash, edgeIncoming, edgeOutgoing, filterAdd, fil
 import { createTableForAggregatedProperties } from '../../../utils/ElementCreationAggregatedProperties'
 import type { NodeStyle } from '../../../interfaces/RendererOptions'
 import { createNodePreview } from '../../../utils/NodePreview'
+import { applyMessages, i18nText } from '../../../i18n/dom'
 
 
 export class SidebarNeighbors extends UIComponent {
@@ -70,7 +71,7 @@ export class SidebarNeighbors extends UIComponent {
         this.tabContainer = createTabs([
                 {
                     id: 'egograph',
-                    label: 'Neighbor Graph',
+                    label: this.i18n.t('sidebar.neighbors.tab.graph'),
                     content: this.egographContainer,
                     onShown: () => {
                         requestAnimationFrame(async () => {
@@ -84,12 +85,12 @@ export class SidebarNeighbors extends UIComponent {
                 },
                 {
                     id: 'stats',
-                    label: 'Stats',
+                    label: this.i18n.t('sidebar.neighbors.tab.stats'),
                     content: this.statContainer,
                 },
                 {
                     id: 'list',
-                    label: 'List',
+                    label: this.i18n.t('sidebar.neighbors.tab.list'),
                     content: this.listContainer,
                 },
             ],
@@ -171,9 +172,7 @@ export class SidebarNeighbors extends UIComponent {
         this.buildList(egoNode)
         this.buildStats(egoNode)
 
-        const connectionCount = egoNode.degree()
-        const connectionCountText = connectionCount > 1 ? `${connectionCount} connections` : '1 connection'
-        this.neighborCount.textContent = connectionCountText
+        this.neighborCount.textContent = this.i18n.t('sidebar.neighbors.connections', { count: egoNode.degree() })
     }
 
     public updateEdgeNeighbors(edge: Edge): void {
@@ -204,9 +203,7 @@ export class SidebarNeighbors extends UIComponent {
         this.buildList(egoNode)
         this.buildStats(egoNode)
 
-        const connectionCount = egoNode.degree()
-        const connectionCountText = connectionCount > 1 ? `${connectionCount} connections` : '1 connection'
-        this.neighborCount.textContent = connectionCountText
+        this.neighborCount.textContent = this.i18n.t('sidebar.neighbors.connections', { count: egoNode.degree() })
     }
 
     public updateEdgesNeighbors(edges: EdgeSelection<unknown>[]): void {
@@ -293,7 +290,7 @@ export class SidebarNeighbors extends UIComponent {
         if (hiddenCount > 0) {
             // Reuse the multi-selection aggregate look ("+N Group") for the overflow node.
             const moreId = `__ego_more__${egoIdStr}`
-            const moreNode = new Node(moreId, { label: `${hiddenCount} more`, aggregated_node_count: hiddenCount }, this.aggregatedNodeStyle())
+            const moreNode = new Node(moreId, { label: this.i18n.t('sidebar.neighbors.moreNode', { count: hiddenCount }), aggregated_node_count: hiddenCount }, this.aggregatedNodeStyle())
             moreNode.weight = 10
             egoNodes.push(moreNode.toDict(true) as RawNode)
             egoEdgeList.push({ id: `${moreId}__edge`, from: egoIdStr, to: moreId, data: {} })
@@ -409,17 +406,17 @@ export class SidebarNeighbors extends UIComponent {
             const aTarget = a.from.id === node.id ? a.to : a.from
             const bTarget = b.from.id === node.id ? b.to : b.from
 
-            const aName = nodeNameGetter(aTarget, mainHeader)
-            const bName = nodeNameGetter(bTarget, mainHeader)
+            const aName = nodeNameGetter(aTarget, mainHeader, this.i18n)
+            const bName = nodeNameGetter(bTarget, mainHeader, this.i18n)
 
-            return aName.localeCompare(bName)
+            return this.i18n.compare(aName, bName)
         })
 
         const container = createHtmlElement('div', { class: 'pvt-neighbor-list' })
         for (const edge of connectedEdges) {
             const isEdgeOut = edge.from.id === node.id
             const targetNode = isEdgeOut ? edge.to : edge.from
-            const edgeName = edgeNameGetter(edge, mainHeader) || ''
+            const edgeName = edgeNameGetter(edge, mainHeader, this.i18n) || ''
             const isDirected = this.uiManager.graph.getOptions().isDirected || edge.directed
 
             const directionIcon = isDirected
@@ -428,9 +425,6 @@ export class SidebarNeighbors extends UIComponent {
             const directionClass = isDirected
                 ? (isEdgeOut ? 'edge-out' : 'edge-in')
                 : 'edge-undirected'
-            const directionLabel = isDirected
-                ? (isEdgeOut ? 'Outgoing connection' : 'Incoming connection')
-                : 'Connection'
             const direction = createHtmlElement('span', {
                 class: ['pvt-neighbor-row__dir', directionClass],
             }, [createIcon({ svgIcon: directionIcon })])
@@ -438,7 +432,7 @@ export class SidebarNeighbors extends UIComponent {
             const preview = createHtmlElement('span', { class: 'pvt-neighbor-row__preview' })
             preview.appendChild(createNodePreview(targetNode, { size: previewSize }))
 
-            const targetNodeName = nodeNameGetter(targetNode, mainHeader)
+            const targetNodeName = nodeNameGetter(targetNode, mainHeader, this.i18n)
             const name = createHtmlElement('span', { class: 'pvt-neighbor-row__name' }, [targetNodeName])
 
             const rowChildren: HTMLElement[] = [direction, preview, name]
@@ -451,9 +445,11 @@ export class SidebarNeighbors extends UIComponent {
                 }, [edgeName]))
             }
 
-            const rowTitle = edgeName
-                ? `${directionLabel} — ${targetNodeName} · ${edgeName}`
-                : `${directionLabel} — ${targetNodeName}`
+            const connection = this.i18n.t(
+                isDirected ? (isEdgeOut ? 'sidebar.neighbors.row.outgoing' : 'sidebar.neighbors.row.incoming') : 'sidebar.neighbors.row.undirected',
+                { node: targetNodeName },
+            )
+            const rowTitle = edgeName ? `${connection} · ${edgeName}` : connection
             const row = createHtmlElement('div', {
                 'class': 'pvt-neighbor-row',
                 'data-node-id': targetNode.id,
@@ -503,17 +499,17 @@ export class SidebarNeighbors extends UIComponent {
                 'class': 'pvt-property-row',
             },
             [
-                createHtmlElement('dt', { class: 'pvt-property-name', title: 'Total connections', style: 'font-size: 1em;' }, ['Degree']),
+                createHtmlElement('dt', { class: 'pvt-property-name', title: this.i18n.t('sidebar.neighbors.stats.degree.title'), style: 'font-size: 1em;' }, [this.i18n.t('sidebar.neighbors.stats.degree')]),
                 createHtmlElement('dd', { class: 'pvt-property-value', style: 'display: flex; align-items: center; font-size: 1em;' }, [
-                    createHtmlElement('span', { style: 'margin-right: 8px;' }, [node.degree().toString()]),
+                    createHtmlElement('span', { style: 'margin-right: 8px;' }, [this.i18n.formatNumber(node.degree())]),
                     createHtmlElement('span', {
                         style: 'display: inline-flex; align-items: center; margin-right: 8px; color: var(--pvt-text-color-secondary)',
-                        title: 'Outgoing edges',
-                    }, [createIcon({ svgIcon: edgeOutgoing }), node.getEdgesOut().length.toString()]),
+                        title: this.i18n.t('sidebar.neighbors.stats.outgoing.title'),
+                    }, [createIcon({ svgIcon: edgeOutgoing }), this.i18n.formatNumber(node.getEdgesOut().length)]),
                     createHtmlElement('span', {
                         style: 'display: inline-flex; align-items: center; color: var(--pvt-text-color-secondary)',
-                        title: 'Incoming edges',
-                    }, [createIcon({ svgIcon: edgeIncoming }), node.getEdgesIn().length.toString()]),
+                        title: this.i18n.t('sidebar.neighbors.stats.incoming.title'),
+                    }, [createIcon({ svgIcon: edgeIncoming }), this.i18n.formatNumber(node.getEdgesIn().length)]),
                 ]),
             ]
         )
@@ -526,13 +522,14 @@ export class SidebarNeighbors extends UIComponent {
             ...node.getEdgesIn(),
         ]
         connectedEdges.forEach((edge) => {
-            const edgeName = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader) || '' 
+            const edgeName = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader, this.i18n) || '' 
             const count = edgeNames.get(edgeName) || 0
             edgeNames.set(edgeName, count+1)
         })
         const aggregatedProperties: Map<string, Map<string, number>> = new Map()
-        aggregatedProperties.set('Label', edgeNames)
+        aggregatedProperties.set(this.i18n.t('sidebar.neighbors.stats.label'), edgeNames)
         const aggregatedPropertiesDiv = createTableForAggregatedProperties(
+            this.i18n,
             aggregatedProperties,
             node.degree(),
             this.genActionButtonsSingleSelection.bind(this),
@@ -566,13 +563,13 @@ export class SidebarNeighbors extends UIComponent {
 
     private genActionButtonsSingleSelection(key: string, value: string): HTMLDivElement {
         const buttonKeep = createHtmlElement('button', {
-            title: 'Select nodes linked with this label',
+            title: this.i18n.t('sidebar.neighbors.stats.select.title'),
             class: 'pvt-facet-action-select',
         }, [createIcon({ svgIcon: filterAdd }) ])
         buttonKeep.addEventListener('click', () => this.applyEdgeLabelFacetFilter(key, value, 'keep'))
 
         const buttonExclude = createHtmlElement('button', {
-            title: 'Exclude nodes linked with this label',
+            title: this.i18n.t('sidebar.neighbors.stats.exclude.title'),
             class: 'pvt-facet-action-exclude',
         }, [createIcon({ svgIcon: filterRemove }) ])
         buttonExclude.addEventListener('click', () => this.applyEdgeLabelFacetFilter(key, value, 'exclude'))
@@ -593,7 +590,7 @@ export class SidebarNeighbors extends UIComponent {
         const matchingNodes = new Map<string, Node>()
         edges
             .filter((edge) => {
-                const currentEdgeName = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader)
+                const currentEdgeName = edgeNameGetter(edge, this.uiManager.getOptions().mainHeader, this.i18n)
                 return reversed ? currentEdgeName !== edgeName : currentEdgeName === edgeName
             })
             .forEach((edge) => {
@@ -624,7 +621,7 @@ export class SidebarNeighbors extends UIComponent {
                 const aggregatedCount = nodeData!.aggregated_node_count
                 const icon = createIcon({ svgIcon: graphMultiSelectNode(28) })
                 icon.style = 'position: absolute;'
-                return createHtmlTemplate(`<div style="display: flex; flex-direction: column; position: relative; align-items: center;">
+                const card = createHtmlTemplate(`<div style="display: flex; flex-direction: column; position: relative; align-items: center;">
                     ${icon.outerHTML}
                     <div style="
     height: 65%;
@@ -635,17 +632,22 @@ export class SidebarNeighbors extends UIComponent {
     flex-direction: column;
     justify-content: center;
     background-color: var(--pvt-bg-color-5);">
-                        <div style="height: auto; font-weight: 600; font-size: 1.5em;">+${aggregatedCount}</div>
-                        <div style="height: auto;">Group</div>
+                        <div style="height: auto; font-weight: 600; font-size: 1.5em;" data-pvt-count></div>
+                        <div style="height: auto;" ${i18nText('sidebar.neighbors.aggregate.group')}></div>
                     </div>
                 </div>`)
+                applyMessages(card, this.i18n)
+                const count = card.querySelector('[data-pvt-count]')!
+                count.removeAttribute('data-pvt-count')
+                count.textContent = this.i18n.t('sidebar.neighbors.aggregate.count', { count: aggregatedCount })
+                return card
             }
         }
     }
 
     private mergeNodesIntoNode(nodes: Node[]): Node {
         const aggregatedNodeStyle: Partial<NodeStyle> = this.aggregatedNodeStyle()
-        const aggregatedData: NodeData = { label: `${nodes.length} nodes`, aggregated_node_count: nodes.length }
+        const aggregatedData: NodeData = { label: this.i18n.t('count.nodes', { count: nodes.length }), aggregated_node_count: nodes.length }
         const aggregatedNodes = new Node('aggregated-node', aggregatedData, aggregatedNodeStyle)
         aggregatedNodes.weight = 10
 

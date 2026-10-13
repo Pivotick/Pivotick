@@ -208,7 +208,7 @@ export class NoteDrawer {
                 ref.dataset.nodeId = node.id
                 const nodeStyle: NodeStyle = this.graphSvgRenderer.nodeDrawer.getNodeStyle(node)
                 applyNodeReferenceColor(ref, nodeStyle.color as string)
-                const mainLabel = nodeNameGetter(node, this.graph.UIManager.getOptions().mainHeader).trim()
+                const mainLabel = nodeNameGetter(node, this.graph.UIManager.getOptions().mainHeader, this.graph.i18n).trim()
                 ref.textContent = mainLabel
                 row.appendChild(ref)
 
@@ -524,9 +524,9 @@ export class NoteDrawer {
                 const matches: TypeaheadItem[] = []
 
                 for (const node of this.graph.getMutableNodes()) {
-                    const label = nodeNameGetter(node, mainHeader).trim()
+                    const label = nodeNameGetter(node, mainHeader, this.graph.i18n).trim()
                     // Nodes without a real title fall back to their id, which `[[…]]` also resolves by.
-                    const name = label && label !== 'Optional name or label' ? label : node.id
+                    const name = label && label !== this.graph.i18n.t('headerMap.nameFallback') ? label : node.id
                     if (needle && !name.toLowerCase().includes(needle) && !node.id.toLowerCase().includes(needle)) {
                         continue
                     }
