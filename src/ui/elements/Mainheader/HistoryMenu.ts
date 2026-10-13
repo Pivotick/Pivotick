@@ -2,6 +2,7 @@ import type { HistoryEntry, HistoryPreview } from '../../../interfaces/History'
 import { addCircle, arrowDown, arrowUp, circleDashed, groupNodes, hide, pin, show, sparkles, trash, ungroupNodes } from '../../icons'
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
+import type { I18n } from '../../../i18n/I18n'
 import './historymenu.scss'
 
 /** Which end of the timeline a click travels towards. */
@@ -72,7 +73,7 @@ export class HistoryMenu extends UIComponent {
         this.root = document.createElement('div')
         this.root.className = 'pvt-history'
         this.root.setAttribute('role', 'menu')
-        this.root.setAttribute('aria-label', 'Graph history')
+        this.root.setAttribute('aria-label', this.i18n.t('history.menu.aria'))
         this.root.tabIndex = -1
         this.root.dataset.side = 'undo'
 
@@ -80,7 +81,7 @@ export class HistoryMenu extends UIComponent {
         head.className = 'pvt-history-head'
         const title = document.createElement('span')
         title.className = 'pvt-history-title'
-        title.textContent = 'History'
+        title.textContent = this.i18n.t('history.menu.title')
         this.side = document.createElement('span')
         this.side.className = 'pvt-history-side'
         this.counter = document.createElement('span')
@@ -205,9 +206,9 @@ export class HistoryMenu extends UIComponent {
         scroller.replaceChildren()
 
         if (!this.rows.length) {
-            scroller.append(this.buildNowLine(), terminal('Nothing has happened yet'))
+            scroller.append(this.buildNowLine(), terminal(this.i18n.t('history.menu.empty')))
         } else {
-            if (!this.ahead) scroller.appendChild(terminal('Nothing ahead — nothing has been undone'))
+            if (!this.ahead) scroller.appendChild(terminal(this.i18n.t('history.menu.nothingAhead')))
             // The line sits immediately above the first row that is still standing, so
             // with nothing undone it is the first thing in the list.
             this.rows.forEach((row, index) => {
@@ -215,15 +216,15 @@ export class HistoryMenu extends UIComponent {
                 scroller.appendChild(this.buildRow(row))
             })
             if (this.ahead === this.rows.length) scroller.appendChild(this.buildNowLine())
-            scroller.appendChild(terminal('The start of the session'))
+            scroller.appendChild(terminal(this.i18n.t('history.menu.start')))
         }
 
         this.nowLine = scroller.querySelector('.pvt-history-now') as HTMLDivElement ?? undefined
         const total = this.rows.length
         if (this.counter) {
             this.counter.textContent = total >= 30
-                ? `${total} of 30 · oldest evicted`
-                : `${total} of 30`
+                ? this.i18n.t('history.menu.countFull', { count: total, limit: 30 })
+                : this.i18n.t('history.menu.count', { count: total, limit: 30 })
         }
         this.decorate()
     }
@@ -255,22 +256,22 @@ export class HistoryMenu extends UIComponent {
         main.className = 'pvt-history-main'
         const label = document.createElement('span')
         label.className = 'pvt-history-label'
-        label.textContent = rowLabel(entry)
+        label.textContent = rowLabel(this.i18n, entry)
         const detail = document.createElement('span')
         detail.className = 'pvt-history-detail'
-        detail.textContent = rowDetail(entry)
+        detail.textContent = rowDetail(this.i18n, entry)
         main.append(label, detail)
 
         const chip = document.createElement('span')
         if (entry.persisted) {
             chip.className = 'pvt-history-chip'
             chip.innerHTML = pin
-            chip.append(entry.sealed ? (kept ? 'kept' : 'locked') : 'saved')
+            chip.append(this.i18n.t(entry.sealed ? (kept ? 'history.row.kept' : 'history.row.locked') : 'history.row.saved'))
         }
 
         const time = document.createElement('span')
         time.className = 'pvt-history-time'
-        time.textContent = elapsed(entry.at)
+        time.textContent = elapsed(this.i18n, entry.at)
 
         const ghost = document.createElement('span')
         ghost.className = 'pvt-history-ghost'
@@ -284,10 +285,10 @@ export class HistoryMenu extends UIComponent {
         line.className = 'pvt-history-now'
         const pill = document.createElement('span')
         pill.className = 'pvt-history-now-pill'
-        pill.textContent = 'NOW'
+        pill.textContent = this.i18n.t('history.menu.now')
         const meta = document.createElement('span')
         meta.className = 'pvt-history-now-meta'
-        meta.textContent = `${this.ahead} undone · ${this.rows.length - this.ahead} done`
+        meta.textContent = this.i18n.t('history.menu.nowMeta', { undone: this.ahead, done: this.rows.length - this.ahead })
         line.append(pill, meta)
         return line
     }
@@ -297,8 +298,8 @@ export class HistoryMenu extends UIComponent {
         button.type = 'button'
         button.className = `pvt-history-jump ${edge}`
         button.innerHTML = icon
-        button.append('NOW')
-        button.title = 'Scroll back to now'
+        button.append(this.i18n.t('history.menu.now'))
+        button.title = this.i18n.t('history.menu.jump.title')
         button.addEventListener('click', () => this.scrollToNow('center'))
         return button
     }
@@ -398,9 +399,9 @@ export class HistoryMenu extends UIComponent {
     private footIdle(): void {
         this.foot?.classList.add('idle')
         if (this.footDir) this.footDir.replaceChildren()
-        if (this.footSay) this.footSay.textContent = 'Point at a row to travel there.'
+        if (this.footSay) this.footSay.textContent = this.i18n.t('history.foot.idle')
         if (this.footDelta) {
-            this.footDelta.textContent = `${this.ahead} ahead · ${this.rows.length - this.ahead} behind`
+            this.footDelta.textContent = this.i18n.t('history.foot.position', { ahead: this.ahead, behind: this.rows.length - this.ahead })
         }
     }
 
@@ -414,28 +415,30 @@ export class HistoryMenu extends UIComponent {
         // Coming off the canvas while the source system keeps its copy. Only on the way
         // out — a redo puts them back and the two agree again.
         const upstream = direction === 'undo' ? preview.canvasOnly.length : 0
-        const verb = direction === 'undo' ? 'Undoes' : 'Redoes'
+        const i18n = this.i18n
         const say = this.footSay
         if (say) {
             const tails: string[] = []
             if (kept) {
                 tails.push(direction === 'undo'
-                    ? `${plural(kept, 'saved item')} kept`
-                    : `${kept} already applied`)
+                    ? i18n.t('history.foot.keptSaved', { count: kept })
+                    : i18n.t('history.foot.alreadyApplied', { count: kept }))
             }
-            if (upstream) tails.push(`${plural(upstream, 'item')} saved upstream`)
+            if (upstream) tails.push(i18n.t('history.foot.savedUpstream', { count: upstream }))
 
             say.replaceChildren()
-            const head = kept ? `${verb} ${acting} of ${total}` : `${verb} ${plural(acting, 'step')}`
+            const head = direction === 'undo'
+                ? (kept ? i18n.t('history.foot.undoesSome', { acting, total }) : i18n.t('history.foot.undoesSteps', { count: acting }))
+                : (kept ? i18n.t('history.foot.redoesSome', { acting, total }) : i18n.t('history.foot.redoesSteps', { count: acting }))
             if (!acting) {
-                say.append(muted('Nothing to reverse'), ` · ${plural(kept, 'saved item')} kept`)
+                say.append(muted(i18n.t('history.foot.nothingToReverse')), ` · ${i18n.t('history.foot.keptSaved', { count: kept })}`)
             } else if (tails.length) {
                 say.append(`${head} `, muted(`· ${tails.join(' · ')}`))
             } else {
                 say.append(head)
             }
         }
-        if (this.footDelta) this.footDelta.textContent = deltaLabel(preview)
+        if (this.footDelta) this.footDelta.textContent = deltaLabel(i18n, preview)
     }
 
     /* ---------- scroll ---------- */
@@ -524,7 +527,7 @@ export class HistoryMenu extends UIComponent {
         const chip = this.side
         if (!chip) return
         chip.innerHTML = direction === 'undo' ? arrowDown : arrowUp
-        chip.append(direction === 'undo' ? 'Undo side' : 'Redo side')
+        chip.append(this.i18n.t(direction === 'undo' ? 'history.menu.undoSide' : 'history.menu.redoSide'))
     }
 }
 
@@ -547,8 +550,8 @@ function kindIcon(entry: HistoryEntry): string {
 }
 
 /** Two runs of one pivot must never read as two identical rows, hence the ordinal. */
-function rowLabel(entry: HistoryEntry): string {
-    if (entry.kind === 'pivot' && entry.ordinal) return `${entry.label} #${entry.ordinal}`
+function rowLabel(i18n: I18n, entry: HistoryEntry): string {
+    if (entry.kind === 'pivot' && entry.ordinal) return i18n.t('history.row.pivotRun', { label: entry.label, ordinal: entry.ordinal })
     return entry.label
 }
 
@@ -557,15 +560,15 @@ function rowLabel(entry: HistoryEntry): string {
  * whose labels name a source, and a group, whose label names the act. Every other kind's label already carries its counts
  * (`Deleted 3 nodes`), and repeating them beside it says the same thing twice.
  */
-function rowDetail(entry: HistoryEntry): string {
-    if (entry.kind === 'group') return plural(entry.nodeIds.length, 'node')
+function rowDetail(i18n: I18n, entry: HistoryEntry): string {
+    if (entry.kind === 'group') return i18n.t('count.nodes', { count: entry.nodeIds.length })
     if (entry.kind !== 'pivot' && entry.kind !== 'removal') return ''
     const parts: string[] = []
-    if (entry.nodeIds.length) parts.push(plural(entry.nodeIds.length, 'node'))
-    if (entry.edgeIds.length) parts.push(plural(entry.edgeIds.length, 'edge'))
+    if (entry.nodeIds.length) parts.push(i18n.t('count.nodes', { count: entry.nodeIds.length }))
+    if (entry.edgeIds.length) parts.push(i18n.t('count.edges', { count: entry.edgeIds.length }))
     // A removal whose every element another source still vouches for changed only
     // who vouches, and the row has to say why it moved nothing.
-    if (!parts.length && entry.kind === 'removal') return 'Nothing left the canvas'
+    if (!parts.length && entry.kind === 'removal') return i18n.t('history.row.nothingLeft')
     return parts.join(' · ')
 }
 
@@ -574,29 +577,31 @@ function rowDetail(entry: HistoryEntry): string {
  * edges only when neither moved — a span that adds nothing and hides nothing but
  * asserts three relations still changed something.
  */
-function deltaLabel(preview: HistoryPreview): string {
+function deltaLabel(i18n: I18n, preview: HistoryPreview): string {
     const { effect } = preview
     const parts: string[] = []
 
     const nodes = effect.nodesRestored - effect.nodesRemoved
-    if (nodes) parts.push(`${nodes > 0 ? '+' : '−'}${plural(Math.abs(nodes), 'node')}`)
+    if (nodes) parts.push(i18n.t(nodes > 0 ? 'history.delta.nodesAdded' : 'history.delta.nodesRemoved', { count: Math.abs(nodes) }))
 
     const shown = effect.nodesShown - effect.nodesHidden
     if (shown) {
         const count = Math.abs(shown)
         // The noun is dropped when something already carries it, so the two halves read
         // as one line rather than saying "node" twice.
-        const subject = parts.length ? String(count) : plural(count, 'node')
-        parts.push(shown > 0 ? `${subject} back in view` : `${subject} hidden`)
+        const key = shown > 0
+            ? (parts.length ? 'history.delta.shown' : 'history.delta.shownNodes')
+            : (parts.length ? 'history.delta.hidden' : 'history.delta.hiddenNodes')
+        parts.push(i18n.t(key, { count }))
     }
 
     if (!parts.length) {
         const edges = effect.edgesRestored - effect.edgesRemoved
-        if (edges) parts.push(`${edges > 0 ? '+' : '−'}${plural(Math.abs(edges), 'edge')}`)
+        if (edges) parts.push(i18n.t(edges > 0 ? 'history.delta.edgesAdded' : 'history.delta.edgesRemoved', { count: Math.abs(edges) }))
     }
     // Groups change how nodes are drawn, not which are there.
-    if (!parts.length && preview.entries.some(entry => entry.kind === 'group')) return 'groups change'
-    return parts.join(' · ') || 'nothing changes'
+    if (!parts.length && preview.entries.some(entry => entry.kind === 'group')) return i18n.t('history.delta.groups')
+    return parts.join(' · ') || i18n.t('history.delta.none')
 }
 
 function terminal(text: string): HTMLDivElement {
@@ -613,16 +618,14 @@ function muted(text: string): HTMLElement {
     return em
 }
 
-function plural(n: number, noun: string): string {
-    return `${n.toLocaleString()} ${n === 1 ? noun : `${noun}s`}`
-}
-
-function elapsed(at: number): string {
+function elapsed(i18n: I18n, at: number): string {
     const minutes = Math.floor((Date.now() - at) / 60_000)
-    if (minutes <= 0) return 'now'
-    if (minutes < 60) return `${minutes}m`
+    if (minutes <= 0) return i18n.t('history.time.now')
+    if (minutes < 60) return i18n.t('history.time.minutes', { count: minutes })
     const hours = Math.floor(minutes / 60)
-    return `${hours}h${minutes % 60 ? ` ${minutes % 60}m` : ''}`
+    return minutes % 60
+        ? i18n.t('history.time.hoursMinutes', { hours, minutes: minutes % 60 })
+        : i18n.t('history.time.hours', { count: hours })
 }
 
 /** Entry ids are generated or provider-supplied, so they cannot be trusted in a selector. */

@@ -699,7 +699,7 @@ export class UIManager {
                         pointerEvent.clientY
                     )
                     const note: Note = new Note({
-                        content: 'This is not a note.',
+                        content: this.graph.i18n.t('note.defaultContent'),
                         x,
                         y
                     })
@@ -1322,7 +1322,7 @@ export class UIManager {
         if (!this.isFeatureEnabled('notifications')) return
         const container = this.layout?.notification
         if (!container) return
-        return mountToast(container, notification)
+        return mountToast(container, notification, this.graph.i18n)
     }
 
    /**

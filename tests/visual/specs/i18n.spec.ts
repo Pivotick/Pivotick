@@ -58,6 +58,17 @@ test.describe('i18n: messages', () => {
         await expect(emptyCard(page)).toHaveText('Rien sur le canevas')
     })
 
+    test('the chrome takes its words from the messages, in text and in tooltips', async ({ page }) => {
+        await loadFixture(page, 'basic', {
+            ...FULL,
+            i18n: { locale: 'fr', messages: { 'topBar.search': 'Rechercher', 'navigation.zoomIn': 'Zoom avant' } },
+        })
+        await expect(page.locator('#pvt-searchbox-button .action-text')).toHaveText('Rechercher')
+        await expect(page.locator('#pvt-graphnavigation-zoom-in')).toHaveAttribute('title', 'Zoom avant')
+        // Untranslated keys beside them stay English.
+        await expect(page.locator('#pvt-filter-button .action-text')).toHaveText('Filter Graph')
+    })
+
     test('a key the messages leave out stays English', async ({ page }) => {
         await loadFixture(page, 'empty', { i18n: { locale: 'fr', messages: { 'busy.label': 'Patientez…' } } })
         await expect(emptyCard(page)).toHaveText(EMPTY_MESSAGE)

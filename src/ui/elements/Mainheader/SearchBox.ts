@@ -7,6 +7,7 @@ import './searchbox.scss'
 import { nodeNameGetter } from '../../../utils/GraphGetters'
 import { createNodePreview } from '../../../utils/NodePreview'
 import type { GroupNode } from '../../../Simplification/GroupNode'
+import { applyMessages, i18nAttr, i18nText } from '../../../i18n/dom'
 
 interface Match {
     key: string,
@@ -54,7 +55,7 @@ export class SearchBox extends UIComponent {
         <div class="pvt-title-container"></div>
         <div class="input-container">
             <span class="icon-container">${magnifyingGlass}</span>
-            <input id="pvt-search-input" type="text" name="pvt-search" placeholder="Search" class="search-text" autocomplete="off" />
+            <input id="pvt-search-input" type="text" name="pvt-search" ${i18nAttr('placeholder', 'search.placeholder')} class="search-text" autocomplete="off" />
         </div>
     </div>
     <div class="pvt-search-results"></div>
@@ -63,25 +64,26 @@ export class SearchBox extends UIComponent {
         <span>
             <span class="pvt-search-icon">${arrowUp}</span>
             <span class="pvt-search-icon">${arrowDown}</span>
-            <span class="pvt-search-text">to navigate</span>
+            <span class="pvt-search-text" ${i18nText('search.hint.navigate')}></span>
         </span>
         <span>
             <span class="pvt-search-icon">${arrowEnter}</span>
-            <span class="pvt-search-text">to select</span>
+            <span class="pvt-search-text" ${i18nText('search.hint.select')}></span>
         </span>
         <span class="pvt-search-hint-showall">
             <span class="pvt-search-icon">⇧</span>
             <span class="pvt-search-icon">${arrowEnter}</span>
-            <span class="pvt-search-text">to show all</span>
+            <span class="pvt-search-text" ${i18nText('search.hint.showAll')}></span>
         </span>
         <span>
-            <span class="pvt-search-icon">esc</span>
-            <span class="pvt-search-text">to close</span>
+            <span class="pvt-search-icon" ${i18nText('keys.escape')}></span>
+            <span class="pvt-search-text" ${i18nText('search.hint.close')}></span>
         </span>
     </div>
   </div>
 `
         this.searchBox = template.content.firstElementChild as HTMLDivElement
+        applyMessages(this.searchBox, this.i18n)
         this.searchInput = this.searchBox.querySelector('#pvt-search-input') ?? undefined
         this.searchResultsContainer = this.searchBox.querySelector('.pvt-search-results') ?? undefined
         this.searchSummaryContainer = this.searchBox.querySelector('.pvt-search-summary') ?? undefined
@@ -187,7 +189,7 @@ export class SearchBox extends UIComponent {
         if (drawn.isGroup) {
             const chip = document.createElement('span')
             chip.className = 'pvt-search-result__group'
-            chip.textContent = `in ${this.uiManager.graph.simplify.labelOf((drawn as GroupNode).info)}`
+            chip.textContent = this.i18n.t('search.result.inGroup', { group: this.uiManager.graph.simplify.labelOf((drawn as GroupNode).info) })
             container.querySelector('.pvt-search-result__info')?.appendChild(chip)
         }
 
@@ -273,27 +275,16 @@ export class SearchBox extends UIComponent {
     private createSummary(): HTMLDivElement {
         if (!this.results) return document.createElement('div')
 
-        let text = ''
-        if (this.results.length === 0) {
-            text = 'No results found'
-        } else if (this.results.length > this.MAX_RESULT_COUNT) {
-            text = `Showing top ${this.MAX_RESULT_COUNT} of ${this.results.length} results`
-        } else {
-            text = `${this.results.length} results`
-        }
-
-        const template = document.createElement('template')
-        template.innerHTML = `
-  <div>
-    ${text}
-  </div>
-`
-        const summary = template.content.firstElementChild as HTMLDivElement
+        const count = this.results.length
+        const summary = document.createElement('div')
+        if (count === 0) summary.textContent = this.i18n.t('search.summary.none')
+        else if (count > this.MAX_RESULT_COUNT) summary.textContent = this.i18n.t('search.summary.top', { shown: this.MAX_RESULT_COUNT, count })
+        else summary.textContent = this.i18n.t('search.summary.all', { count })
         if (this.options.showAll && this.results.length > 0) {
             const button = document.createElement('button')
             button.type = 'button'
             button.className = 'pvt-search-showall'
-            button.textContent = 'Show all on the canvas'
+            button.textContent = this.i18n.t('search.showAll')
             button.addEventListener('click', () => this.showAll())
             summary.appendChild(button)
         }

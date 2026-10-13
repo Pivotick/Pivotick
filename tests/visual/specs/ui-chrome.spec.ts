@@ -121,4 +121,20 @@ test.describe('ui-chrome', () => {
         await expect(search.locator('.pvt-search-result')).toHaveCount(3)
         await expectElement(page.locator('.pvt-modal'), 'search-modal.png')
     })
+
+    test('the search summary counts its results, a single one in the singular', async ({ page }) => {
+        /** The summary's own sentence, without the Show-all button beside it. */
+        const summarySentence = () => page.locator('.pvt-search-summary > div').evaluate((el) => el.firstChild?.textContent ?? '')
+
+        await loadFixture(page, 'filterable')
+        await page.locator('#pvt-searchbox-button').click()
+        const input = page.locator('#pvt-search-input')
+
+        await input.fill('router')
+        await expect.poll(summarySentence).toBe('3 results')
+        await input.fill('sw1')
+        await expect.poll(summarySentence).toBe('1 result')
+        await input.fill('nothing is called this')
+        await expect.poll(summarySentence).toBe('No results found')
+    })
 })

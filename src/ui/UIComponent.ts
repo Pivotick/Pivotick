@@ -1,5 +1,6 @@
 import type { UIManager } from './UIManager'
 import type { GraphInteractionEvents } from '../interfaces/GraphInteractions'
+import type { I18n } from '../i18n/I18n'
 
 /**
  * The lifecycle phases every UI element participates in, in order. `mount`
@@ -68,6 +69,11 @@ export abstract class UIComponent {
     }
 
     /* ---------- helpers for subclasses ---------- */
+
+    /** The graph's language: what the element's own text is looked up and formatted with. */
+    protected get i18n(): I18n {
+        return this.uiManager.graph.i18n
+    }
 
     /**
      * Register a child component. When `slot` is provided the child is mounted

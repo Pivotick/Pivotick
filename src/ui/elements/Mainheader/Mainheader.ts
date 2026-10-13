@@ -17,6 +17,7 @@ import { TopBarActionMenu } from './TopBarActionMenu'
 import { createIcon } from '../../../utils/ElementCreation'
 import { confirmModal, promptData } from '../../../editing/PromptModal'
 import type { MenuActionItemOptions, TopBarAction, TopBarActionContext } from '../../../interfaces/GraphUI'
+import type { I18n } from '../../../i18n/I18n'
 
 /** One drawn host pill, kept across refreshes so it keeps its focus and its listeners. */
 interface ActionPill {
@@ -70,37 +71,37 @@ export class Mainheader extends UIComponent {
         /** Searchbox */
         if (this.uiManager.isFeatureEnabled('search')) {
             this.searchBoxButton = this.makePill(`
-  <div id="pvt-searchbox-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Search for a node">
+  <div id="pvt-searchbox-button" class="pvt-action-button" role="button" tabindex="0">
     <div class="action-container">
         <span class="icon-container">${magnifyingGlass}</span>
-        <span class="action-text">Search</span>
+        <span class="action-text"></span>
         ${createShortcutBadge('Shift+J').outerHTML}
     </div>
-  </div>`)
+  </div>`, this.i18n.t('topBar.search'), this.i18n.t('topBar.search.aria'))
         }
 
         /** Filterbox */
         if (this.uiManager.isFeatureEnabled('filter')) {
             this.filterButton = this.makePill(`
-  <div id="pvt-filter-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Filter the graph">
+  <div id="pvt-filter-button" class="pvt-action-button" role="button" tabindex="0">
     <div class="action-container">
         <span class="icon-container">${funnel}</span>
-        <span class="action-text">Filter Graph</span>
+        <span class="action-text"></span>
         ${createShortcutBadge('Shift+K').outerHTML}
     </div>
-  </div>`)
+  </div>`, this.i18n.t('topBar.filter'), this.i18n.t('topBar.filter.aria'))
         }
 
         /** Notebox */
         if (this.uiManager.isFeatureEnabled('notes')) {
             this.noteButton = this.makePill(`
-  <div id="pvt-notes-button" class="pvt-action-button" role="button" tabindex="0" aria-label="Notes">
+  <div id="pvt-notes-button" class="pvt-action-button" role="button" tabindex="0">
     <div class="action-container">
         <span class="icon-container">${stickyNote}</span>
-        <span class="action-text">Notes</span>
+        <span class="action-text"></span>
         ${createShortcutBadge('Shift+N').outerHTML}
     </div>
-  </div>`)
+  </div>`, this.i18n.t('topBar.notes'), this.i18n.t('topBar.notes'))
         }
 
         // `display: contents`, so the pills inside are the strip's own flex items.
@@ -125,11 +126,13 @@ export class Mainheader extends UIComponent {
         container.appendChild(this.mainheader)
     }
 
-    /** Build one header pill from its markup and append it to the strip. */
-    private makePill(markup: string): HTMLDivElement {
+    /** Build one header pill from its markup, give it its words, and append it to the strip. */
+    private makePill(markup: string, label: string, ariaLabel: string): HTMLDivElement {
         const template = document.createElement('template')
         template.innerHTML = markup
         const pill = template.content.firstElementChild as HTMLDivElement
+        pill.setAttribute('aria-label', ariaLabel)
+        pill.querySelector('.action-text')!.textContent = label
         this.mainheader!.appendChild(pill)
         return pill
     }
@@ -142,14 +145,14 @@ export class Mainheader extends UIComponent {
         <button id="pvt-undo-button" class="pvt-button-undo pvt-undoredo-step" disabled>
             ${undo}
         </button>
-        <button id="pvt-undo-caret" class="pvt-undoredo-caret" disabled aria-label="Undo history" aria-haspopup="menu">
+        <button id="pvt-undo-caret" class="pvt-undoredo-caret" disabled aria-haspopup="menu">
             ${chevronDown}
         </button>
         <span class="pvt-undoredo-sep"></span>
         <button id="pvt-redo-button" class="pvt-button-redo pvt-undoredo-step" disabled>
             ${redo}
         </button>
-        <button id="pvt-redo-caret" class="pvt-undoredo-caret" disabled aria-label="Redo history" aria-haspopup="menu">
+        <button id="pvt-redo-caret" class="pvt-undoredo-caret" disabled aria-haspopup="menu">
             ${chevronDown}
         </button>
     </div>`
@@ -158,6 +161,8 @@ export class Mainheader extends UIComponent {
         this.redoButton = group.querySelector('#pvt-redo-button') ?? undefined
         this.undoCaret = group.querySelector('#pvt-undo-caret') ?? undefined
         this.redoCaret = group.querySelector('#pvt-redo-caret') ?? undefined
+        this.undoCaret?.setAttribute('aria-label', this.i18n.t('topBar.undoHistory.aria'))
+        this.redoCaret?.setAttribute('aria-label', this.i18n.t('topBar.redoHistory.aria'))
         right.appendChild(group)
     }
 
@@ -244,7 +249,7 @@ export class Mainheader extends UIComponent {
         pill.root.tabIndex = pill.disabled ? -1 : 0
         if (pill.caret) {
             pill.caret.disabled = pill.disabled
-            pill.caret.setAttribute('aria-label', `More: ${text}`)
+            pill.caret.setAttribute('aria-label', this.i18n.t('topBar.action.more.aria', { action: text }))
             if (pill.disabled) this.closeMenuOf(pill)
         }
         return pill
@@ -375,7 +380,7 @@ export class Mainheader extends UIComponent {
             this.track(this.uiManager.keyManager.register({ key: 'Shift+K', callback: () => this.filterButton?.click() }))
             const graphFilter = new GraphFilter(this.uiManager)
             this.filteringSlidepanel = this.uiManager.createSlidepanel({
-                header: 'Graph Filters',
+                header: this.i18n.t('topBar.filter.panelTitle'),
                 body: graphFilter.build()
             })
             // Only one slide panel open at a time: opening one closes the other.
@@ -389,7 +394,7 @@ export class Mainheader extends UIComponent {
             this.track(this.uiManager.keyManager.register({ key: 'Shift+N', callback: () => this.noteButton?.click() }))
             this.noteSidebar = new NoteSidebar(this.uiManager)
             this.noteSlidepanel = this.uiManager.createSlidepanel({
-                header: 'Notes',
+                header: this.i18n.t('topBar.notes'),
                 body: this.noteSidebar.build()
             })
             this.listen(noteButton, 'click', () => {
@@ -469,8 +474,8 @@ export class Mainheader extends UIComponent {
         const paint = (): void => {
             const [next] = history.entries()
             const [back] = history.redoable()
-            paintButton(undoButton, 'Undo', next?.label, history.canUndo())
-            paintButton(redoButton, 'Redo', back?.label, history.canRedo())
+            paintButton(this.i18n, undoButton, 'undo', next?.label, history.canUndo())
+            paintButton(this.i18n, redoButton, 'redo', back?.label, history.canRedo())
             // Either caret opens the same list, so either one is useful as soon as the
             // list has anything in it at all.
             const anyEntries = history.canUndo() || history.canRedo()
@@ -488,17 +493,28 @@ export class Mainheader extends UIComponent {
  * happen — `Undo — Hid 3 nodes` — because a bare "Undo" on a canvas that moved while
  * the analyst was reading is the one thing they cannot check.
  */
-function paintButton(button: HTMLButtonElement, verb: string, entry: string | undefined, enabled: boolean): void {
+function paintButton(
+    i18n: I18n,
+    button: HTMLButtonElement,
+    direction: 'undo' | 'redo',
+    entry: string | undefined,
+    enabled: boolean,
+): void {
     button.disabled = !enabled
-    const shortcut = verb === 'Undo' ? modLabel('Z') : modLabel('⇧Z')
-    button.title = enabled && entry ? `${verb} — ${entry} (${shortcut})` : `${verb} (${shortcut})`
-    button.setAttribute('aria-label', enabled && entry ? `${verb} ${entry}` : verb)
+    const shortcut = modLabel(i18n, direction === 'undo' ? 'Z' : '⇧Z')
+    if (direction === 'undo') {
+        button.title = enabled && entry ? i18n.t('topBar.undo.titleNamed', { entry, shortcut }) : i18n.t('topBar.undo.title', { shortcut })
+        button.setAttribute('aria-label', enabled && entry ? i18n.t('topBar.undo.ariaNamed', { entry }) : i18n.t('topBar.undo'))
+    } else {
+        button.title = enabled && entry ? i18n.t('topBar.redo.titleNamed', { entry, shortcut }) : i18n.t('topBar.redo.title', { shortcut })
+        button.setAttribute('aria-label', enabled && entry ? i18n.t('topBar.redo.ariaNamed', { entry }) : i18n.t('topBar.redo'))
+    }
 }
 
 /** `⌘Z` on macOS, `Ctrl+Z` everywhere else. */
-function modLabel(key: string): string {
+function modLabel(i18n: I18n, key: string): string {
     const mac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent)
-    return mac ? `⌘${key}` : `Ctrl+${key}`
+    return mac ? `⌘${key}` : i18n.t('keys.ctrlCombo', { key })
 }
 /** Read a field that is either a value or a function of the graph. */
 function resolve<T>(value: T | ((graph: Graph) => T), graph: Graph): T {

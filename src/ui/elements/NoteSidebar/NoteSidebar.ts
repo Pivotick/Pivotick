@@ -205,7 +205,7 @@ export class NoteSidebar extends UIComponent {
                     bcr.y + bcr.height / 2 - 170,
                 )
                 const note: Note = new Note({
-                    content: 'This is not a note.',
+                    content: this.i18n.t('note.defaultContent'),
                     x,
                     y
                 })

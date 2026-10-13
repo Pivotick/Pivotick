@@ -8,6 +8,7 @@ import type { ModalHTMLElement } from '../../../components/Modal'
 import { FormFactory, type FieldConfig, type FormValues } from '../../../../utils/FormFactory'
 import type { NodeEditSession } from '../../../../editing/NodeEditSession'
 import { edit } from '../../../icons'
+import { applyMessages, i18nText } from '../../../../i18n/dom'
 
 
 export function createNodeEditModal(node: Node, session: NodeEditSession, uiManager: UIManager, customHandler?: ((session: NodeEditSession) => HTMLDivElement)): void {
@@ -16,11 +17,12 @@ export function createNodeEditModal(node: Node, session: NodeEditSession, uiMana
         <div class="main-container">
             <div class="icon-container"></div>
             <div class="nodeinfo-container">
-                <div>Editing node: </div>
+                <div ${i18nText('modal.editNode.heading')}></div>
                 <div class="nodeinfo-name"></div>
             </div>
         </div>
     `) as HTMLDivElement
+    applyMessages(header, uiManager.graph.i18n)
     // The label is graph data: assign it as text, never interpolate as markup.
     const nameEl = header.querySelector('.nodeinfo-name')
     if (nameEl) nameEl.textContent = nodeNameGetter(node, uiManager.getOptions().mainHeader)
@@ -55,7 +57,7 @@ export function createNodeEditModal(node: Node, session: NodeEditSession, uiMana
         buttons: [
             {
                 variant: 'secondary',
-                text: 'Cancel',
+                text: uiManager.graph.i18n.t('prompt.cancel'),
                 iconUnicode: '×',
                 onClick: (evt, hideModal) => {
                     hideModal()
@@ -63,7 +65,7 @@ export function createNodeEditModal(node: Node, session: NodeEditSession, uiMana
             },
             {
                 variant: 'primary',
-                text: 'Edit Node',
+                text: uiManager.graph.i18n.t('modal.editNode.submit'),
                 svgIcon: edit,
                 onClick: async (evt, hideModal) => {
                     const nodeData: FormValues = FormFactory.getValues(form)

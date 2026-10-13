@@ -61,7 +61,7 @@ function createNodePropertiesTab(node: Node, uiManager: UIManager): HTMLDivEleme
     return container
 }
 
-function createNodeJsonTab(node: Node): HTMLDivElement {
+function createNodeJsonTab(node: Node, uiManager: UIManager): HTMLDivElement {
     const container = document.createElement('div')
     container.classList.add('inspect-node-json-tab')
     // The snapshot keeps the tab from reflecting later edits, but a circular `data` bag makes
@@ -72,7 +72,7 @@ function createNodeJsonTab(node: Node): HTMLDivElement {
     } catch {
         // keep the live object
     }
-    container.appendChild(createJsonViewer(data))
+    container.appendChild(createJsonViewer(data, uiManager.graph.i18n))
 
     return container
 }
@@ -85,13 +85,13 @@ function createInspectModalBody(node: Node, uiManager: UIManager): HTMLDivElemen
         [
             {
                 id: 'properties',
-                label: 'Properties',
+                label: uiManager.graph.i18n.t('modal.inspect.properties'),
                 content: createNodePropertiesTab(node, uiManager),
             },
             {
                 id: 'json',
-                label: 'JSON',
-                content: createNodeJsonTab(node),
+                label: uiManager.graph.i18n.t('modal.inspect.json'),
+                content: createNodeJsonTab(node, uiManager),
             },
         ],
         'properties',

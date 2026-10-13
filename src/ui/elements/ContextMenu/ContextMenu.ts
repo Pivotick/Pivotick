@@ -427,7 +427,7 @@ const defaultMenuCanvas = {
             onclick(this: ContextMenu, _evt: PointerEvent) {
                 const { x, y } = this.openPoint()
                 const note: Note = new Note({
-                    content: 'This is not a note.',
+                    content: this.i18n.t('note.defaultContent'),
                     x,
                     y
                 })

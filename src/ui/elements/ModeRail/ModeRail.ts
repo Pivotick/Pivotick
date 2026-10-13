@@ -45,18 +45,18 @@ export class ModeRail extends UIComponent {
         // the guaranteed fallback and always here; the other three answer to their
         // options — Create to whether any of its four tools survived, the two flyouts
         // to their own switches.
-        this.rail.appendChild(this.makeButton('select', 'Select', cursor, 'V'))
+        this.rail.appendChild(this.makeButton('select', this.i18n.t('rail.select'), cursor, 'V'))
         if (this.uiManager.hasCreateTools()) {
-            this.rail.appendChild(this.makeButton('create', 'Create', addCircle, 'C'))
+            this.rail.appendChild(this.makeButton('create', this.i18n.t('rail.create'), addCircle, 'C'))
         }
         if (this.uiManager.isFeatureEnabled('viewFlyout')) {
-            this.rail.appendChild(this.makeButton('view', 'View', show))
+            this.rail.appendChild(this.makeButton('view', this.i18n.t('rail.view'), show))
         }
         if (this.uiManager.isFeatureEnabled('physicsFlyout')) {
-            this.rail.appendChild(this.makeButton('physics', 'Physics', atom))
+            this.rail.appendChild(this.makeButton('physics', this.i18n.t('rail.physics'), atom))
         }
         if (simplifyOffered(this.uiManager.getOptions())) {
-            const button = this.makeButton('simplify', 'Simplify', groupNodes)
+            const button = this.makeButton('simplify', this.i18n.t('rail.simplify'), groupNodes)
             const count = document.createElement('span')
             count.className = 'pvt-moderail-count'
             button.appendChild(count)
@@ -180,10 +180,13 @@ export class ModeRail extends UIComponent {
         const count = button?.querySelector<HTMLElement>('.pvt-moderail-count')
         if (!button || !count) return
         const { groups, folded } = this.uiManager.graph.simplify.summary()
-        count.textContent = groups ? String(groups) : ''
+        count.textContent = groups ? this.i18n.formatNumber(groups) : ''
         button.title = groups
-            ? `Simplify: ${groups} ${groups === 1 ? 'group' : 'groups'}, ${folded} ${folded === 1 ? 'node' : 'nodes'} folded`
-            : 'Simplify'
+            ? this.i18n.t('rail.simplify.summary', {
+                groups: this.i18n.t('rail.simplify.groups', { count: groups }),
+                folded: this.i18n.t('rail.simplify.folded', { count: folded }),
+            })
+            : this.i18n.t('rail.simplify')
     }
 
     /** Click the active mode to toggle its panel; click another to switch to it. */
@@ -247,9 +250,9 @@ export class ModeRail extends UIComponent {
 
     private railFace(mode: PointerMode, armed: string | null): { icon: string; label: string } {
         if (mode === 'select') {
-            return armed === 'lasso' ? { icon: lassoTool, label: 'Lasso' } : { icon: cursor, label: 'Select' }
+            return armed === 'lasso' ? { icon: lassoTool, label: this.i18n.t('rail.lasso') } : { icon: cursor, label: this.i18n.t('rail.select') }
         }
-        return armed === 'add-edge' ? { icon: graphEdgeIcon(20), label: 'Edge' } : { icon: addCircle, label: 'Create' }
+        return armed === 'add-edge' ? { icon: graphEdgeIcon(20), label: this.i18n.t('rail.edge') } : { icon: addCircle, label: this.i18n.t('rail.create') }
     }
 
     private makeDivider(): HTMLDivElement {
@@ -263,8 +266,14 @@ export class ModeRail extends UIComponent {
         button.type = 'button'
         button.className = 'pvt-moderail-button'
         button.dataset.mode = key
-        button.title = shortcut ? `${label} (${shortcut.toUpperCase()})` : label
-        button.innerHTML = `<span class="pvt-moderail-icon">${icon}</span><span class="pvt-moderail-label">${label}</span>`
+        button.title = shortcut ? this.i18n.t('rail.button.title', { label, shortcut: shortcut.toUpperCase() }) : label
+        const iconEl = document.createElement('span')
+        iconEl.className = 'pvt-moderail-icon'
+        iconEl.innerHTML = icon
+        const labelEl = document.createElement('span')
+        labelEl.className = 'pvt-moderail-label'
+        labelEl.textContent = label
+        button.append(iconEl, labelEl)
         this.buttons.set(key, button)
         return button
     }

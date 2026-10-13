@@ -59,7 +59,7 @@ export class Modal extends UIComponent {
     private DEFAULT_HEADER = null
     private DEFAULT_BODY = ''
     private DEFAULT_BUTTON_CONFIG = {
-        text: 'Ok',
+        text: this.i18n.t('modal.ok'),
         variant: 'primary',
         onClick: (_event: MouseEvent, hideModal: () => void) => {
             hideModal()
@@ -124,6 +124,7 @@ export class Modal extends UIComponent {
                 },
                 style: 'margin-left: auto;',
             })
+            closeBtn.setAttribute('aria-label', this.i18n.t('modal.close.aria'))
             this.header.appendChild(closeBtn)
         }
 

@@ -82,7 +82,7 @@ export class ToolPanel extends UIComponent {
         this.divider.className = 'pvt-toolpanel-divider'
         this.divider.setAttribute('role', 'separator')
         this.divider.setAttribute('aria-orientation', 'vertical')
-        this.divider.setAttribute('aria-label', 'Resize the tool panel')
+        this.divider.setAttribute('aria-label', this.i18n.t('toolPanel.resize.aria'))
         this.divider.hidden = true
         container.appendChild(this.divider)
     }
@@ -217,12 +217,12 @@ export class ToolPanel extends UIComponent {
             // same switch — a canvas with no drag-select has no freehand one either.
             const regionSelect = this.uiManager.graph.getOptions().render?.selectionBox?.enabled !== false
             return [
-                { id: 'pointer', label: 'Pointer', icon: cursor, kind: 'default', run: () => this.disarmLasso() },
+                { id: 'pointer', label: this.i18n.t('toolPanel.pointer'), icon: cursor, kind: 'default', run: () => this.disarmLasso() },
                 ...(regionSelect
-                    ? [{ id: 'lasso', label: 'Lasso', icon: lassoTool, kind: 'toggle', run: (armed: boolean) => this.toggleLasso(armed) } as ToolSpec]
+                    ? [{ id: 'lasso', label: this.i18n.t('toolPanel.lasso'), icon: lassoTool, kind: 'toggle', run: (armed: boolean) => this.toggleLasso(armed) } as ToolSpec]
                     : []),
-                { id: 'path', label: 'Path select', icon: pathSelection, kind: 'soon' },
-                { id: 'invert', label: 'Invert selection', icon: selectionInverse, kind: 'action', run: () => this.invertSelection() },
+                { id: 'path', label: this.i18n.t('toolPanel.pathSelect'), icon: pathSelection, kind: 'soon' },
+                { id: 'invert', label: this.i18n.t('toolPanel.invertSelection'), icon: selectionInverse, kind: 'action', run: () => this.invertSelection() },
             ]
         }
         // Explicit rather than a fallthrough: a mode unregistered mid-render would
@@ -232,16 +232,16 @@ export class ToolPanel extends UIComponent {
             // Both write-path tools are dropped entirely when their editor is disabled —
             // a read-only integration gets no affordance rather than one that refuses.
             ...(this.uiManager.isEditorEnabled('nodeCreator')
-                ? [{ id: 'add-node', label: 'Add node', icon: addCircle, kind: 'action', run: () => this.addNode() } as ToolSpec]
+                ? [{ id: 'add-node', label: this.i18n.t('toolPanel.addNode'), icon: addCircle, kind: 'action', run: () => this.addNode() } as ToolSpec]
                 : []),
             ...(this.uiManager.isEditorEnabled('edgeCreator')
-                ? [{ id: 'add-edge', label: 'Add edge', icon: graphEdgeIcon(18), kind: 'toggle', run: (armed: boolean) => this.toggleAddEdge(armed) } as ToolSpec]
+                ? [{ id: 'add-edge', label: this.i18n.t('toolPanel.addEdge'), icon: graphEdgeIcon(18), kind: 'toggle', run: (armed: boolean) => this.toggleAddEdge(armed) } as ToolSpec]
                 : []),
             ...(this.uiManager.isFeatureEnabled('notes')
-                ? [{ id: 'add-note', label: 'Add note', icon: stickyNote, kind: 'action', run: () => this.addNote() } as ToolSpec]
+                ? [{ id: 'add-note', label: this.i18n.t('toolPanel.addNote'), icon: stickyNote, kind: 'action', run: () => this.addNote() } as ToolSpec]
                 : []),
             ...(this.uiManager.isEditorEnabled('nodeEditor')
-                ? [{ id: 'edit', label: 'Edit node', icon: edit, kind: 'action', run: () => this.editSelectedNode(), enabled: () => this.hasEditableSelection() } as ToolSpec]
+                ? [{ id: 'edit', label: this.i18n.t('toolPanel.editNode'), icon: edit, kind: 'action', run: () => this.editSelectedNode(), enabled: () => this.hasEditableSelection() } as ToolSpec]
                 : []),
         ]
     }
@@ -251,15 +251,16 @@ export class ToolPanel extends UIComponent {
         this.renderedMode = mode
         const specs = this.specsFor(mode)
         const registered = this.registered(mode)
-        const title = registered?.label ?? (mode === 'select' ? 'Select' : 'Create')
+        const title = registered?.label ?? this.i18n.t(mode === 'select' ? 'toolPanel.select' : 'toolPanel.create')
         const titleIcon = registered?.icon ?? (mode === 'select' ? cursor : addCircle)
         const shortcut = registered ? registered.shortcut : MODE_SHORTCUT[mode as PointerMode]
         this.panel.innerHTML =
             '<div class="pvt-toolpanel-header">'
             + `<span class="pvt-toolpanel-icon">${titleIcon}</span>`
-            + `<span class="pvt-toolpanel-title">${title}</span>`
+            + '<span class="pvt-toolpanel-title"></span>'
             + (shortcut ? createShortcutBadge(shortcut.toUpperCase()).outerHTML : '')
             + '</div>'
+        this.panel.querySelector('.pvt-toolpanel-title')!.textContent = title
 
         for (const spec of specs) {
             const row = document.createElement('button')
@@ -269,12 +270,21 @@ export class ToolPanel extends UIComponent {
             row.dataset.kind = spec.kind
             // Toggle tools (lasso / add-edge) expose their armed state to AT; reflectArmed keeps it in sync.
             if (spec.kind === 'toggle') row.setAttribute('aria-pressed', 'false')
-            row.innerHTML = `<span class="pvt-toolpanel-icon">${spec.icon}</span><span class="pvt-toolpanel-tool-label">${spec.label}</span>`
+            const icon = document.createElement('span')
+            icon.className = 'pvt-toolpanel-icon'
+            icon.innerHTML = spec.icon
+            const label = document.createElement('span')
+            label.className = 'pvt-toolpanel-tool-label'
+            label.textContent = spec.label
+            row.append(icon, label)
             if (spec.kind === 'soon') {
                 row.disabled = true
                 row.classList.add('pvt-toolpanel-soon')
-                row.title = `${spec.label} — coming soon`
-                row.innerHTML += '<span class="pvt-toolpanel-badge">SOON</span>'
+                row.title = this.i18n.t('toolPanel.soon.title', { tool: spec.label })
+                const badge = document.createElement('span')
+                badge.className = 'pvt-toolpanel-badge'
+                badge.textContent = this.i18n.t('toolPanel.soon')
+                row.appendChild(badge)
             } else {
                 row.addEventListener('click', () => this.onToolClick(mode, spec))
             }
@@ -473,7 +483,7 @@ export class ToolPanel extends UIComponent {
     private addNote() {
         const centre = this.canvasCentre()
         if (!centre) return
-        this.uiManager.graph.noteManager.addNote(new Note({ content: 'This is not a note.', ...centre }))
+        this.uiManager.graph.noteManager.addNote(new Note({ content: this.i18n.t('note.defaultContent'), ...centre }))
     }
 
     /**

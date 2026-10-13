@@ -2,6 +2,7 @@ import { fullscreen, fullscreenExit, graphNavigationReset, graphNavigationZoomIn
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import './graphNavigation.scss'
+import { applyMessages, i18nAttr } from '../../../i18n/dom'
 
 export class GraphNavigation extends UIComponent {
 
@@ -34,23 +35,24 @@ export class GraphNavigation extends UIComponent {
         const template = document.createElement('template')
         template.innerHTML = `
   <div class="pvt-graphnavigation-elements">
-    <button id="pvt-graphnavigation-reset" class="pvt-graphnavigation-button" title="Fit and center">
+    <button id="pvt-graphnavigation-reset" class="pvt-graphnavigation-button" ${i18nAttr('title', 'navigation.fit')}>
         ${graphNavigationReset}
     </button>
     ${zoomable ? `
-    <button id="pvt-graphnavigation-zoom-in" class="pvt-graphnavigation-button" title="Zoom In">
+    <button id="pvt-graphnavigation-zoom-in" class="pvt-graphnavigation-button" ${i18nAttr('title', 'navigation.zoomIn')}>
         ${graphNavigationZoomIn}
     </button>
-    <button id="pvt-graphnavigation-zoom-out" class="pvt-graphnavigation-button" title="Zoom Out">
+    <button id="pvt-graphnavigation-zoom-out" class="pvt-graphnavigation-button" ${i18nAttr('title', 'navigation.zoomOut')}>
         ${graphNavigationZoomOut}
     </button>` : ''}
-    <button id="pvt-graphnavigation-fullscreen" class="pvt-graphnavigation-button pvt-graphnavigation-fullscreen-button" title="Toggle Fullscreen" aria-pressed="false">
+    <button id="pvt-graphnavigation-fullscreen" class="pvt-graphnavigation-button pvt-graphnavigation-fullscreen-button" ${i18nAttr('title', 'navigation.fullscreen')} aria-pressed="false">
         <span>${fullscreen}</span>
         <span style="display: none">${fullscreenExit}</span>
     </button>
   </div>
 `
         this.navigation = template.content.firstElementChild as HTMLDivElement
+        applyMessages(this.navigation, this.i18n)
 
         container.appendChild(this.navigation)
     }

@@ -1,6 +1,7 @@
 import '../../styles/components/jsonViewer.scss'
 import { createButton } from './Button'
 import { escapeHtml } from '../../utils/utils'
+import type { I18n } from '../../i18n/I18n'
 
 export type JsonValue =
     | string
@@ -190,7 +191,7 @@ function stringifyForCopy(data: JsonValue): string {
     }
 }
 
-export function createJsonViewer(data: JsonValue): HTMLDivElement {
+export function createJsonViewer(data: JsonValue, i18n: I18n): HTMLDivElement {
     const container = document.createElement('div')
     container.className = 'pvt-json-viewer'
 
@@ -198,7 +199,7 @@ export function createJsonViewer(data: JsonValue): HTMLDivElement {
     toolbar.className = 'pvt-json-viewer__toolbar'
 
     const copyBtn = createButton({
-        text: 'Copy JSON',
+        text: i18n.t('jsonViewer.copy'),
         variant: 'secondary',
         size: 'sm',
         onClick: async () => {
@@ -208,7 +209,7 @@ export function createJsonViewer(data: JsonValue): HTMLDivElement {
                 return
             }
             const old = copyBtn.textContent
-            copyBtn.textContent = 'Copied!'
+            copyBtn.textContent = i18n.t('jsonViewer.copied')
             setTimeout(() => {
                 copyBtn.textContent = old
             }, 1200)

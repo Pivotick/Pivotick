@@ -1,6 +1,7 @@
 import type { Graph } from '../Graph'
 import { closeIcon } from './icons'
 import type { UIManager } from './UIManager'
+import type { I18n } from '../i18n/I18n'
 
 /** @internal */
 export const NotificationLevel = {
@@ -66,7 +67,7 @@ export interface NotificationHandle {
  *
  * @internal
  */
-export function mountToast(container: HTMLElement, notification: Notification): NotificationHandle {
+export function mountToast(container: HTMLElement, notification: Notification, i18n: I18n): NotificationHandle {
     let current = notification
     let dismissed = false
     let timer: ReturnType<typeof setTimeout> | undefined
@@ -85,7 +86,7 @@ export function mountToast(container: HTMLElement, notification: Notification): 
     close.type = 'button'
     close.className = 'pivotick-toast-close'
     close.innerHTML = closeIcon
-    close.setAttribute('aria-label', 'Dismiss')
+    close.setAttribute('aria-label', i18n.t('notification.dismiss.aria'))
     close.addEventListener('click', () => dismiss())
     titleRow.appendChild(close)
     toast.appendChild(titleRow)
