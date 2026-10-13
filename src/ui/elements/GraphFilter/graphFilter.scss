@@ -45,6 +45,107 @@
         }
     }
 
+    // ── Is / is not ────────────────────────────────────────────────────────
+    // The field's name on the left, its direction on the right. Always drawn, so
+    // picking a value never moves the row.
+    // Scoped under `.pvt-form-element` throughout: the ambient `.pvt-form
+    // .pvt-form-element label` rule (0,2,1) would otherwise restyle every label here,
+    // the pill's own options included.
+    .pvt-form-element > .pvt-form-label-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        min-width: 0;
+
+        > label {
+            min-width: 0;
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+    }
+
+    // Quiet while it says "is", so a panel of untouched fields stays calm and the
+    // one switched to "is not" is what the eye finds.
+    .pvt-form-element .pvt-negate-switch {
+        display: inline-flex;
+        flex-shrink: 0;
+        padding: 1px;
+        border: 1px solid var(--pvt-bg-color-4);
+        border-radius: 999px;
+    }
+
+    .pvt-form-element .pvt-negate-switch > .pvt-negate-option {
+        position: relative;
+        display: block;
+        margin: 0;
+        padding: 0 7px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 400;
+        line-height: 16px;
+        color: var(--pvt-text-color-3);
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+        transition: background-color 0.15s ease, color 0.15s ease;
+
+        &:hover {
+            color: var(--pvt-text-color-5);
+        }
+
+        // Out-specifies the ambient `.pvt-form .pvt-form-element input` box: the radio
+        // is there for the keyboard and the form, the pill is what is drawn.
+        > input[type] {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            border: none;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        &:has(input:focus-visible) {
+            outline: 2px solid var(--pvt-theme-primary);
+            outline-offset: 1px;
+        }
+
+        &:has(input:checked) {
+            color: var(--pvt-text-color-5);
+            background: var(--pvt-bg-color-3);
+        }
+
+        &.pvt-negate-not:has(input:checked) {
+            font-weight: 600;
+            color: var(--pvt-text-color-danger);
+            background: color-mix(in srgb, var(--pvt-bg-color-danger) 14%, var(--pvt-bg-color-0));
+        }
+    }
+
+    // A negated field names what is dropped: a red edge on the box, red struck chips.
+    .pvt-form-element.pvt-form-element-negated {
+        .pvt-picker__chips,
+        .pvt-picker__input-wrap,
+        > input[type],
+        .pvt-number-range > input[type] {
+            border-color: color-mix(in srgb, var(--pvt-bg-color-danger) 55%, var(--pvt-bg-color-5));
+        }
+
+        .pvt-picker__chip {
+            background: color-mix(in srgb, var(--pvt-bg-color-danger) 12%, var(--pvt-bg-color-0));
+            border-color: color-mix(in srgb, var(--pvt-bg-color-danger) 45%, var(--pvt-bg-color-5));
+            color: var(--pvt-text-color-danger);
+        }
+
+        .pvt-picker__chip-label {
+            text-decoration: line-through;
+            text-decoration-thickness: 1.5px;
+        }
+    }
+
     // Normalise every field control to the same bordered box, so single-select
     // pickers, multiselect chip fields and plain inputs read as one system.
     .pvt-picker__control {

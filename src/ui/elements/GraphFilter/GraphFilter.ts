@@ -406,11 +406,14 @@ export class GraphFilter extends UIComponent {
     private syncFormFromActiveFilters(filters: GraphFilters): void {
         if (!this.filteringForm || this.applyingForm) return
         const values: FormValues = {}
+        const negations: Record<string, boolean> = {}
         for (const [key, config] of Object.entries(filters)) {
             if (key === 'manuallyHidden' || config === undefined) continue
             values[key] = config.value
+            negations[key] = config.negate === true
         }
         FormFactory.setValues(this.filteringForm, values)
+        FormFactory.setNegations(this.filteringForm, negations)
     }
 
     private updateUIFilterButtonContent(filters: GraphFilters) {
@@ -592,6 +595,7 @@ export class GraphFilter extends UIComponent {
 
         // 'boolean' is a true/false/unset dropdown — a checkbox has no "unset".
         if (facet.type === 'boolean') {
+            // No switch: "is not true" is "is false", give or take the empty values.
             return {
                 key: facet.key,
                 label,
@@ -603,7 +607,7 @@ export class GraphFilter extends UIComponent {
             }
         }
 
-        const field: FieldConfig = { key: facet.key, label, type: facet.type, matchMode }
+        const field: FieldConfig = { key: facet.key, label, type: facet.type, matchMode, negatable: true }
         if (facet.type === 'select' || facet.type === 'multiselect') {
             field.options = this.resolveFacetOptions(facet)
             field.allowEmpty = true
@@ -654,6 +658,7 @@ export class GraphFilter extends UIComponent {
                 type: inferred.type as FieldType,
                 matchMode: inferred.matchMode,
                 valuesAreBoolean: inferred.valuesAreBoolean,
+                negatable: !inferred.valuesAreBoolean,
             }
 
             if ((field.type === 'select' || field.type === 'multiselect') && inferred.options) {
@@ -674,6 +679,7 @@ export class GraphFilter extends UIComponent {
         if (!this.validatePatternFields(filters)) return
 
         const activeFilters: FormValues = this.getActiveFilters(filters)
+        const negations = this.filteringForm ? FormFactory.getNegations(this.filteringForm) : {}
         const graphFilter: GraphFilters = {}
         const formOptionMap = Object.fromEntries(this.formOptions.map(option => [option.key, option]))
         for (const [key, value] of Object.entries(activeFilters)) {
@@ -681,6 +687,7 @@ export class GraphFilter extends UIComponent {
                 value: value,
                 matchMode: formOptionMap[key]?.matchMode
             }
+            if (negations[key]) fieldCondig.negate = true
             if (value !== undefined) {
                 graphFilter[key] = fieldCondig
             }

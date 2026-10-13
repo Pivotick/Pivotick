@@ -34,6 +34,11 @@ export interface FieldConfig {
     allowEmpty?: boolean
     matchMode?: FilterMatchMode
     valuesAreBoolean?: boolean
+    /**
+     * Give the field an *is / is not* switch on its label row, read back by
+     * {@link FormFactory.getNegations}.
+     */
+    negatable?: boolean
 }
 
 export interface FormConfig {
@@ -126,6 +131,29 @@ export class FormFactory {
 
     static clear(form: HTMLFormElement) {
         form.reset()
+        // A reset fires no `change`, so the negated look has to be cleared by hand.
+        form.querySelectorAll('.pvt-form-element-negated')
+            .forEach((wrapper) => wrapper.classList.remove('pvt-form-element-negated'))
+    }
+
+    /** Which negatable fields are switched to *is not*, by key. */
+    static getNegations(form: HTMLFormElement): Record<string, boolean> {
+        const negations: Record<string, boolean> = {}
+        form.querySelectorAll<HTMLElement>('[data-negate-for]').forEach((group) => {
+            const key = group.getAttribute('data-negate-for')!
+            negations[key] = group.querySelector<HTMLInputElement>('input[value="not"]')?.checked === true
+        })
+        return negations
+    }
+
+    /** Set every negatable field's switch; a field absent from `negations` goes back to *is*. */
+    static setNegations(form: HTMLFormElement, negations: Record<string, boolean>) {
+        form.querySelectorAll<HTMLElement>('[data-negate-for]').forEach((group) => {
+            const negated = negations[group.getAttribute('data-negate-for')!] === true
+            const input = group.querySelector<HTMLInputElement>(`input[value="${negated ? 'not' : 'is'}"]`)
+            if (input) input.checked = true
+            this.paintNegation(group, negated)
+        })
     }
 
     // Push values back into the form controls (inverse of getValues). Used to reflect
@@ -222,7 +250,14 @@ export class FormFactory {
         // Verbatim: a caller that wants a key prettified calls niceLabelFromKey itself,
         // so a consumer-supplied (translated) label survives as written.
         label.textContent = field.label
-        wrapper.appendChild(label)
+        if (field.negatable) {
+            const row = document.createElement('div')
+            row.className = 'pvt-form-label-row'
+            row.append(label, this.createNegateSwitch(field, i18n))
+            wrapper.appendChild(row)
+        } else {
+            wrapper.appendChild(label)
+        }
 
         switch (field.type) {
             case 'select':
@@ -291,6 +326,45 @@ export class FormFactory {
             el.removeAttribute('aria-invalid')
         })
         form.querySelectorAll('.pvt-form-error').forEach((el) => el.remove())
+    }
+
+    /**
+     * The *is / is not* pill: two radios, so the form's own reset and `change` events
+     * cover it and the arrow keys move between the two. It carries no `data-field-key`,
+     * which keeps it out of {@link getValues}.
+     */
+    private static createNegateSwitch(field: FieldConfig, i18n: I18n): HTMLElement {
+        const group = document.createElement('span')
+        group.className = 'pvt-negate-switch'
+        group.setAttribute('role', 'radiogroup')
+        group.setAttribute('aria-label', i18n.t('form.negate.aria', { field: field.label }))
+        group.setAttribute('data-negate-for', field.key)
+        group.setAttribute('data-field-type', 'negate')
+
+        for (const side of ['is', 'not'] as const) {
+            const option = document.createElement('label')
+            option.className = `pvt-negate-option pvt-negate-${side}`
+            option.title = i18n.t(`form.negate.${side}.title`)
+            const input = document.createElement('input')
+            input.type = 'radio'
+            input.name = `pvt-negate-${field.key}`
+            input.value = side
+            input.defaultChecked = side === 'is'
+            const text = document.createElement('span')
+            text.textContent = i18n.t(`form.negate.${side}`)
+            option.append(input, text)
+            group.appendChild(option)
+        }
+
+        group.addEventListener('change', () => {
+            this.paintNegation(group, group.querySelector<HTMLInputElement>('input[value="not"]')?.checked === true)
+        })
+        return group
+    }
+
+    /** Tint the field a negation switch belongs to. */
+    private static paintNegation(group: HTMLElement, negated: boolean) {
+        group.closest('.pvt-form-element')?.classList.toggle('pvt-form-element-negated', negated)
     }
 
     private static baseAttrs(el: HTMLElement, field: FieldConfig) {

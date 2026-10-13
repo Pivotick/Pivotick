@@ -1854,6 +1854,8 @@ export interface HarnessApi {
      * "did the legend leave a phantom filter behind".
      */
     activeFilterKeys(): string[]
+    /** One active filter as the engine holds it (`undefined` when there is none). */
+    activeFilter(key: string): FilterFieldConfig | undefined
     /** `console.warn` messages recorded since the graph was loaded. */
     warnings(): string[]
     /** Load a fixture with the real `minimap()` plugin installed. */
@@ -4126,6 +4128,10 @@ class Harness implements HarnessApi {
         return Object.keys(this.g.queryEngine.getFilters())
             .filter((key) => key !== 'manuallyHidden')
             .sort()
+    }
+
+    activeFilter(key: string): FilterFieldConfig | undefined {
+        return this.g.queryEngine.getFilters()[key]
     }
 
     warnings(): string[] {

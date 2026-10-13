@@ -327,6 +327,21 @@ test.describe('canvas legend', () => {
         await expectVisible(page, ['a3', 'obj'])
     })
 
+    test('an adopted facet set to "is not" names what the legend hides, and stays negated', async ({ page }) => {
+        await loadLegend(page, { key: 'attr-type', withFacets: true })
+        await harness(page, 'setFilter', 'attr-type', { value: ['md5'], negate: true })
+
+        expect(await hiddenRowIds(page)).toEqual(['md5'])
+
+        await legendRow(page, 'domain').click()
+
+        // Still "is not", now with both hidden — not a list of the shown ones.
+        const filter = (await harness(page, 'activeFilter', 'attr-type')) as { value: string[], negate?: boolean }
+        expect(filter.negate).toBe(true)
+        expect(filter.value.slice().sort()).toEqual(['domain', 'md5'])
+        await expectVisible(page, ['a1', 'obj'])
+    })
+
     test('an adopted facet cannot be emptied, and says why', async ({ page }) => {
         await loadLegend(page, { key: 'category', withFacets: true }, 2)
 
