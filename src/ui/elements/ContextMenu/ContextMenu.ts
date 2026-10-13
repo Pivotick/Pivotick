@@ -6,6 +6,7 @@ import { createActionList, createHtmlElement, createQuickActionList, generateSaf
 import { addCircle, dataTable, edit, expand, focusElement, fullscreen, graphEdgeIcon, groupNodes, hide, inspect, pin, selectNeighbor, sparkles, stickyNote, trash, ungroupNodes, unpin } from '../../icons'
 import type { UIElement, UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
+import type { I18n } from '../../../i18n/I18n'
 import './contextmenu.scss'
 import { deepMerge } from '../../../utils/utils'
 import type { Editors, MenuActionItemOptions, MenuQuickActionItemOptions } from '../../../interfaces/GraphUI'
@@ -42,15 +43,13 @@ type MenuSection = { topbar: GatedQuickActionItem[]; menu: GatedActionItem[] }
  */
 const PEEK_DELAY = 200
 
-const fmt = (value: number): string => value.toLocaleString()
-
 /** The nodes a menu was opened over: the selection's, or the one clicked. */
 const asNodes = (element: unknown): Node[] => Array.isArray(element) ? element as Node[] : element ? [element as Node] : []
 
-const defaultMenuNode = {
+const defaultMenuNode = (i18n: I18n) => ({
     topbar: [
         {
-            title: 'Pin Node',
+            title: i18n.t('contextMenu.node.pin'),
             svgIcon: pin,
             variant: 'outline-primary',
             visible: (node: Node) => {
@@ -61,7 +60,7 @@ const defaultMenuNode = {
             }
         },
         {
-            title: 'Unpin Node',
+            title: i18n.t('contextMenu.node.unpin'),
             svgIcon: unpin,
             variant: 'outline-primary',
             visible: (node: Node) => {
@@ -72,7 +71,7 @@ const defaultMenuNode = {
             }
         },
         {
-            title: 'Focus Node',
+            title: i18n.t('contextMenu.node.focus'),
             svgIcon: focusElement,
             variant: 'outline-primary',
             onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
@@ -80,7 +79,7 @@ const defaultMenuNode = {
             },
         },
         {
-            title: 'Hide Node',
+            title: i18n.t('contextMenu.node.hide'),
             svgIcon: hide,
             variant: 'outline-danger',
             flushRight: true,
@@ -94,8 +93,8 @@ const defaultMenuNode = {
     ] as GatedQuickActionItem[],
     menu: [
         {
-            text: 'View Image',
-            title: 'View Image',
+            text: i18n.t('contextMenu.node.viewImage'),
+            title: i18n.t('contextMenu.node.viewImage'),
             svgIcon: fullscreen,
             variant: 'outline-primary',
             // Only for picture nodes: read the resolved src straight off the rendered node.
@@ -106,8 +105,8 @@ const defaultMenuNode = {
             },
         },
         {
-            text: 'Select Neighbors',
-            title: 'Select Neighbors',
+            text: i18n.t('contextMenu.selectNeighbors'),
+            title: i18n.t('contextMenu.selectNeighbors'),
             svgIcon: selectNeighbor,
             variant: 'outline-primary',
             onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
@@ -124,8 +123,8 @@ const defaultMenuNode = {
             },
         },
         {
-            text: 'Hide Children',
-            title: 'Hide Children',
+            text: i18n.t('contextMenu.node.hideChildren'),
+            title: i18n.t('contextMenu.node.hideChildren'),
             svgIcon: hide,
             variant: 'outline-primary',
             visible: (node: Node) => {
@@ -136,8 +135,8 @@ const defaultMenuNode = {
             }
         },
         {
-            text: 'Connect to...',
-            title: 'Connect to...',
+            text: i18n.t('contextMenu.node.connect'),
+            title: i18n.t('contextMenu.node.connect'),
             requires: 'edgeCreator',
             svgIcon: graphEdgeIcon(24),
             variant: 'outline-primary',
@@ -147,9 +146,9 @@ const defaultMenuNode = {
             async onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
                 const mainLabel = nodeNameGetter(node, this.uiManager.graph.UIManager.getOptions().mainHeader).trim()
                 const title = document.createElement('div')
-                title.textContent = 'Select the target node to link with'
+                title.textContent = this.i18n.t('contextMenu.node.connect.picker')
                 const pre = document.createElement('b')
-                pre.textContent = `"${mainLabel}"`
+                pre.textContent = this.i18n.t('contextMenu.node.connect.pickerNode', { node: mainLabel })
                 pre.classList.add('pvt-ms-1')
                 title.appendChild(pre)
                 const targetNode = await pickNode(this.uiManager.graph.UIManager, title)
@@ -161,8 +160,8 @@ const defaultMenuNode = {
             }
         },
         {
-            text: 'Expand Node',
-            title: 'Expand Node',
+            text: i18n.t('contextMenu.node.expand'),
+            title: i18n.t('contextMenu.node.expand'),
             svgIcon: expand,
             variant: 'outline-primary',
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -174,8 +173,8 @@ const defaultMenuNode = {
             },
         },
         {
-            text: 'Inspect Properties',
-            title: 'Inspect Properties',
+            text: i18n.t('contextMenu.node.inspect'),
+            title: i18n.t('contextMenu.node.inspect'),
             requires: 'inspector',
             svgIcon: inspect,
             variant: 'outline-primary',
@@ -189,17 +188,17 @@ const defaultMenuNode = {
             shortcut: 'I'
         },
     ] as GatedActionItem[],
-}
+})
 
 /**
  * A group's menu: it acts for its members. The node menu's single-node entries (edit,
  * connect-to, inspect) have nothing to act on, and an app's own node entries expect a
  * node's data, so a group has a section of its own.
  */
-const defaultMenuGroup = {
+const defaultMenuGroup = (i18n: I18n) => ({
     topbar: [
         {
-            title: 'Pin Group',
+            title: i18n.t('contextMenu.group.pin'),
             svgIcon: pin,
             variant: 'outline-primary',
             visible: (node: Node) => !node.frozen,
@@ -208,7 +207,7 @@ const defaultMenuGroup = {
             },
         },
         {
-            title: 'Unpin Group',
+            title: i18n.t('contextMenu.group.unpin'),
             svgIcon: unpin,
             variant: 'outline-primary',
             visible: (node: Node) => node.frozen,
@@ -217,7 +216,7 @@ const defaultMenuGroup = {
             },
         },
         {
-            title: 'Focus Group',
+            title: i18n.t('contextMenu.group.focus'),
             svgIcon: focusElement,
             variant: 'outline-primary',
             onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
@@ -227,8 +226,8 @@ const defaultMenuGroup = {
     ] as GatedQuickActionItem[],
     menu: [
         {
-            text: 'Select Neighbors',
-            title: 'Select the nodes this group links to',
+            text: i18n.t('contextMenu.selectNeighbors'),
+            title: i18n.t('contextMenu.group.selectNeighbors.title'),
             svgIcon: selectNeighbor,
             variant: 'outline-primary',
             onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
@@ -236,16 +235,16 @@ const defaultMenuGroup = {
             },
         },
     ] as GatedActionItem[],
-}
+})
 
 /**
  * The menu over a node that is part of a multi-selection: every entry acts on the whole
  * selection, as the bulk bar does. Entries that only make sense for one node are left out.
  */
-const defaultMenuSelection = {
+const defaultMenuSelection = (i18n: I18n) => ({
     topbar: [
         {
-            title: 'Pin Selected',
+            title: i18n.t('contextMenu.selection.pin'),
             svgIcon: pin,
             variant: 'outline-primary',
             visible: (nodes: Node[]) => nodes.some(node => !node.frozen),
@@ -254,7 +253,7 @@ const defaultMenuSelection = {
             },
         },
         {
-            title: 'Unpin Selected',
+            title: i18n.t('contextMenu.selection.unpin'),
             svgIcon: unpin,
             variant: 'outline-primary',
             visible: (nodes: Node[]) => nodes.some(node => node.frozen),
@@ -263,7 +262,7 @@ const defaultMenuSelection = {
             },
         },
         {
-            title: 'Hide Selected',
+            title: i18n.t('contextMenu.selection.hide'),
             svgIcon: hide,
             variant: 'outline-danger',
             flushRight: true,
@@ -275,8 +274,8 @@ const defaultMenuSelection = {
     ] as GatedQuickActionItem[],
     menu: [
         {
-            text: 'Select Neighbors',
-            title: 'Select the nodes linked to the selection',
+            text: i18n.t('contextMenu.selectNeighbors'),
+            title: i18n.t('contextMenu.selection.selectNeighbors.title'),
             svgIcon: selectNeighbor,
             variant: 'outline-primary',
             onclick(this: ContextMenu, _evt: PointerEvent, nodes: Node[]) {
@@ -284,34 +283,34 @@ const defaultMenuSelection = {
             },
         },
     ] as GatedActionItem[],
-}
+})
 
 /** Each menu's delete, kept apart so it can close the menu below an app's own entries. */
-const deleteNodeEntry = {
-    text: 'Delete Node',
-    title: 'Delete Node',
+const deleteNodeEntry = (i18n: I18n) => ({
+    text: i18n.t('contextMenu.node.delete'),
+    title: i18n.t('contextMenu.node.delete'),
     requires: 'deletion',
     svgIcon: trash,
     variant: 'outline-danger',
     onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
         void this.uiManager.graph.editing.requestDelete({ nodes: [node], origin: 'context-menu' })
     },
-} as GatedActionItem
+}) as GatedActionItem
 
-const deleteMembersEntry = {
-    text: 'Delete members',
-    title: 'Delete every node in this group',
+const deleteMembersEntry = (i18n: I18n) => ({
+    text: i18n.t('contextMenu.group.deleteMembers'),
+    title: i18n.t('contextMenu.group.deleteMembers.title'),
     requires: 'deletion',
     svgIcon: trash,
     variant: 'outline-danger',
     onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
         void this.uiManager.graph.editing.requestDelete({ nodes: (node as GroupNode).info.members, origin: 'context-menu' })
     },
-} as GatedActionItem
+}) as GatedActionItem
 
-const deleteSelectedEntry = {
-    text: 'Delete Selected',
-    title: 'Delete every selected node',
+const deleteSelectedEntry = (i18n: I18n) => ({
+    text: i18n.t('contextMenu.selection.delete'),
+    title: i18n.t('contextMenu.selection.delete.title'),
     requires: 'deletion',
     svgIcon: trash,
     variant: 'outline-danger',
@@ -319,13 +318,13 @@ const deleteSelectedEntry = {
         const ui = this.uiManager
         void deleteNodes(ui, nodes, 'context-menu').then(deleted => { if (deleted) clearNodeSelection(ui) })
     },
-} as GatedActionItem
+}) as GatedActionItem
 
 /** A group's own entries, which open its menu after *Pivot ▸*. */
-const groupEntries = [
+const groupEntries = (i18n: I18n) => [
     {
-        text: 'Open group',
-        title: 'Put the members back on the canvas',
+        text: i18n.t('contextMenu.group.open'),
+        title: i18n.t('contextMenu.group.open.title'),
         svgIcon: ungroupNodes,
         variant: 'outline-primary',
         onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
@@ -333,8 +332,8 @@ const groupEntries = [
         },
     },
     {
-        text: 'Select members',
-        title: 'Select the nodes in this group',
+        text: i18n.t('contextMenu.group.selectMembers'),
+        title: i18n.t('contextMenu.group.selectMembers.title'),
         svgIcon: selectNeighbor,
         variant: 'outline-primary',
         onclick(this: ContextMenu, _evt: PointerEvent, node: Node) {
@@ -343,12 +342,12 @@ const groupEntries = [
     },
 ] as GatedActionItem[]
 
-const defaultMenuEdge: MenuSection = {
+const defaultMenuEdge = (i18n: I18n): MenuSection => ({
     topbar: [],
     menu: [
         {
-            text: 'Edit Edge',
-            title: 'Edit Edge',
+            text: i18n.t('contextMenu.edge.edit'),
+            title: i18n.t('contextMenu.edge.edit'),
             requires: 'edgeEditor',
             svgIcon: edit,
             variant: 'outline-primary',
@@ -357,8 +356,8 @@ const defaultMenuEdge: MenuSection = {
             },
         },
         {
-            text: 'Delete Edge',
-            title: 'Delete Edge',
+            text: i18n.t('contextMenu.edge.delete'),
+            title: i18n.t('contextMenu.edge.delete'),
             requires: 'deletion',
             svgIcon: trash,
             variant: 'outline-danger',
@@ -367,12 +366,12 @@ const defaultMenuEdge: MenuSection = {
             },
         },
     ] as GatedActionItem[],
-}
+})
 
-const defaultMenuCanvas = {
+const defaultMenuCanvas = (i18n: I18n) => ({
     topbar: [
         {
-            title: 'Pin All',
+            title: i18n.t('contextMenu.canvas.pinAll'),
             svgIcon: pin,
             variant: 'outline-primary',
             visible: true,
@@ -385,7 +384,7 @@ const defaultMenuCanvas = {
             }
         },
         {
-            title: 'Unpin All',
+            title: i18n.t('contextMenu.canvas.unpinAll'),
             svgIcon: unpin,
             variant: 'outline-primary',
             visible: true,
@@ -401,8 +400,8 @@ const defaultMenuCanvas = {
     ] as GatedQuickActionItem[],
     menu: [
         {
-            title: 'Add Node Here',
-            text: 'Add Node Here',
+            title: i18n.t('contextMenu.canvas.addNode'),
+            text: i18n.t('contextMenu.canvas.addNode'),
             requires: 'nodeCreator',
             svgIcon: addCircle,
             variant: 'outline-primary',
@@ -417,8 +416,8 @@ const defaultMenuCanvas = {
             },
         },
         {
-            title: 'Add Note',
-            text: 'Add Note',
+            title: i18n.t('contextMenu.canvas.addNote'),
+            text: i18n.t('contextMenu.canvas.addNote'),
             requires: 'notes',
             svgIcon: stickyNote,
             variant: 'outline-primary',
@@ -436,12 +435,12 @@ const defaultMenuCanvas = {
             shortcut: 'n'
         }
     ] as GatedActionItem[],
-}
+})
 
-const defaultMenuNote = {
+const defaultMenuNote = (i18n: I18n) => ({
     topbar: [
         {
-            title: 'Hide Note',
+            title: i18n.t('contextMenu.note.hide'),
             svgIcon: hide,
             variant: 'outline-danger',
             flushRight: true,
@@ -455,8 +454,8 @@ const defaultMenuNote = {
     ] as GatedQuickActionItem[],
     menu: [
         {
-            title: 'Remove Note',
-            text: 'Remove Note',
+            title: i18n.t('contextMenu.note.remove'),
+            text: i18n.t('contextMenu.note.remove'),
             requires: 'deletion',
             svgIcon: trash,
             variant: 'outline-danger',
@@ -467,7 +466,7 @@ const defaultMenuNote = {
             shortcut: 'n'
         }
     ] as GatedActionItem[],
-}
+})
 
 export class ContextMenu extends UIComponent {
 
@@ -519,35 +518,36 @@ export class ContextMenu extends UIComponent {
         this.visible = false
 
         const options = this.uiManager.getOptions().contextMenu
-        this.menuEdge = deepMerge(this.gate(defaultMenuEdge), options.menuEdge ?? {})
-        this.menuNote = deepMerge(this.gate(defaultMenuNote), options.menuNote ?? {})
-        const canvasMenu = this.gate(defaultMenuCanvas)
+        const i18n = this.i18n
+        this.menuEdge = deepMerge(this.gate(defaultMenuEdge(i18n)), options.menuEdge ?? {})
+        this.menuNote = deepMerge(this.gate(defaultMenuNote(i18n)), options.menuNote ?? {})
+        const canvasMenu = this.gate(defaultMenuCanvas(i18n))
         canvasMenu.menu.push(this.releasePinnedEntry())
         this.menuCanvas = deepMerge(canvasMenu, options.menuCanvas ?? {})
         // Every node-ish menu reads in four bands: *Pivot ▸*, the group entries, everything
         // else (the app's entries last), then the delete. Pivot's entry is built here rather
         // than declared because its `visible` reads the live registry, and a predicate is
         // resolved without `this` bound (`ElementCreation.tryResolveBoolean`).
-        this.menuNode = deepMerge(this.gate(defaultMenuNode), options.menuNode ?? {})
+        this.menuNode = deepMerge(this.gate(defaultMenuNode(i18n)), options.menuNode ?? {})
         this.menuNode.menu = [
             this.pivotEntry(),
             ...this.membershipEntries(),
             ...this.menuNode.menu,
-            ...this.gateEntries([deleteNodeEntry]),
+            ...this.gateEntries([deleteNodeEntry(i18n)]),
         ]
-        this.menuGroup = this.gate(defaultMenuGroup)
+        this.menuGroup = this.gate(defaultMenuGroup(i18n))
         this.menuGroup.menu = [
             this.pivotEntry(),
-            ...this.gateEntries(groupEntries), this.tableEntry(), ...this.manualGroupEntries(),
+            ...this.gateEntries(groupEntries(i18n)), this.tableEntry(), ...this.manualGroupEntries(),
             ...this.menuGroup.menu,
-            ...this.gateEntries([deleteMembersEntry]),
+            ...this.gateEntries([deleteMembersEntry(i18n)]),
         ]
-        this.menuSelection = deepMerge(this.gate(defaultMenuSelection), options.menuSelection ?? {})
+        this.menuSelection = deepMerge(this.gate(defaultMenuSelection(i18n)), options.menuSelection ?? {})
         this.menuSelection.menu = [
             this.pivotEntry(),
             this.groupSelectionEntry(), ...this.membershipEntries(), this.ungroupSelectionEntry(),
             ...this.menuSelection.menu,
-            ...this.gateEntries([deleteSelectedEntry]),
+            ...this.gateEntries([deleteSelectedEntry(i18n)]),
         ]
         this.wrapOnclickActions()
     }
@@ -561,8 +561,8 @@ export class ContextMenu extends UIComponent {
     private pivotEntry(): MenuActionItemOptions {
         const ui = this.uiManager
         return {
-            text: 'Pivot',
-            title: 'Pivot',
+            text: this.i18n.t('contextMenu.pivot'),
+            title: this.i18n.t('contextMenu.pivot'),
             svgIcon: sparkles,
             variant: 'outline-primary',
             // The node menu only ever carries a node, so the cast is the shape of this
@@ -580,8 +580,8 @@ export class ContextMenu extends UIComponent {
         const ui = this.uiManager
         const pinned = () => [...new Set([...ui.graph.getMutableNodes(), ...ui.graph.getCanvasNodes()])].filter(node => node.frozen)
         return {
-            text: 'Release pinned nodes',
-            title: 'Unpin every pinned node so the layout can move them again',
+            text: this.i18n.t('contextMenu.canvas.releasePinned'),
+            title: this.i18n.t('contextMenu.canvas.releasePinned.title'),
             svgIcon: unpin,
             variant: 'outline-primary',
             visible: () => pinned().length > 0,
@@ -595,16 +595,16 @@ export class ContextMenu extends UIComponent {
         const simplify = ui.graph.simplify
         return [
             {
-                text: 'Rename group',
-                title: 'Give this group a title',
+                text: this.i18n.t('contextMenu.group.rename'),
+                title: this.i18n.t('contextMenu.group.rename.title'),
                 svgIcon: edit,
                 variant: 'outline-primary',
                 visible: (element) => !!element && simplify.isManual((element as GroupNode).id),
                 onclick: (_event, element) => void renameGroupPrompt(ui, element as GroupNode),
             },
             {
-                text: 'Ungroup',
-                title: 'Draw the members as they were before this group',
+                text: this.i18n.t('contextMenu.ungroup'),
+                title: this.i18n.t('contextMenu.group.ungroup.title'),
                 svgIcon: ungroupNodes,
                 variant: 'outline-primary',
                 visible: (element) => !!element && simplify.isManual((element as GroupNode).id),
@@ -617,8 +617,8 @@ export class ContextMenu extends UIComponent {
     private groupSelectionEntry(): MenuActionItemOptions {
         const ui = this.uiManager
         return {
-            text: 'Group selected nodes',
-            title: 'Fold the selection into one group with a title',
+            text: this.i18n.t('contextMenu.selection.group'),
+            title: this.i18n.t('contextMenu.selection.group.title'),
             svgIcon: groupNodes,
             variant: 'outline-primary',
             visible: (element) => ui.graph.simplify.isEnabled() && ui.graph.simplify.groupableIds(asNodes(element)).length >= 2,
@@ -630,8 +630,8 @@ export class ContextMenu extends UIComponent {
     private ungroupSelectionEntry(): MenuActionItemOptions {
         const ui = this.uiManager
         return {
-            text: 'Ungroup',
-            title: 'Draw the members of these hand-made groups as they were',
+            text: this.i18n.t('contextMenu.ungroup'),
+            title: this.i18n.t('contextMenu.selection.ungroup.title'),
             svgIcon: ungroupNodes,
             variant: 'outline-primary',
             visible: (element) => ui.graph.simplify.isEnabled() && manualGroupsIn(ui, asNodes(element)).length > 0,
@@ -643,8 +643,8 @@ export class ContextMenu extends UIComponent {
     private tableEntry(): MenuActionItemOptions {
         const ui = this.uiManager
         return {
-            text: 'View members in table',
-            title: 'List the members in the data dock, to filter and search them',
+            text: this.i18n.t('contextMenu.group.viewInTable'),
+            title: this.i18n.t('contextMenu.group.viewInTable.title'),
             svgIcon: dataTable,
             variant: 'outline-primary',
             visible: () => !!ui.table,
@@ -662,16 +662,16 @@ export class ContextMenu extends UIComponent {
         const pulled = (element: unknown) => asNodes(element).filter(node => simplify.isPulledOut(node))
         return [
             {
-                text: 'Pull out of group',
-                title: 'Keep these nodes out of their groups',
+                text: this.i18n.t('contextMenu.membership.pullOut'),
+                title: this.i18n.t('contextMenu.membership.pullOut.title'),
                 svgIcon: ungroupNodes,
                 variant: 'outline-primary',
                 visible: (element) => grouped(element).length > 0,
                 onclick: (_evt, element) => simplify.pullOut(grouped(element)),
             },
             {
-                text: 'Put back in group',
-                title: 'Let these nodes be grouped again',
+                text: this.i18n.t('contextMenu.membership.putBack'),
+                title: this.i18n.t('contextMenu.membership.putBack.title'),
                 svgIcon: groupNodes,
                 variant: 'outline-primary',
                 visible: (element) => pulled(element).length > 0,
@@ -717,8 +717,8 @@ export class ContextMenu extends UIComponent {
         })
         this.startPeeks()
         rows.push({
-            text: 'Open pivot panel…',
-            title: 'Read the counts, narrow, then run',
+            text: this.i18n.t('contextMenu.pivot.openPanel'),
+            title: this.i18n.t('contextMenu.pivot.openPanel.title'),
             svgIcon: sparkles,
             variant: 'outline-primary',
             dividerBefore: rows.length > 0,
@@ -746,8 +746,8 @@ export class ContextMenu extends UIComponent {
             },
         }))
         rows.push({
-            text: 'Open pivot panel…',
-            title: 'Read the counts, narrow, then run',
+            text: this.i18n.t('contextMenu.pivot.openPanel'),
+            title: this.i18n.t('contextMenu.pivot.openPanel.title'),
             svgIcon: sparkles,
             variant: 'outline-primary',
             dividerBefore: true,
@@ -802,7 +802,7 @@ export class ContextMenu extends UIComponent {
             // that cannot say what is out there rarely fetches it either.
             slot.classList.remove('pvt-contextmenu-peek-waiting')
             slot.textContent = '—'
-            slot.title = 'This pivot could not say what is out there'
+            slot.title = this.i18n.t('contextMenu.pivot.peek.failed.title')
         }
     }
 
@@ -813,10 +813,10 @@ export class ContextMenu extends UIComponent {
     private paintPeek(slot: HTMLElement, total: number | undefined, nodes: number): void {
         slot.classList.remove('pvt-contextmenu-peek-waiting')
         if (total === undefined) return
-        slot.textContent = `~${fmt(total)}`
+        slot.textContent = this.i18n.t('contextMenu.pivot.peek', { count: total })
         slot.title = nodes > 1
-            ? `About ${fmt(total)} across ${fmt(nodes)} nodes`
-            : `About ${fmt(total)} out there`
+            ? this.i18n.t('contextMenu.pivot.peek.titleAcross', { count: total, nodes: this.i18n.t('count.nodes', { count: nodes }) })
+            : this.i18n.t('contextMenu.pivot.peek.title', { count: total })
     }
 
     /** Stop asking: the panel the answers were for has gone. */
@@ -1012,7 +1012,7 @@ export class ContextMenu extends UIComponent {
         topbar.innerHTML = ''
         mainMenu.innerHTML = ''
         const quickActions = createQuickActionList<ContextMenu>(this, this.menuSelection.topbar, nodes)
-        quickActions.prepend(createHtmlElement('span', { class: 'pvt-contextmenu-caption' }, [`${fmt(nodes.length)} selected`]))
+        quickActions.prepend(createHtmlElement('span', { class: 'pvt-contextmenu-caption' }, [this.i18n.t('contextMenu.selection.count', { count: nodes.length })]))
         topbar.appendChild(quickActions)
         mainMenu.appendChild(createActionList<ContextMenu>(this, this.menuSelection.menu, nodes, this.rowWiring(0)))
     }
