@@ -110,7 +110,7 @@ export function promptData<TData>(
                 return
             }
             if (options.fields?.length) {
-                form = FormFactory.createForm({ fields: options.fields })
+                form = FormFactory.createForm({ fields: options.fields, i18n: graph.i18n })
                 body.appendChild(form)
             }
         },

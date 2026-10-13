@@ -98,7 +98,7 @@ function createEditModalBody(edge: Edge, uiManager: UIManager, configured?: Fiel
     const body = document.createElement('div')
     body.classList.add('edit-edge-modal-body')
 
-    const form = FormFactory.createForm({ fields: configured ?? inferFields(edge, uiManager) })
+    const form = FormFactory.createForm({ fields: configured ?? inferFields(edge, uiManager), i18n: uiManager.graph.i18n })
 
     body.append(form)
     return { body, form }

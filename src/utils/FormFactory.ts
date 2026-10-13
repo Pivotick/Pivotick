@@ -1,4 +1,5 @@
 import type { FilterMatchMode } from '../interfaces/GraphQueryEngine'
+import type { I18n } from '../i18n/I18n'
 import { PivotickPicker } from './PivotickPicker'
 
 export type FieldType =
@@ -37,6 +38,8 @@ export interface FieldConfig {
 
 export interface FormConfig {
     fields: FieldConfig[]
+    /** The graph's language, for the words the form writes itself (placeholders, the picker's). */
+    i18n: I18n
 }
 
 export type FormValue = string | string[] | number | number[] | boolean | undefined | {min: number | undefined, max: number | undefined}
@@ -44,14 +47,18 @@ export type FormValues = Record<string, FormValue>
 
 type SelectWithPicker = HTMLSelectElement & { _picker?: PivotickPicker }
 
+/** The language each form was built in, so a later repaint writes in the same one. */
+const formLanguage = new WeakMap<HTMLFormElement, I18n>()
+
 export class FormFactory {
 
     static createForm(config: FormConfig): HTMLFormElement {
         const form = document.createElement('form')
         form.className = 'pvt-form'
+        formLanguage.set(form, config.i18n)
 
         config.fields.forEach(field => {
-            form.appendChild(this.createField(field))
+            form.appendChild(this.createField(field, config.i18n))
         })
 
         return form
@@ -200,11 +207,13 @@ export class FormFactory {
             row.querySelector<HTMLInputElement>('input')?.value === options[index].value)
         if (!linedUp) return false
 
-        rows.forEach((row, index) => this.paintCheckboxOption(row, options[index]))
+        const i18n = formLanguage.get(form)
+        if (!i18n) return false
+        rows.forEach((row, index) => this.paintCheckboxOption(row, options[index], i18n))
         return true
     }
 
-    static createField(field: FieldConfig): HTMLElement {
+    static createField(field: FieldConfig, i18n: I18n): HTMLElement {
         const wrapper = document.createElement('div')
         wrapper.className = 'pvt-form-element'
 
@@ -217,15 +226,15 @@ export class FormFactory {
 
         switch (field.type) {
             case 'select':
-                wrapper.appendChild(this.createSelect(field))
+                wrapper.appendChild(this.createSelect(field, i18n))
                 break
 
             case 'multiselect':
-                wrapper.appendChild(this.createMultiSelect(field))
+                wrapper.appendChild(this.createMultiSelect(field, i18n))
                 break
 
             case 'checkboxes':
-                wrapper.appendChild(this.createCheckboxes(field))
+                wrapper.appendChild(this.createCheckboxes(field, i18n))
                 break
 
             case 'checkbox':
@@ -237,11 +246,11 @@ export class FormFactory {
                 break
 
             case 'regex':
-                wrapper.appendChild(this.createRegex(field))
+                wrapper.appendChild(this.createRegex(field, i18n))
                 break
 
             case 'numberRange':
-                wrapper.appendChild(this.createNumberRange(field))
+                wrapper.appendChild(this.createNumberRange(field, i18n))
                 break
         }
 
@@ -326,21 +335,21 @@ export class FormFactory {
         return select
     }
 
-    private static createSelect(field: FieldConfig): HTMLSelectElement {
+    private static createSelect(field: FieldConfig, i18n: I18n): HTMLSelectElement {
         const select = this.buildSelect(field) as SelectWithPicker
 
         requestAnimationFrame(() => {
-            select._picker = new PivotickPicker(select, {})
+            select._picker = new PivotickPicker(select, { i18n })
         })
         return select
     }
 
-    private static createMultiSelect(field: FieldConfig): HTMLSelectElement {
+    private static createMultiSelect(field: FieldConfig, i18n: I18n): HTMLSelectElement {
         const select = this.buildSelect(field) as SelectWithPicker
         select.multiple = true
 
         requestAnimationFrame(() => {
-            select._picker = new PivotickPicker(select, {})
+            select._picker = new PivotickPicker(select, { i18n })
         })
 
         return select
@@ -351,7 +360,7 @@ export class FormFactory {
      * its own rather than in the label, so the options stay scannable as a list of
      * names and the numbers line up down the right-hand edge.
      */
-    private static createCheckboxes(field: FieldConfig): HTMLElement {
+    private static createCheckboxes(field: FieldConfig, i18n: I18n): HTMLElement {
         const list = document.createElement('div')
         list.className = 'pvt-checkbox-list'
         this.baseAttrs(list, field)
@@ -373,7 +382,7 @@ export class FormFactory {
             label.className = 'pvt-checkbox-label'
 
             row.append(input, label)
-            this.paintCheckboxOption(row, option)
+            this.paintCheckboxOption(row, option, i18n)
             list.appendChild(row)
         })
 
@@ -381,7 +390,7 @@ export class FormFactory {
     }
 
     /** Write an option's label and count into a row that already holds its checkbox. */
-    private static paintCheckboxOption(row: HTMLElement, option: FieldOption): void {
+    private static paintCheckboxOption(row: HTMLElement, option: FieldOption, i18n: I18n): void {
         const label = row.querySelector('.pvt-checkbox-label')
         if (label) label.textContent = option.label
 
@@ -395,7 +404,7 @@ export class FormFactory {
             count.className = 'pvt-checkbox-count'
             row.appendChild(count)
         }
-        count.textContent = option.count.toLocaleString()
+        count.textContent = i18n.formatNumber(option.count)
     }
 
     private static createCheckbox(field: FieldConfig): HTMLInputElement {
@@ -423,28 +432,28 @@ export class FormFactory {
     }
 
     /** A pattern field: a text input that reads as one (monospace, `/…/` placeholder). */
-    private static createRegex(field: FieldConfig): HTMLInputElement {
+    private static createRegex(field: FieldConfig, i18n: I18n): HTMLInputElement {
         const input = this.createText(field)
         input.classList.add('pvt-form-regex')
-        input.placeholder = field.placeholder ?? 'pattern…'
+        input.placeholder = field.placeholder ?? i18n.t('form.pattern.placeholder')
         input.spellcheck = false
         input.autocapitalize = 'off'
         return input
     }
 
-    private static createNumberRange(field: FieldConfig): HTMLElement {
+    private static createNumberRange(field: FieldConfig, i18n: I18n): HTMLElement {
         const container = document.createElement('div')
         container.className = 'pvt-number-range'
         this.baseAttrs(container, field)
 
         const min = document.createElement('input')
         min.type = 'number'
-        min.placeholder = 'Min'
+        min.placeholder = i18n.t('form.min.placeholder')
         min.className = 'min'
 
         const max = document.createElement('input')
         max.type = 'number'
-        max.placeholder = 'Max'
+        max.placeholder = i18n.t('form.max.placeholder')
         max.className = 'max'
 
         const dv =

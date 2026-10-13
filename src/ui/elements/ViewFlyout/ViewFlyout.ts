@@ -1,14 +1,16 @@
 import { Flyout } from '../Flyout/Flyout'
 import type { FlyoutMode } from '../../ModeStore'
 import { show, snapGrid, grid, hide, pin, graphNavigationReset } from '../../icons'
+import { i18nAttr, i18nText } from '../../../i18n/dom'
+import type { MessageKey } from '../../../interfaces/I18n'
 import './viewflyout.scss'
 
 /** The canvas background patterns, in the order the button group offers them. */
-const BG_MODES: Array<{ id: string, label: string, desc: string }> = [
-    { id: 'grid', label: 'Grid', desc: 'Rule the canvas with grid lines.' },
-    { id: 'dots', label: 'Dots', desc: 'Mark the grid with dots instead of lines.' },
-    { id: 'none', label: 'None', desc: 'Leave the canvas plain.' },
-    { id: 'image', label: 'Image', desc: 'Paint an image behind the graph.' },
+const BG_MODES: Array<{ id: string, label: MessageKey, desc: MessageKey }> = [
+    { id: 'grid', label: 'viewFlyout.background.grid', desc: 'viewFlyout.background.grid.title' },
+    { id: 'dots', label: 'viewFlyout.background.dots', desc: 'viewFlyout.background.dots.title' },
+    { id: 'none', label: 'viewFlyout.background.none', desc: 'viewFlyout.background.none.title' },
+    { id: 'image', label: 'viewFlyout.background.image', desc: 'viewFlyout.background.image.title' },
 ]
 
 /** The patterns that have a grid colour to pick and can be highlighted. */
@@ -18,10 +20,10 @@ const PATTERNED_MODES = ['grid', 'dots']
  * How a background image sits on the canvas. The first entry is the default,
  * and `id` doubles as the `background-size` the two scaling fits want.
  */
-const FIT_MODES: Array<{ id: string, label: string, desc: string }> = [
-    { id: 'cover', label: 'Cover', desc: 'Scale the image to fill the canvas, cropping whatever overflows.' },
-    { id: 'contain', label: 'Contain', desc: 'Scale the image until all of it fits on the canvas.' },
-    { id: 'repeat', label: 'Tile', desc: 'Keep the image at its own size and repeat it across the canvas.' },
+const FIT_MODES: Array<{ id: string, label: MessageKey, desc: MessageKey }> = [
+    { id: 'cover', label: 'viewFlyout.image.fit.cover', desc: 'viewFlyout.image.fit.cover.title' },
+    { id: 'contain', label: 'viewFlyout.image.fit.contain', desc: 'viewFlyout.image.fit.contain.title' },
+    { id: 'repeat', label: 'viewFlyout.image.fit.tile', desc: 'viewFlyout.image.fit.tile.title' },
 ]
 
 /**
@@ -30,12 +32,12 @@ const FIT_MODES: Array<{ id: string, label: string, desc: string }> = [
  * to the theme. Neutrals only — the theme's own accent is where the custom
  * picker beside them starts, so it costs the row no slot.
  */
-const COLOR_SWATCHES: Array<{ color: string, title: string, cls?: string }> = [
-    { color: '', title: 'Theme default', cls: 'swatch-default' },
-    { color: '#ffffff', title: 'White' },
-    { color: '#d4d4d4', title: 'Light grey' },
-    { color: '#525252', title: 'Dark grey' },
-    { color: '#171717', title: 'Black' },
+const COLOR_SWATCHES: Array<{ color: string, title: MessageKey, cls?: string }> = [
+    { color: '', title: 'viewFlyout.colour.default', cls: 'swatch-default' },
+    { color: '#ffffff', title: 'viewFlyout.colour.white' },
+    { color: '#d4d4d4', title: 'viewFlyout.colour.lightGrey' },
+    { color: '#525252', title: 'viewFlyout.colour.darkGrey' },
+    { color: '#171717', title: 'viewFlyout.colour.black' },
 ]
 
 /** A colour input takes a plain hex and nothing else. */
@@ -56,54 +58,54 @@ export class ViewFlyout extends Flyout {
     protected readonly mode: FlyoutMode = 'view'
 
     protected template(): string {
+        const t = (key: MessageKey) => this.i18n.t(key)
         const modes = BG_MODES.map(m =>
             `<button type="button" class="pvt-flyout-btn-group-btn" data-bg="${m.id}"
-                aria-pressed="${m.id === 'grid'}" title="${m.desc}">${m.label}</button>`
+                aria-pressed="${m.id === 'grid'}" ${i18nAttr('title', m.desc)} ${i18nText(m.label)}></button>`
         ).join('')
         const swatches = COLOR_SWATCHES.map(s =>
             `<button type="button" class="pvt-viewflyout-swatch ${s.cls ?? ''}" data-color="${s.color}"
-                title="${s.title}" style="${s.color ? `--swatch: ${s.color}` : ''}"></button>`
+                ${i18nAttr('title', s.title)} style="${s.color ? `--swatch: ${s.color}` : ''}"></button>`
         ).join('')
         const fits = FIT_MODES.map((f, i) =>
             `<button type="button" class="pvt-flyout-btn-group-btn" data-fit="${f.id}"
-                aria-pressed="${i === 0}" title="${f.desc}">${f.label}</button>`
+                aria-pressed="${i === 0}" ${i18nAttr('title', f.desc)} ${i18nText(f.label)}></button>`
         ).join('')
 
-        return this.headerRow(show, 'View')
-            + this.sectionLabel('GRID &amp; CANVAS')
+        return this.headerRow(show, t('viewFlyout.title'))
+            + this.sectionLabel(t('viewFlyout.section'))
             + `
             <div class="pvt-flyout-card">
                 <div class="pvt-flyout-card-head">
-                    <span class="pvt-flyout-card-title">Background</span>
+                    <span class="pvt-flyout-card-title" ${i18nText('viewFlyout.background')}></span>
                 </div>
                 <div class="pvt-flyout-btn-group">${modes}</div>
-                <div class="pvt-viewflyout-swatch-label">Canvas colour</div>
+                <div class="pvt-viewflyout-swatch-label" ${i18nText('viewFlyout.canvasColour')}></div>
                 <div class="pvt-viewflyout-swatches" data-swatches="canvas">${swatches}
-                    <input type="color" class="pvt-viewflyout-color-picker" title="Custom canvas colour">
+                    <input type="color" class="pvt-viewflyout-color-picker" ${i18nAttr('title', 'viewFlyout.canvasColour.custom.title')}>
                 </div>
-                <div class="pvt-viewflyout-swatch-label" data-pattern-only>Grid colour</div>
+                <div class="pvt-viewflyout-swatch-label" data-pattern-only ${i18nText('viewFlyout.gridColour')}></div>
                 <div class="pvt-viewflyout-swatches" data-swatches="grid" data-pattern-only>${swatches}
-                    <input type="color" class="pvt-viewflyout-color-picker" title="Custom grid colour">
+                    <input type="color" class="pvt-viewflyout-color-picker" ${i18nAttr('title', 'viewFlyout.gridColour.custom.title')}>
                 </div>
                 <div class="pvt-viewflyout-bg-toggles" data-pattern-only>
-                    ${this.toggleRow('highlight', grid, 'Highlight grid', 'Make the background grid lines more visible.')}
+                    ${this.toggleRow('highlight', grid, t('viewFlyout.highlightGrid'), t('viewFlyout.highlightGrid.title'))}
                 </div>
                 <div class="pvt-viewflyout-bg-image" hidden>
                     <div class="pvt-viewflyout-bg-image-row">
-                        <input type="text" class="pvt-viewflyout-bg-image-url" placeholder="Image URL...">
+                        <input type="text" class="pvt-viewflyout-bg-image-url" ${i18nAttr('placeholder', 'viewFlyout.image.url.placeholder')}>
                         <button type="button" class="pvt-viewflyout-bg-image-pick"
-                            title="Pick an image file from this device.">Browse</button>
+                            ${i18nAttr('title', 'viewFlyout.image.browse.title')} ${i18nText('viewFlyout.image.browse')}></button>
                         <input type="file" class="pvt-viewflyout-bg-image-file" accept="image/*" hidden>
                     </div>
                     <div class="pvt-flyout-btn-group">${fits}</div>
-                    <button type="button" class="pvt-viewflyout-bg-image-clear">Remove image</button>
+                    <button type="button" class="pvt-viewflyout-bg-image-clear" ${i18nText('viewFlyout.image.remove')}></button>
                 </div>
             </div>`
-            + this.toggleRow('snap', snapGrid, 'Snap to grid', 'Align nodes to the grid while you drag them.')
-            + this.toggleRow('freeze', pin, 'Freeze on drag', 'Keep nodes pinned where you drop them instead of letting physics move them again.')
-            + this.toggleRow('fit', graphNavigationReset, 'Fit on expand/collapse', 'Zoom and re-center to fit the graph when clusters or groups are expanded or collapsed.')
-            + this.toggleRow('orphans', hide, 'Hide unconnected',
-                'Hide nodes that have no visible relation left. Unlike hiding a relationship layer, this moves the graph.')
+            + this.toggleRow('snap', snapGrid, t('viewFlyout.snap'), t('viewFlyout.snap.title'))
+            + this.toggleRow('freeze', pin, t('viewFlyout.freeze'), t('viewFlyout.freeze.title'))
+            + this.toggleRow('fit', graphNavigationReset, t('viewFlyout.fit'), t('viewFlyout.fit.title'))
+            + this.toggleRow('orphans', hide, t('viewFlyout.orphans'), t('viewFlyout.orphans.title'))
     }
 
     protected onGraphReady() {
@@ -151,7 +153,7 @@ export class ViewFlyout extends Flyout {
     private syncOrphanNote() {
         const hidden = this.uiManager.graph.queryEngine.getDisconnectedNodeCount()
         if (hidden === 0) return this.toggleNote('orphans', '')
-        this.toggleNote('orphans', String(hidden), `${hidden} unconnected ${hidden > 1 ? 'nodes' : 'node'} hidden`)
+        this.toggleNote('orphans', this.i18n.formatNumber(hidden), this.i18n.t('viewFlyout.orphans.note.title', { count: hidden }))
     }
 
     /* ---------- background ---------- */

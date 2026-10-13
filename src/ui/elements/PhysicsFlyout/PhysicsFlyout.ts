@@ -9,6 +9,9 @@ import {
     magnet, arrowsHorizontal, arrowsVertical, circleDashed, wind, focusElement, timeDuration10, sparkles,
     firstValidNode, mostConnectedNode, minHeight, selectElement, arrowDown, checkmark,
 } from '../../icons'
+import { applyMessages, i18nAttr, i18nText } from '../../../i18n/dom'
+import type { MessageKey } from '../../../interfaces/I18n'
+import { escapeHtml } from '../../../utils/utils'
 import './physicsflyout.scss'
 
 type SliderKey = keyof PhysicsKnobs
@@ -16,23 +19,24 @@ type SliderKey = keyof PhysicsKnobs
 /**
  * A slider per knob. `desc` is surfaced as a hover tooltip (native `title`) so each
  * knob explains itself; `step`/`unit` exist because `settleTime` is the one knob
- * measured in seconds rather than in abstract units.
+ * measured in seconds rather than in abstract units. `unit` is the message the value is
+ * written with; a knob without one shows the bare number.
  */
 const SLIDERS: Array<{
     key: SliderKey
-    label: string
-    desc: string
+    label: MessageKey
+    desc: MessageKey
     icon: string
     step: number
-    unit?: string
+    unit?: MessageKey
     set: (sim: import('../../../Simulation').Simulation, v: number) => void
 }> = [
-    { key: 'repulsion', label: 'Repulsion', desc: 'How strongly nodes push each other apart. Higher values spread the graph out.', icon: magnet, step: 1, set: (s, v) => s.setRepulsion(v) },
-    { key: 'linkDistance', label: 'Link distance', desc: 'The resting length of edges, in pixels. Higher values place connected nodes further apart.', icon: arrowsHorizontal, step: 1, set: (s, v) => s.setLinkDistance(v) },
-    { key: 'collisionRadius', label: 'Collision radius', desc: 'The clear space kept around each node to prevent overlap. Higher values keep nodes further apart.', icon: circleDashed, step: 1, set: (s, v) => s.setCollisionRadius(v) },
-    { key: 'friction', label: 'Friction', desc: 'How quickly node motion is damped. Higher values calm the layout and settle it faster.', icon: wind, step: 1, set: (s, v) => s.setFriction(v) },
-    { key: 'centering', label: 'Centering', desc: 'How strongly the graph is pulled toward the middle of the canvas. Higher values keep disconnected parts in frame.', icon: focusElement, step: 1, set: (s, v) => s.setCentering(v) },
-    { key: 'settleTime', label: 'Settle time', desc: 'How long the layout is given to settle, in seconds. Higher values let large graphs unfold further before they stop.', icon: timeDuration10, step: 0.1, unit: 's', set: (s, v) => s.setSettleTime(v) },
+    { key: 'repulsion', label: 'physicsFlyout.knob.repulsion', desc: 'physicsFlyout.knob.repulsion.title', icon: magnet, step: 1, set: (s, v) => s.setRepulsion(v) },
+    { key: 'linkDistance', label: 'physicsFlyout.knob.linkDistance', desc: 'physicsFlyout.knob.linkDistance.title', icon: arrowsHorizontal, step: 1, set: (s, v) => s.setLinkDistance(v) },
+    { key: 'collisionRadius', label: 'physicsFlyout.knob.collisionRadius', desc: 'physicsFlyout.knob.collisionRadius.title', icon: circleDashed, step: 1, set: (s, v) => s.setCollisionRadius(v) },
+    { key: 'friction', label: 'physicsFlyout.knob.friction', desc: 'physicsFlyout.knob.friction.title', icon: wind, step: 1, set: (s, v) => s.setFriction(v) },
+    { key: 'centering', label: 'physicsFlyout.knob.centering', desc: 'physicsFlyout.knob.centering.title', icon: focusElement, step: 1, set: (s, v) => s.setCentering(v) },
+    { key: 'settleTime', label: 'physicsFlyout.knob.settleTime', desc: 'physicsFlyout.knob.settleTime.title', icon: timeDuration10, step: 0.1, unit: 'physicsFlyout.knob.seconds', set: (s, v) => s.setSettleTime(v) },
 ]
 
 /**
@@ -44,11 +48,18 @@ type PresetChoice = 'auto' | PhysicsPresetName
 
 const PRESETS: PresetChoice[] = ['auto', 'tight', 'loose']
 
+/** Each preset button's caption. */
+const PRESET_LABELS: Record<PresetChoice, MessageKey> = {
+    auto: 'physicsFlyout.preset.auto',
+    tight: 'physicsFlyout.preset.tight',
+    loose: 'physicsFlyout.preset.loose',
+}
+
 /** Tooltip for each preset button, explaining the layout it produces. */
-const PRESET_DESCRIPTIONS: Record<PresetChoice, string> = {
-    auto: 'Let the layout tune itself from the number of nodes, their size and the canvas — and keep tuning as the graph changes.',
-    tight: 'Compact layout with nodes packed closely together.',
-    loose: 'Spacious layout with nodes spread further apart.',
+const PRESET_DESCRIPTIONS: Record<PresetChoice, MessageKey> = {
+    auto: 'physicsFlyout.preset.auto.title',
+    tight: 'physicsFlyout.preset.tight.title',
+    loose: 'physicsFlyout.preset.loose.title',
 }
 
 /** The Auto button carries an icon; the character presets are plain labels. */
@@ -59,11 +70,11 @@ const PRESET_ICONS: Partial<Record<PresetChoice, string>> = { auto: sparkles }
  * open first. `label` is the tile's caption (the `desc` tooltip carries the full
  * name); tree variants are disabled on cyclic graphs.
  */
-const LAYOUTS: Array<{ id: string; label: string; icon: string; tree: boolean; desc: string }> = [
-    { id: 'force', label: 'Force', icon: graphControlLayoutOrganic, tree: false, desc: 'Force — positions nodes freely using the physics simulation.' },
-    { id: 'tree-v', label: 'Vertical', icon: graphControlLayoutTreeV, tree: true, desc: 'Tree — hierarchical layout flowing from top to bottom.' },
-    { id: 'tree-h', label: 'Horizontal', icon: graphControlLayoutTreeH, tree: true, desc: 'Tree — hierarchical layout flowing from left to right.' },
-    { id: 'tree-r', label: 'Radial', icon: graphControlLayoutTreeR, tree: true, desc: 'Tree — hierarchical layout radiating out from a central root.' },
+const LAYOUTS: Array<{ id: string; label: MessageKey; icon: string; tree: boolean; desc: MessageKey }> = [
+    { id: 'force', label: 'physicsFlyout.layout.force', icon: graphControlLayoutOrganic, tree: false, desc: 'physicsFlyout.layout.force.title' },
+    { id: 'tree-v', label: 'physicsFlyout.layout.treeV', icon: graphControlLayoutTreeV, tree: true, desc: 'physicsFlyout.layout.treeV.title' },
+    { id: 'tree-h', label: 'physicsFlyout.layout.treeH', icon: graphControlLayoutTreeH, tree: true, desc: 'physicsFlyout.layout.treeH.title' },
+    { id: 'tree-r', label: 'physicsFlyout.layout.treeR', icon: graphControlLayoutTreeR, tree: true, desc: 'physicsFlyout.layout.treeR.title' },
 ]
 
 /**
@@ -86,9 +97,9 @@ type SpacingKey = keyof TreeSpacing
  * `radial` marks the sliders the radial layout can honour: it spreads every level
  * over the full circle, so only the ring gap is left to widen.
  */
-const SPACING_SLIDERS: Array<{ key: SpacingKey, label: string, desc: string, icon: string, radial: boolean }> = [
-    { key: 'levelSpacing', label: 'Level distance', desc: 'How far apart consecutive levels of the tree sit — the gap between rings, in the radial layout.', icon: arrowsVertical, radial: true },
-    { key: 'siblingSpacing', label: 'Sibling distance', desc: 'How far apart nodes on the same level sit. The radial layout spreads a level over the whole circle, so it ignores this one.', icon: arrowsHorizontal, radial: false },
+const SPACING_SLIDERS: Array<{ key: SpacingKey, label: MessageKey, desc: MessageKey, icon: string, radial: boolean }> = [
+    { key: 'levelSpacing', label: 'physicsFlyout.spacing.level', desc: 'physicsFlyout.spacing.level.title', icon: arrowsVertical, radial: true },
+    { key: 'siblingSpacing', label: 'physicsFlyout.spacing.sibling', desc: 'physicsFlyout.spacing.sibling.title', icon: arrowsHorizontal, radial: false },
 ]
 
 /**
@@ -96,8 +107,6 @@ const SPACING_SLIDERS: Array<{ key: SpacingKey, label: string, desc: string, ico
  * `plugins/analytics/DAGAlgorithms.ts`.
  */
 type RootChoice = 'selected' | TreeLayoutAlgorithm
-
-const SELECTED_ROOT_DESCRIPTION = 'Hangs the tree from the node you have selected, following edges either way round.'
 
 /**
  * The root menu, in the order it reads best: the deliberate choice first, then the three
@@ -110,19 +119,16 @@ const SELECTED_ROOT_DESCRIPTION = 'Hangs the tree from the node you have selecte
  * be offering the same item twice. A tree that asks for `MinMaxDistance` reads as
  * `MinHeight`, which is what it gets.
  */
-const ROOT_CHOICES: Array<{ id: RootChoice, label: string, icon: string, desc: string }> = [
-    { id: 'selected', label: 'Selected node', icon: selectElement, desc: SELECTED_ROOT_DESCRIPTION },
-    { id: 'FirstZeroInDegree', label: 'First source', icon: firstValidNode, desc: 'The first node nothing points at.' },
-    { id: 'MaxReachability', label: 'Widest reach', icon: mostConnectedNode, desc: 'Reaches the most other nodes.' },
-    { id: 'MinHeight', label: 'Shallowest', icon: minHeight, desc: 'Makes the tree as shallow as it can be.' },
+const ROOT_CHOICES: Array<{ id: RootChoice, label: MessageKey, icon: string, desc: MessageKey }> = [
+    { id: 'selected', label: 'physicsFlyout.root.selected', icon: selectElement, desc: 'physicsFlyout.root.selected.description' },
+    { id: 'FirstZeroInDegree', label: 'physicsFlyout.root.firstSource', icon: firstValidNode, desc: 'physicsFlyout.root.firstSource.description' },
+    { id: 'MaxReachability', label: 'physicsFlyout.root.widestReach', icon: mostConnectedNode, desc: 'physicsFlyout.root.widestReach.description' },
+    { id: 'MinHeight', label: 'physicsFlyout.root.shallowest', icon: minHeight, desc: 'physicsFlyout.root.shallowest.description' },
 ]
 
 /** The menu entry that stands for a finder — the two duplicate finders share one. */
 const rootChoiceFor = (algorithm: TreeLayoutAlgorithm): RootChoice =>
     algorithm === 'MinMaxDistance' ? 'MinHeight' : algorithm
-
-/** Tooltip for the spacing card's Auto button. */
-const AUTO_SPACING_DESCRIPTION = 'Let the tree work out its own distances from the size of the nodes and the shape of the tree — and keep working them out as the graph changes.'
 
 /** The layout options each tree tile applies, keyed by tile id. */
 const TREE_ORIENTATIONS: Record<string, { horizontal?: boolean, radial?: boolean }> = {
@@ -318,13 +324,14 @@ export class PhysicsFlyout extends Flyout {
         const item = document.createElement('span')
         item.className = 'pvt-rootmenu-item'
         if (isCurrent) item.classList.add('current')
-        const desc = choice.id === 'selected' && !this.selectedNodeId()
-            ? 'Select a node first.'
+        const desc: MessageKey = choice.id === 'selected' && !this.selectedNodeId()
+            ? 'physicsFlyout.root.selectFirst'
             : choice.desc
         item.innerHTML = `
             <span class="pvt-flyout-icon">${choice.icon}</span>
-            <span class="pvt-rootmenu-text"><b>${choice.label}</b><em>${desc}</em></span>
+            <span class="pvt-rootmenu-text"><b ${i18nText(choice.label)}></b><em ${i18nText(desc)}></em></span>
             <span class="pvt-rootmenu-tick">${checkmark}</span>`
+        applyMessages(item, this.i18n)
         return item
     }
 
@@ -392,14 +399,14 @@ export class PhysicsFlyout extends Flyout {
 
         const pinned = Boolean(this.pinnedRootId)
         const choice = ROOT_CHOICES.find(c => c.id === (pinned ? 'selected' : rootChoiceFor(this.rootFinder)))
-        const label = pinned ? this.pinnedRootName() : choice?.label ?? ''
+        const label = pinned ? this.pinnedRootName() : choice ? this.i18n.t(choice.label) : ''
         const icon = this.query('.pvt-physicsflyout-rootpick-icon')
         const value = this.query('.pvt-physicsflyout-rootpick-value')
         if (icon && choice) icon.innerHTML = choice.icon
         if (value) value.textContent = label
         this.rootPicker.title = pinned
-            ? `The tree is hung from "${label}". Pick again to change it.`
-            : `${choice?.label}: ${choice?.desc}`
+            ? this.i18n.t('physicsFlyout.root.pinned.title', { node: label })
+            : this.i18n.t('physicsFlyout.root.finder.title', { label, description: choice ? this.i18n.t(choice.desc) : '' })
     }
 
     /**
@@ -492,7 +499,7 @@ export class PhysicsFlyout extends Flyout {
         const label = this.sliderValues.get(key)
         if (!label) return
         const spec = SLIDERS.find(s => s.key === key)
-        label.textContent = `${value}${spec?.unit ?? ''}`
+        label.textContent = spec?.unit ? this.i18n.t(spec.unit, { count: value }) : this.i18n.formatNumber(value)
     }
 
     /**
@@ -522,7 +529,7 @@ export class PhysicsFlyout extends Flyout {
 
     private setSpacingLabel(key: SpacingKey, value: number) {
         const label = this.spacingValues.get(key)
-        if (label) label.textContent = `${value}\u00d7`
+        if (label) label.textContent = this.i18n.t('physicsFlyout.spacing.value', { count: value })
     }
 
     private highlightPreset(active: PresetChoice | null) {
@@ -542,7 +549,7 @@ export class PhysicsFlyout extends Flyout {
         if (!this.runButton) return
         const running = this.sim.isEnabled()
         this.runButton.innerHTML = running ? pause : play
-        this.runButton.title = running ? 'Pause physics' : 'Resume physics'
+        this.runButton.title = this.i18n.t(running ? 'physicsFlyout.pause.title' : 'physicsFlyout.resume.title')
         this.runButton.setAttribute('aria-pressed', String(running))
     }
 
@@ -574,39 +581,41 @@ export class PhysicsFlyout extends Flyout {
     /* ---------- template ---------- */
 
     protected template(): string {
+        // Words beside an icon have no element of their own to be marked, so they are escaped.
+        const text = (key: MessageKey) => escapeHtml(this.i18n.t(key))
         const layouts = LAYOUTS.map(l => `
-            <button type="button" class="pvt-physicsflyout-layout" data-layout="${l.id}" aria-pressed="false" title="${l.desc}">
-                <span class="pvt-flyout-icon">${l.icon}</span>${l.label}
+            <button type="button" class="pvt-physicsflyout-layout" data-layout="${l.id}" aria-pressed="false" ${i18nAttr('title', l.desc)}>
+                <span class="pvt-flyout-icon">${l.icon}</span>${text(l.label)}
             </button>`).join('')
         const presets = PRESETS.map(p => {
             const icon = PRESET_ICONS[p] ? `<span class="pvt-flyout-icon">${PRESET_ICONS[p]}</span>` : ''
-            return `<button type="button" class="pvt-flyout-btn-group-btn pvt-physicsflyout-preset" data-preset="${p}" title="${PRESET_DESCRIPTIONS[p]}">${icon}${p[0].toUpperCase()}${p.slice(1)}</button>`
+            return `<button type="button" class="pvt-flyout-btn-group-btn pvt-physicsflyout-preset" data-preset="${p}" ${i18nAttr('title', PRESET_DESCRIPTIONS[p])}>${icon}${text(PRESET_LABELS[p])}</button>`
         }).join('')
         const spacing = SPACING_SLIDERS.map(s => `
-            <div class="pvt-physicsflyout-slider" title="${s.desc}">
+            <div class="pvt-physicsflyout-slider" ${i18nAttr('title', s.desc)}>
                 <div class="pvt-physicsflyout-slider-head">
-                    <span class="pvt-physicsflyout-slider-label"><span class="pvt-flyout-icon">${s.icon}</span>${s.label}</span>
+                    <span class="pvt-physicsflyout-slider-label"><span class="pvt-flyout-icon">${s.icon}</span>${text(s.label)}</span>
                     <span class="pvt-physicsflyout-slider-value" data-value="${s.key}">1&times;</span>
                 </div>
                 <input type="range" class="pvt-physicsflyout-range" data-spacing="${s.key}"
                     min="${TREE_SPACING_RANGE[0]}" max="${TREE_SPACING_RANGE[1]}" step="0.1" value="1" />
             </div>`).join('')
         const sliders = SLIDERS.map(s => `
-            <div class="pvt-physicsflyout-slider" data-row="${s.key}" title="${s.desc}">
+            <div class="pvt-physicsflyout-slider" data-row="${s.key}" ${i18nAttr('title', s.desc)}>
                 <div class="pvt-physicsflyout-slider-head">
-                    <span class="pvt-physicsflyout-slider-label"><span class="pvt-flyout-icon">${s.icon}</span>${s.label}</span>
+                    <span class="pvt-physicsflyout-slider-label"><span class="pvt-flyout-icon">${s.icon}</span>${text(s.label)}</span>
                     <span class="pvt-physicsflyout-slider-value" data-value="${s.key}">0</span>
                 </div>
                 <input type="range" class="pvt-physicsflyout-range" data-slider="${s.key}"
                     min="${PHYSICS_KNOB_RANGES[s.key][0]}" max="${PHYSICS_KNOB_RANGES[s.key][1]}" step="${s.step}" value="0" />
             </div>`).join('')
 
-        return this.headerRow(atom, 'Physics')
-            + this.sectionLabel('LAYOUT &amp; SIMULATION')
+        return this.headerRow(atom, this.i18n.t('physicsFlyout.title'))
+            + this.sectionLabel(this.i18n.t('physicsFlyout.section'))
             + `
             <div class="pvt-physicsflyout-layouts">${layouts}</div>
             <div class="pvt-physicsflyout-rootrow" hidden>
-                <span class="pvt-physicsflyout-rootrow-label">Root</span>
+                <span class="pvt-physicsflyout-rootrow-label" ${i18nText('physicsFlyout.root')}></span>
                 <button type="button" class="pvt-physicsflyout-rootpick" aria-haspopup="menu">
                     <span class="pvt-flyout-icon pvt-physicsflyout-rootpick-icon"></span>
                     <span class="pvt-physicsflyout-rootpick-value"></span>
@@ -615,16 +624,16 @@ export class PhysicsFlyout extends Flyout {
             </div>
             <div class="pvt-flyout-card pvt-physicsflyout-spacing" hidden>
                 <div class="pvt-flyout-card-head">
-                    <span class="pvt-flyout-card-title">Spacing</span>
+                    <span class="pvt-flyout-card-title" ${i18nText('physicsFlyout.spacing')}></span>
                     <button type="button" class="pvt-physicsflyout-autospacing active" aria-pressed="true"
-                        title="${AUTO_SPACING_DESCRIPTION}"><span class="pvt-flyout-icon">${sparkles}</span>Auto</button>
+                        ${i18nAttr('title', 'physicsFlyout.spacing.auto.title')}><span class="pvt-flyout-icon">${sparkles}</span>${text('physicsFlyout.spacing.auto')}</button>
                 </div>
                 <div class="pvt-physicsflyout-sliders">${spacing}</div>
             </div>
             <div class="pvt-flyout-card pvt-physicsflyout-card">
                 <div class="pvt-flyout-card-head">
-                    <span class="pvt-flyout-card-title">Simulation</span>
-                    <button type="button" class="pvt-physicsflyout-run" title="Pause physics">${pause}</button>
+                    <span class="pvt-flyout-card-title" ${i18nText('physicsFlyout.simulation')}></span>
+                    <button type="button" class="pvt-physicsflyout-run" ${i18nAttr('title', 'physicsFlyout.pause.title')}>${pause}</button>
                 </div>
                 <div class="pvt-flyout-btn-group pvt-physicsflyout-presets">${presets}</div>
                 <div class="pvt-physicsflyout-sliders">${sliders}</div>

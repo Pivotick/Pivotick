@@ -1,5 +1,7 @@
 import { UIComponent } from '../../UIComponent'
 import type { RailMode } from '../../ModeStore'
+import { applyMessages } from '../../../i18n/dom'
+import { escapeHtml } from '../../../utils/utils'
 import './flyout.scss'
 
 /**
@@ -11,7 +13,9 @@ import './flyout.scss'
  * the active one, so the flyouts exclude each other for free.
  *
  * A subclass declares the mode it answers to, renders its controls in
- * {@link template} and wires them in {@link wire}. A subclass overriding
+ * {@link template} and wires them in {@link wire}. The template's words are text:
+ * the helpers below escape what they are given, and elements marked with
+ * `i18nText` / `i18nAttr` are filled from the graph's catalogue. A subclass overriding
  * `onGraphReady` must call `super.onGraphReady()`: that's where switch rows get
  * their initial state (`graph.simulation` only exists by then).
  */
@@ -44,6 +48,7 @@ export abstract class Flyout extends UIComponent {
         this.panel = document.createElement('div')
         this.panel.className = `pvt-flyout-panel pvt-flyout-${this.mode}`
         this.panel.innerHTML = this.template()
+        applyMessages(this.panel, this.i18n)
         container.appendChild(this.panel)
     }
 
@@ -81,26 +86,26 @@ export abstract class Flyout extends UIComponent {
         return [...this.panel?.querySelectorAll<T>(selector) ?? []]
     }
 
-    /** The flyout's title row. */
+    /** The flyout's title row. `label` is text, not markup. */
     protected headerRow(icon: string, label: string): string {
-        return `<div class="pvt-flyout-header"><span class="pvt-flyout-icon">${icon}</span>${label}</div>`
+        return `<div class="pvt-flyout-header"><span class="pvt-flyout-icon">${icon}</span>${escapeHtml(label)}</div>`
     }
 
-    /** An all-caps label introducing a group of controls. */
+    /** An all-caps label introducing a group of controls. `text` is text, not markup. */
     protected sectionLabel(text: string): string {
-        return `<div class="pvt-flyout-section-label">${text}</div>`
+        return `<div class="pvt-flyout-section-label">${escapeHtml(text)}</div>`
     }
 
     /**
      * A labelled switch row; wire it with {@link wireToggle} under the same `id`. The
      * note span is for a row that has something to report about its own effect (how many
      * nodes it is hiding, say) — filled through {@link toggleNote}, and invisible while
-     * empty.
+     * empty. `label` and `desc` are text, not markup.
      */
     protected toggleRow(id: string, icon: string, label: string, desc: string): string {
         return `
-            <button type="button" class="pvt-flyout-toggle" data-toggle="${id}" role="switch" aria-pressed="false" title="${desc}">
-                <span class="pvt-flyout-icon">${icon}</span>${label}
+            <button type="button" class="pvt-flyout-toggle" data-toggle="${id}" role="switch" aria-pressed="false" title="${escapeHtml(desc)}">
+                <span class="pvt-flyout-icon">${icon}</span>${escapeHtml(label)}
                 <span class="pvt-flyout-toggle-note" data-note="${id}"></span>
                 <span class="pvt-flyout-switch"></span>
             </button>`

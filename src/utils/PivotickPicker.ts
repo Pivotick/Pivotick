@@ -1,3 +1,5 @@
+import type { I18n } from '../i18n/I18n'
+
 type Option = {
     value: string
     label: string
@@ -10,6 +12,8 @@ interface PickerOptions {
     mode?: PickerMode
     placeholder?: string
     searchable?: boolean
+    /** The graph's language, for the picker's own words. */
+    i18n: I18n
 }
 
 export class PivotickPicker {
@@ -19,6 +23,7 @@ export class PivotickPicker {
     private selected: Set<string> = new Set()
     private mode: PickerMode
     private searchable: boolean
+    private readonly i18n: I18n
 
     private dropdown!: HTMLDivElement
     private input!: HTMLInputElement
@@ -33,8 +38,9 @@ export class PivotickPicker {
     private opened = false
     private anchorWatch = 0
 
-    constructor(select: HTMLSelectElement, options: PickerOptions = {}) {
+    constructor(select: HTMLSelectElement, options: PickerOptions) {
         this.select = select
+        this.i18n = options.i18n
         this.root = document.createElement('div')
         this.root.className = 'pvt-picker'
 
@@ -45,6 +51,11 @@ export class PivotickPicker {
         this.build()
         this.syncFromSelect()
         this.attach()
+    }
+
+    /** What the control says while nothing is chosen: the select's own placeholder, else the library's. */
+    private placeholderText(): string {
+        return this.select.getAttribute('placeholder') || this.i18n.t('picker.placeholder')
     }
 
     private parseOptions() {
@@ -84,7 +95,7 @@ export class PivotickPicker {
         // input
         this.input = document.createElement('input')
         this.input.className = 'pvt-picker__input'
-        this.input.placeholder = this.select.getAttribute('placeholder') || 'Select...'
+        this.input.placeholder = this.placeholderText()
         this.input.type = 'text'
 
         // single-select close button
@@ -119,7 +130,7 @@ export class PivotickPicker {
             this.searchWrap.className = 'pvt-picker__search'
             this.searchInput = document.createElement('input')
             this.searchInput.className = 'pvt-picker__search-input'
-            this.searchInput.placeholder = this.select.getAttribute('placeholder') || 'Search...'
+            this.searchInput.placeholder = this.select.getAttribute('placeholder') || this.i18n.t('picker.search.placeholder')
             this.searchWrap.appendChild(this.searchInput)
             this.dropdown.insertBefore(this.searchWrap, this.listContainer)
         }
@@ -228,7 +239,7 @@ export class PivotickPicker {
                 }
                 // Preserve current selection display
                 if (this.selected.size === 0) {
-                    const placeholder = this.select.getAttribute('placeholder') || 'Select...'
+                    const placeholder = this.placeholderText()
                     this.input.placeholder = placeholder
                     this.input.value = ''
                 }
@@ -341,7 +352,7 @@ export class PivotickPicker {
         if (filtered.length === 0) {
             const msg = document.createElement('div')
             msg.className = 'pvt-picker__no-options'
-            msg.textContent = 'No options available'
+            msg.textContent = this.i18n.t('picker.empty')
             this.listContainer.appendChild(msg)
         }
 
@@ -524,7 +535,7 @@ export class PivotickPicker {
                 const remove = document.createElement('button')
                 remove.className = 'pvt-picker__chip-remove'
                 remove.textContent = '×'
-                remove.setAttribute('aria-label', `Remove ${opt.label}`)
+                remove.setAttribute('aria-label', this.i18n.t('picker.remove.aria', { option: opt.label }))
 
                 remove.addEventListener('click', (e) => {
                     e.stopPropagation()
@@ -541,7 +552,7 @@ export class PivotickPicker {
         } else {
             const placeholder = document.createElement('span')
             placeholder.className = 'pvt-picker__placeholder'
-            placeholder.textContent = this.select.getAttribute('placeholder') || 'Select...'
+            placeholder.textContent = this.placeholderText()
             this.chipsContainer.appendChild(placeholder)
         }
 
@@ -573,7 +584,7 @@ export class PivotickPicker {
                     this.input.placeholder = ''
                 }
             } else {
-                const placeholder = this.select.getAttribute('placeholder') || 'Select...'
+                const placeholder = this.placeholderText()
                 this.input.value = ''
                 this.input.placeholder = placeholder
             }

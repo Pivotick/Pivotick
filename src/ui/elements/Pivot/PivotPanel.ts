@@ -1166,7 +1166,7 @@ class PivotEntry {
         this.form = undefined
         if (!facets.length) return
 
-        const form = FormFactory.createForm({ fields: facets.map(facet => facetToField(facet, this.i18n)) })
+        const form = FormFactory.createForm({ fields: facets.map(facet => facetToField(facet, this.i18n)), i18n: this.i18n })
         FormFactory.setValues(form, { ...facetDefaults(facets), ...this.narrowing } as FormValues)
         this.form = form
         this.narrowingHost.appendChild(form)

@@ -202,8 +202,9 @@ export class GraphQueryEngine {
                 else found.set(id, { count: 1, sample: edge })
             }
         }
+        const collator = this.graph.i18n.collator({})
         return [...found]
-            .sort(([a], [b]) => a.localeCompare(b))
+            .sort(([a], [b]) => collator.compare(a, b))
             .map(([value, { count, sample }]) => ({ value, count, sample }))
     }
 

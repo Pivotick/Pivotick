@@ -11,6 +11,7 @@ import { createEdgeSwatch } from '../../components/EdgeSwatch'
 import { arrowDown, selectionInverse, show } from '../../icons'
 import type { UIManager } from '../../UIManager'
 import type { Simplification } from '../../../Simplification/Simplification'
+import type { I18n } from '../../../i18n/I18n'
 
 const DEFAULT_MAX_VISIBLE_ENTRIES = 12
 
@@ -22,9 +23,6 @@ const DEFAULT_MAX_VISIBLE_ENTRIES = 12
  */
 const AUTO_MAX_CATEGORIES = 24
 const AUTO_MAX_NODES = 5000
-
-/** Header text for the automatic section, whose dimension has no key name. */
-const AUTO_TITLE = 'Type'
 
 /** What a section keys on: nodes, or the graph's relations. */
 type LegendItem = Node | Edge
@@ -104,7 +102,7 @@ export class LegendSectionView {
     private applyingFilter = false
 
     /** Header text when `title` isn't set — depends on where the entries came from. */
-    private titleFallback = 'Legend'
+    private titleFallback: string
     /** Warnings already emitted, so rebuilds don't spam the console. */
     private readonly warned = new Set<string>()
 
@@ -113,9 +111,14 @@ export class LegendSectionView {
 
     constructor(uiManager: UIManager, id: string, reservedKey: string) {
         this.uiManager = uiManager
+        this.titleFallback = this.i18n.t('legend.title')
         this.id = id
         this.reservedKey = reservedKey
         this.filterKey = reservedKey
+    }
+
+    private get i18n(): I18n {
+        return this.uiManager.graph.i18n
     }
 
     /* ---------- configuration ---------- */
@@ -235,7 +238,7 @@ export class LegendSectionView {
     private resolveEntries(): ResolvedLegendEntry[] {
         const declared = this.declaredEntries()
         if (declared?.length) {
-            this.titleFallback = 'Legend'
+            this.titleFallback = this.i18n.t('legend.title')
             return this.fromDeclared(declared, this.items())
         }
 
@@ -245,7 +248,8 @@ export class LegendSectionView {
             return this.derive(item => readItemData(item, key), key, this.items()).entries
         }
 
-        this.titleFallback = AUTO_TITLE
+        // The automatic section's dimension has no key name to head it with.
+        this.titleFallback = this.i18n.t('legend.title.type')
         return this.deriveAutomatically()
     }
 
@@ -783,8 +787,8 @@ export class LegendSectionView {
     }
 
     private collapseTitle(): string {
-        const base = this.collapsed ? 'Expand this section' : 'Collapse this section'
-        return this.collapseAllOffered ? `${base} (alt-click for every section)` : base
+        if (this.collapseAllOffered) return this.i18n.t(this.collapsed ? 'legend.expandAll.title' : 'legend.collapseAll.title')
+        return this.i18n.t(this.collapsed ? 'legend.expand.title' : 'legend.collapse.title')
     }
 
     private renderHeader(): HTMLElement {
@@ -792,8 +796,8 @@ export class LegendSectionView {
         const children: HTMLElement[] = []
 
         if (this.filterable) {
-            children.push(this.action('show-all', show, 'Show every category'))
-            children.push(this.action('invert', selectionInverse, 'Invert which categories are shown'))
+            children.push(this.action('show-all', show, this.i18n.t('legend.showAll.title')))
+            children.push(this.action('invert', selectionInverse, this.i18n.t('legend.invert.title')))
         }
         if (this.config.collapsible !== false) {
             const collapse = this.action('collapse', arrowDown, this.collapseTitle())
@@ -850,7 +854,7 @@ export class LegendSectionView {
             createHtmlElement('span', { class: 'pvt-legend-label' }, [entry.label]),
         ]
         if (this.config.showCounts !== false) {
-            children.push(createHtmlElement('span', { class: 'pvt-legend-count' }, [String(entry.count)]))
+            children.push(createHtmlElement('span', { class: 'pvt-legend-count' }, [this.i18n.formatNumber(entry.count)]))
         }
 
         const row = this.filterable
@@ -873,11 +877,10 @@ export class LegendSectionView {
                 const blocked = !hidden && this.wouldEmptyAdopted(this.visibleCount - 1)
                 const button = row as HTMLButtonElement
                 button.disabled = blocked
+                const category = entry?.label ?? id
                 row.setAttribute('title', blocked
-                    ? 'The last shown category can\'t be hidden while the legend drives the filter panel\'s facet.'
-                    : hidden
-                        ? `Show ${entry?.label ?? id}`
-                        : `Hide ${entry?.label ?? id} (alt-click to show only this one)`)
+                    ? this.i18n.t('legend.entry.lastShown.title')
+                    : this.i18n.t(hidden ? 'legend.entry.show.title' : 'legend.entry.hide.title', { category }))
             }
             row.classList.toggle('pvt-legend-hidden', hidden)
         }

@@ -2,17 +2,17 @@ import { Flyout } from '../Flyout/Flyout'
 import type { FlyoutMode } from '../../ModeStore'
 import type { SimplifyRuleSetting, SimplifyRuleStatus } from '../../../interfaces/Simplify'
 import { groupNodes } from '../../icons'
+import { i18nText } from '../../../i18n/dom'
+import type { I18n } from '../../../i18n/I18n'
 import './simplifyflyout.scss'
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
-
 /** What a rule's card says when it is on and folds nothing, in terms of its setting. */
-function nothingToFold(rule: SimplifyRuleStatus): string {
+function nothingToFold(i18n: I18n, rule: SimplifyRuleStatus): string {
     const value = rule.setting?.value
-    if (value === undefined) return 'Nothing to fold'
-    if (rule.kind === 'degree') return `Every node has ${plural(value, 'link', 'links')} or more`
-    if (rule.kind === 'kcore') return `Every node is in the ${value}-core`
-    return `Nothing to fold at ${value} or more`
+    if (value === undefined) return i18n.t('simplifyFlyout.result.nothing')
+    if (rule.kind === 'degree') return i18n.t('simplifyFlyout.result.nothingByDegree', { count: value })
+    if (rule.kind === 'kcore') return i18n.t('simplifyFlyout.result.nothingByCore', { count: value })
+    return i18n.t('simplifyFlyout.result.nothingAt', { count: value })
 }
 
 /**
@@ -26,9 +26,9 @@ export class SimplifyFlyout extends Flyout {
 
     protected template(): string {
         return `
-            ${this.headerRow(groupNodes, 'Simplify')}
+            ${this.headerRow(groupNodes, this.i18n.t('simplifyFlyout.title'))}
             <div class="pvt-simplifyflyout-summary">
-                <div class="pvt-simplifyflyout-summary-row"><span>On the canvas</span><b data-summary="shown"></b></div>
+                <div class="pvt-simplifyflyout-summary-row"><span ${i18nText('simplifyFlyout.onCanvas')}></span><b data-summary="shown"></b></div>
                 <div class="pvt-simplifyflyout-bar"><i></i></div>
                 <div class="pvt-simplifyflyout-summary-row"><span data-summary="groups"></span><span data-summary="folded"></span></div>
             </div>
@@ -63,9 +63,9 @@ export class SimplifyFlyout extends Flyout {
             const el = this.query<HTMLElement>(`[data-summary="${key}"]`)
             if (el) el.textContent = text
         }
-        set('shown', `${shown} of ${plural(total, 'node', 'nodes')}`)
-        set('groups', plural(groups, 'group', 'groups'))
-        set('folded', `${folded} folded`)
+        set('shown', this.i18n.t('simplifyFlyout.shown', { shown, count: total }))
+        set('groups', this.i18n.t('simplifyFlyout.groups', { count: groups }))
+        set('folded', this.i18n.t('simplifyFlyout.folded', { count: folded }))
         const bar = this.query<HTMLElement>('.pvt-simplifyflyout-bar i')
         if (bar) bar.style.width = `${total ? Math.round(100 * shown / total) : 100}%`
     }
@@ -86,7 +86,7 @@ export class SimplifyFlyout extends Flyout {
         head.className = 'pvt-simplifyflyout-rule-head'
         const order = document.createElement('span')
         order.className = 'pvt-simplifyflyout-rule-order'
-        order.textContent = String(index + 1)
+        order.textContent = this.i18n.formatNumber(index + 1)
         const title = document.createElement('span')
         title.className = 'pvt-simplifyflyout-rule-title'
         title.textContent = rule.label
@@ -94,7 +94,7 @@ export class SimplifyFlyout extends Flyout {
         if (rule.custom) {
             const tag = document.createElement('span')
             tag.className = 'pvt-simplifyflyout-rule-app'
-            tag.textContent = 'app'
+            tag.textContent = this.i18n.t('simplifyFlyout.rule.app')
             head.appendChild(tag)
         }
         const toggle = document.createElement('button')
@@ -144,7 +144,7 @@ export class SimplifyFlyout extends Flyout {
         minus.type = 'button'
         minus.dataset.step = '-1'
         minus.textContent = '−'
-        minus.setAttribute('aria-label', 'Smaller')
+        minus.setAttribute('aria-label', this.i18n.t('simplifyFlyout.smaller.aria'))
         const input = document.createElement('input')
         input.type = 'text'
         input.inputMode = 'numeric'
@@ -153,7 +153,7 @@ export class SimplifyFlyout extends Flyout {
         plus.type = 'button'
         plus.dataset.step = '1'
         plus.textContent = '+'
-        plus.setAttribute('aria-label', 'Larger')
+        plus.setAttribute('aria-label', this.i18n.t('simplifyFlyout.larger.aria'))
         stepper.append(minus, input, plus)
         row.appendChild(stepper)
 
@@ -187,7 +187,11 @@ export class SimplifyFlyout extends Flyout {
         slider.setAttribute('aria-label', setting.label)
         const ends = document.createElement('span')
         ends.className = 'pvt-simplifyflyout-slider-ends'
-        ends.innerHTML = '<span>Fine</span><span>Coarse</span>'
+        const fine = document.createElement('span')
+        fine.textContent = this.i18n.t('simplifyFlyout.slider.fine')
+        const coarse = document.createElement('span')
+        coarse.textContent = this.i18n.t('simplifyFlyout.slider.coarse')
+        ends.append(fine, coarse)
         const track = document.createElement('span')
         track.className = 'pvt-simplifyflyout-slider'
         track.append(slider, ends)
@@ -218,10 +222,10 @@ export class SimplifyFlyout extends Flyout {
 
         const result = card.querySelector<HTMLElement>('.pvt-simplifyflyout-rule-result')
         if (!result) return
-        if (rule.failed) result.textContent = 'This rule failed'
+        if (rule.failed) result.textContent = this.i18n.t('simplifyFlyout.result.failed')
         else if (!rule.enabled) result.textContent = ''
-        else if (rule.computing) result.textContent = 'Grouping…'
-        else if (rule.groups === 0) result.textContent = nothingToFold(rule)
-        else result.textContent = `${plural(rule.groups, 'group', 'groups')} · ${plural(rule.folded, 'node', 'nodes')}`
+        else if (rule.computing) result.textContent = this.i18n.t('simplifyFlyout.result.grouping')
+        else if (rule.groups === 0) result.textContent = nothingToFold(this.i18n, rule)
+        else result.textContent = `${this.i18n.t('simplifyFlyout.groups', { count: rule.groups })} · ${this.i18n.t('count.nodes', { count: rule.folded })}`
     }
 }

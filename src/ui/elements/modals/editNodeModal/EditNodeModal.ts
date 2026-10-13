@@ -9,6 +9,7 @@ import { FormFactory, type FieldConfig, type FormValues } from '../../../../util
 import type { NodeEditSession } from '../../../../editing/NodeEditSession'
 import { edit } from '../../../icons'
 import { applyMessages, i18nText } from '../../../../i18n/dom'
+import type { I18n } from '../../../../i18n/I18n'
 
 
 export function createNodeEditModal(node: Node, session: NodeEditSession, uiManager: UIManager, customHandler?: ((session: NodeEditSession) => HTMLDivElement)): void {
@@ -32,7 +33,7 @@ export function createNodeEditModal(node: Node, session: NodeEditSession, uiMana
     if (customHandler) {
         body = customHandler(session)
     } else {
-        const result = createEditModalBody(node)
+        const result = createEditModalBody(node, uiManager.graph.i18n)
         body = result.body
         form = result.form
     
@@ -83,7 +84,7 @@ export function createNodeEditModal(node: Node, session: NodeEditSession, uiMana
     })
 }
 
-function createEditModalBody(node: Node): { body: HTMLDivElement, form: HTMLFormElement } {
+function createEditModalBody(node: Node, i18n: I18n): { body: HTMLDivElement, form: HTMLFormElement } {
     const body = document.createElement('div')
     body.classList.add('edit-node-modal-body')
 
@@ -99,7 +100,8 @@ function createEditModalBody(node: Node): { body: HTMLDivElement, form: HTMLForm
     })
 
     const editForm = FormFactory.createForm({
-        fields: fields
+        fields: fields,
+        i18n,
     })
 
     body.append(editForm)

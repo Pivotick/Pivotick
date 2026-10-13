@@ -14,10 +14,8 @@ import { createInspectModal } from '../modals/InspectNodeModal/InspectNodeModal'
 import type { UIManager } from '../../UIManager'
 import { UIComponent } from '../../UIComponent'
 import { collectDataAttributes, inferAttributeType } from '../../../utils/DataAttributes'
+import { applyMessages, i18nText } from '../../../i18n/dom'
 import './graphFilter.scss'
-
-
-const DEFAULT_FILTER_BUTTON_TEXT = 'Filter Graph'
 
 /** The field kinds you type into, and so the ones that commit on a pause, not per keystroke. */
 const TYPED_FIELD_TYPES: ReadonlySet<string> = new Set(['text', 'regex', 'numberRange'])
@@ -102,10 +100,10 @@ export class GraphFilter extends UIComponent {
 
         const resetButton = createButton({
             variant: 'secondary',
-            text: 'Reset',
+            text: this.i18n.t('filter.reset'),
             size: 'xs',
             svgIcon: funnelClear,
-            title: 'Clear all attribute filters',
+            title: this.i18n.t('filter.reset.title'),
             onClick: () => {
                 FormFactory.clear(filteringForm)
                 const filters: FormValues = {}
@@ -115,7 +113,8 @@ export class GraphFilter extends UIComponent {
 
         this.formOptions = this.buildFormFields()
         const filteringForm = FormFactory.createForm({
-            fields: this.formOptions
+            fields: this.formOptions,
+            i18n: this.i18n,
         })
         this.filteringForm = filteringForm
 
@@ -125,7 +124,7 @@ export class GraphFilter extends UIComponent {
         // generated form, which applies itself — see bindLiveApply.
         const attributeSection = createHtmlElement('div', { class: 'pvt-filter-section' })
         const attributeHead = createHtmlElement('div', { class: 'pvt-filter-section-head' }, [
-            createHtmlElement('span', { class: 'pvt-filter-section-label' }, ['Attributes']),
+            createHtmlElement('span', { class: 'pvt-filter-section-label' }, [this.i18n.t('filter.attributes')]),
             resetButton,
         ])
         attributeSection.appendChild(attributeHead)
@@ -133,20 +132,21 @@ export class GraphFilter extends UIComponent {
 
         this.manuallyFilteredContainer = createHtmlTemplate(`<div class="pvt-hidden-nodes-container">
                 <div class="pvt-filter-section-head">
-                    <span class="pvt-filter-section-label">Hidden nodes</span>
+                    <span class="pvt-filter-section-label" ${i18nText('filter.hiddenNodes')}></span>
                 </div>
                 <div class="pvt-hidden-nodes-container-list"></div>
             </div>`) as HTMLDivElement
+        applyMessages(this.manuallyFilteredContainer, this.i18n)
 
         const resetHiddenButton = createButton({
             variant: 'secondary',
-            text: 'Show all',
+            text: this.i18n.t('filter.hiddenNodes.showAll'),
             size: 'xs',
             svgIcon: show,
             onClick: () => {
                 this.uiManager.graph.queryEngine.clearNodeExclusions()
             },
-            title: 'Restore manually hidden nodes',
+            title: this.i18n.t('filter.hiddenNodes.showAll.title'),
         })
         this.manuallyFilteredContainer.querySelector('.pvt-filter-section-head')?.appendChild(resetHiddenButton)
 
@@ -217,7 +217,7 @@ export class GraphFilter extends UIComponent {
     private buildFromTableSection(): HTMLDivElement {
         return createHtmlElement('div', { class: 'pvt-filter-section pvt-filter-from-table hidden' }, [
             createHtmlElement('div', { class: 'pvt-filter-section-head' }, [
-                createHtmlElement('span', { class: 'pvt-filter-section-label' }, ['From the table']),
+                createHtmlElement('span', { class: 'pvt-filter-section-label' }, [this.i18n.t('filter.fromTable')]),
             ]),
             createHtmlElement('div', { class: 'pvt-filter-from-table-list' }),
         ]) as HTMLDivElement
@@ -233,15 +233,17 @@ export class GraphFilter extends UIComponent {
         // and each keeps its own filter.
         const scopes = [
             {
-                noun: 'node',
+                hidden: 'filter.fromTable.nodesHidden',
+                title: 'filter.fromTable.clearNodes.title',
                 count: countFilterValues(engine.getFilters()[TABLE_FILTER_KEY]?.value),
                 clear: () => engine.removeFilter(TABLE_FILTER_KEY),
-            },
+            } as const,
             {
-                noun: 'relation',
+                hidden: 'filter.fromTable.edgesHidden',
+                title: 'filter.fromTable.clearEdges.title',
                 count: countFilterValues(engine.getEdgeFilters()[TABLE_FILTER_KEY]?.value),
                 clear: () => engine.removeEdgeFilter(TABLE_FILTER_KEY),
-            },
+            } as const,
         ].filter((scope) => scope.count > 0)
 
         container.classList.toggle('hidden', scopes.length === 0)
@@ -249,15 +251,15 @@ export class GraphFilter extends UIComponent {
         for (const scope of scopes) {
             const clearButton = createButton({
                 variant: 'secondary',
-                text: 'Clear',
+                text: this.i18n.t('filter.fromTable.clear'),
                 size: 'sm',
                 svgIcon: show,
-                title: `Stop hiding the ${scope.noun}s the table's column filters leave out`,
+                title: this.i18n.t(scope.title),
                 onClick: scope.clear,
             })
             list.appendChild(createHtmlElement('div', { class: 'pvt-filter-from-table-row' }, [
                 createHtmlElement('span', { class: 'pvt-filter-from-table-count' },
-                    [`${scope.count} ${scope.noun}${scope.count > 1 ? 's' : ''} hidden`]),
+                    [this.i18n.t(scope.hidden, { count: scope.count })]),
                 clearButton,
             ]))
         }
@@ -311,10 +313,10 @@ export class GraphFilter extends UIComponent {
 
         const showAll = createButton({
             variant: 'secondary',
-            text: 'Show all',
+            text: this.i18n.t('filter.layers.showAll'),
             size: 'xs',
             svgIcon: show,
-            title: 'Show every relationship layer',
+            title: this.i18n.t('filter.layers.showAll.title'),
             onClick: () => {
                 for (const { facet } of facets) {
                     this.uiManager.graph.queryEngine.removeEdgeFilter(facet.key)
@@ -324,7 +326,7 @@ export class GraphFilter extends UIComponent {
 
         const section = createHtmlElement('div', { class: 'pvt-filter-section pvt-edge-layers' }, [
             createHtmlElement('div', { class: 'pvt-filter-section-head' }, [
-                createHtmlElement('span', { class: 'pvt-filter-section-label' }, ['Relationships']),
+                createHtmlElement('span', { class: 'pvt-filter-section-label' }, [this.i18n.t('filter.layers')]),
                 showAll,
             ]),
             ...lists,
@@ -347,7 +349,7 @@ export class GraphFilter extends UIComponent {
             createEdgeSwatchFor(this.uiManager.graph, sample),
             // A value is data, so it is shown as it is unless the facet named it.
             createHtmlElement('span', { class: 'pvt-edge-layer-label' }, [declared?.label ?? value]),
-            createHtmlElement('span', { class: 'pvt-edge-layer-count' }, [String(count)]),
+            createHtmlElement('span', { class: 'pvt-edge-layer-count' }, [this.i18n.formatNumber(count)]),
         ])
         row.addEventListener('click', () => this.toggleLayer(facet, value))
         this.layerRows.set(`${facet.key}|${value}`, row)
@@ -395,7 +397,7 @@ export class GraphFilter extends UIComponent {
 
             row.setAttribute('aria-pressed', String(on))
             row.classList.toggle('pvt-edge-layer-hidden', !on)
-            row.setAttribute('title', on ? `Hide ${value}` : `Show ${value}`)
+            row.setAttribute('title', this.i18n.t(on ? 'filter.layer.hide.title' : 'filter.layer.show.title', { layer: value }))
         }
     }
 
@@ -431,25 +433,27 @@ export class GraphFilter extends UIComponent {
         if (filterCount > 0) {
             const hiddenCount = this.uiManager.graph.queryEngine.getHiddenNodeCount()
             const status = createHtmlElement('span', { 'class': 'pvt-filter-status' }, [
-                createHtmlElement('span', { 'class': 'pvt-filter-count' }, [`${filterCount}`]),
-                createHtmlElement('span', { 'class': 'pvt-filter-word' }, [filterCount > 1 ? 'active filters' : 'active filter']),
+                createHtmlElement('span', { 'class': 'pvt-filter-count' }, [this.i18n.formatNumber(filterCount)]),
+                createHtmlElement('span', { 'class': 'pvt-filter-word' }, [this.i18n.t('filter.button.active', { count: filterCount })]),
             ])
             // Edges are counted apart from nodes — a layer hides relations and nothing
             // else, so one bare total would misreport the nodes. The nouns only appear
             // once edges are involved: a graph with no edge layers reads as it always did.
             const hiddenEdges = this.uiManager.graph.queryEngine.getHiddenEdgeCount()
             const hiddenText = hiddenEdges === 0
-                ? (hiddenCount > 0 ? `${hiddenCount} hidden` : undefined)
-                : [
-                    hiddenCount > 0 ? `${hiddenCount} ${hiddenCount > 1 ? 'nodes' : 'node'}` : undefined,
-                    `${hiddenEdges} ${hiddenEdges > 1 ? 'edges' : 'edge'}`,
-                ].filter((part) => part !== undefined).join(', ') + ' hidden'
+                ? (hiddenCount > 0 ? this.i18n.t('filter.button.hidden', { count: hiddenCount }) : undefined)
+                : hiddenCount > 0
+                    ? this.i18n.t('filter.button.hiddenNodesAndEdges', {
+                        nodes: this.i18n.t('count.nodes', { count: hiddenCount }),
+                        edges: this.i18n.t('count.edges', { count: hiddenEdges }),
+                    })
+                    : this.i18n.t('filter.button.hiddenEdges', { count: hiddenEdges })
             if (hiddenText !== undefined) {
                 status.appendChild(createHtmlElement('span', { 'class': 'pvt-filter-hidden' }, [hiddenText]))
             }
             filterButtonElement.appendChild(status)
         } else {
-            filterButtonElement.textContent = DEFAULT_FILTER_BUTTON_TEXT
+            filterButtonElement.textContent = this.i18n.t('topBar.filter')
         }
     }
 
@@ -466,9 +470,9 @@ export class GraphFilter extends UIComponent {
                 const nodeEdgesCount = node.getEdgesIn().length + node.getEdgesOut().length
                 const showNodeButton = createButton({
                     variant: 'secondary',
-                    text: 'Show node',
+                    text: this.i18n.t('filter.hiddenNode.show'),
                     size: 'sm',
-                    title: 'Restore manually hidden node',
+                    title: this.i18n.t('filter.hiddenNode.show.title'),
                     svgIcon: show,
                     onClick: () => {
                         this.uiManager.graph.queryEngine.includeNode(node)
@@ -480,9 +484,9 @@ export class GraphFilter extends UIComponent {
                         'class': 'subtext'
                     },
                     [
-                        createHtmlElement('span', { 'class': 'nodeinfo'}, [nodePropertyCount.toString(), createIcon({svgIcon :nodeProperty})]),
+                        createHtmlElement('span', { 'class': 'nodeinfo'}, [this.i18n.formatNumber(nodePropertyCount), createIcon({svgIcon :nodeProperty})]),
                         '·',
-                        createHtmlElement('span', { 'class': 'nodeinfo'}, [nodeEdgesCount.toString(), createIcon({svgIcon: graphEdgeIcon(24)})]),
+                        createHtmlElement('span', { 'class': 'nodeinfo'}, [this.i18n.formatNumber(nodeEdgesCount), createIcon({svgIcon: graphEdgeIcon(24)})]),
                     ]
                 )
 
@@ -492,7 +496,7 @@ export class GraphFilter extends UIComponent {
                         'class': 'hidden-node',
                         'role': 'button',
                         'tabindex': '0',
-                        'aria-label': `Inspect ${nodeName}`,
+                        'aria-label': this.i18n.t('filter.hiddenNode.inspect.aria', { node: nodeName }),
                     },
                     [
                         nodeName,
@@ -595,7 +599,7 @@ export class GraphFilter extends UIComponent {
                 matchMode,
                 valuesAreBoolean: true,
                 allowEmpty: true,
-                options: [{ label: 'true', value: 'true' }, { label: 'false', value: 'false' }],
+                options: this.booleanOptions(),
             }
         }
 
@@ -605,6 +609,14 @@ export class GraphFilter extends UIComponent {
             field.allowEmpty = true
         }
         return field
+    }
+
+    /** A boolean field's two choices, worded for the reader; the values stay `'true'` / `'false'`. */
+    private booleanOptions(): FieldOption[] {
+        return [
+            { label: this.i18n.t('filter.value.true'), value: 'true' },
+            { label: this.i18n.t('filter.value.false'), value: 'false' },
+        ]
     }
 
     /** Resolve a facet's option list, calling the consumer's function against the live graph. */
@@ -645,7 +657,9 @@ export class GraphFilter extends UIComponent {
             }
 
             if ((field.type === 'select' || field.type === 'multiselect') && inferred.options) {
-                field.options = inferred.options.map((value) => ({ label: String(value), value: String(value) }))
+                field.options = inferred.valuesAreBoolean
+                    ? this.booleanOptions()
+                    : inferred.options.map((value) => ({ label: String(value), value: String(value) }))
                 field.allowEmpty = true
             }
             return field
@@ -693,7 +707,7 @@ export class GraphFilter extends UIComponent {
             } catch {
                 valid = false
                 if (this.filteringForm) {
-                    FormFactory.setFieldError(this.filteringForm, option.key, 'Invalid pattern')
+                    FormFactory.setFieldError(this.filteringForm, option.key, this.i18n.t('filter.invalidPattern'))
                 }
             }
         }
