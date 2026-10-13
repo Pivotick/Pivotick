@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Negated filters
+
+- **`FilterFieldConfig.negate`** keeps what a filter would otherwise hide: a list reads *none
+  of*, a text field *doesn't contain*, a pattern *doesn't match*, a range *outside*. A node
+  with no value for the key is kept, so a filter and its negation split the graph exactly.
+  Works on node and edge filters, predicate facets and cluster contents. See
+  [Negation](./docs/ui-filter.md#negation).
+- The filter panel gives every field except true / false ones an **is / is not** switch on
+  its label row. A negated field is drawn red, its picks struck through.
+- A legend section that adopts a declared facet follows a negated filter, and keeps it
+  negated when clicked.
+
 ### Translating the UI
 
 - **`GraphOptions.i18n`** puts the text the library writes itself in the host's language:

@@ -164,6 +164,33 @@ matched a node tagged `not-malware`, and an array filter value never matched at
 all. Both now behave as described above.
 :::
 
+### Negation {#negation}
+
+`negate: true` keeps what the filter would otherwise hide. Each field in the panel has an
+**is / is not** switch on its label row that sets it; a field switched to *is not* is drawn
+red, its picks struck through.
+
+```ts
+// every type but domain, including types added later
+graph.queryEngine.setFilter('type', { value: ['domain'], negate: true })
+
+// nothing tagged malware
+graph.queryEngine.setFilter('tags', { value: ['malware'], negate: true })
+```
+
+It reads the other way round for every widget: a list is *none of*, a text field
+*doesn't contain* (with `'partial'`), a pattern *doesn't match*, a range *outside*. With
+`'all'` it is *not all of*. A `predicate` facet's answer is inverted.
+
+A node with **no value** for the key is kept, since it is not a domain either. So a filter
+and its negation always split the graph in two, each node on exactly one side. A value
+that narrows nothing (an empty list, a blank string, an open range, an unusable pattern)
+still narrows nothing.
+
+True / false fields have no switch: *is not true* is *is false*. Edge filters
+(`setEdgeFilter`) take `negate` too. A [legend](/ui-legend) section that shares a facet's
+key keeps a negated filter negated when you click it.
+
 ## Hiding unconnected nodes {#hide-disconnected}
 
 Filtering relations away leaves nodes behind. Switch an
