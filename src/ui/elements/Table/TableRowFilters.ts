@@ -1,4 +1,5 @@
 import type { TableColumn } from '../../../interfaces/GraphUI'
+import type { I18n } from '../../../i18n/I18n'
 
 /**
  * A column's row filter, in the shape its control produces.
@@ -63,7 +64,7 @@ export function rowFilterMatches(filter: RowFilter, value: unknown): boolean {
  * Read from **all** rows rather than the narrowed ones, or picking a value would empty
  * the very list you picked it from.
  */
-export function columnChoices(values: unknown[]): string[] {
+export function columnChoices(i18n: I18n, values: unknown[]): string[] {
     const choices = new Set<string>()
     for (const value of values) {
         if (value === null || value === undefined) continue
@@ -73,7 +74,7 @@ export function columnChoices(values: unknown[]): string[] {
         }
         if (choices.size > MAX_CHOICES) return []
     }
-    return [...choices].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    return [...choices].sort(i18n.collator({ numeric: true }).compare)
 }
 
 /**
@@ -107,24 +108,34 @@ function widgetFor(
  * graph, which is why the tooltip promises nothing about it either way.
  *
  * `onChange` receives `undefined` when the control is cleared back to matching everything.
+ * `labelOf` names a choice for the reader when its value is not what it should read as.
  */
 export function buildRowFilterControl(
+    i18n: I18n,
     column: FilterableColumn,
     current: RowFilter | undefined,
     choices: string[],
     onChange: (filter: RowFilter | undefined) => void,
+    labelOf?: (choice: string) => string,
 ): HTMLElement {
     const name = column.label ?? column.key
-    const explain = `Narrow the rows by ${name}`
+    const explain = i18n.t('table.filter.title', { column: name })
 
     switch (widgetFor(column, choices, current)) {
-        case 'range': return buildRangeControl(current, explain, onChange)
-        case 'choice': return buildChoiceControl(current, choices, explain, onChange)
-        default: return buildTextControl(current, explain, onChange)
+        case 'range': return buildRangeControl(i18n, current, explain, onChange)
+        case 'choice': return buildChoiceControl(i18n, current, choices, explain, onChange, labelOf ?? choiceLabel(i18n, column))
+        default: return buildTextControl(i18n, current, explain, onChange)
     }
 }
 
+/** A boolean column's values read as words; any other choice reads as itself. */
+function choiceLabel(i18n: I18n, column: FilterableColumn): (choice: string) => string {
+    if (column.type !== 'boolean') return (choice) => choice
+    return (choice) => choice === 'true' ? i18n.t('table.value.true') : choice === 'false' ? i18n.t('table.value.false') : choice
+}
+
 function buildTextControl(
+    i18n: I18n,
     current: RowFilter | undefined,
     explain: string,
     onChange: (filter: RowFilter | undefined) => void,
@@ -133,7 +144,7 @@ function buildTextControl(
     input.type = 'text'
     input.className = 'pvt-table-filter'
     input.dataset.role = 'text'
-    input.placeholder = 'Filter rows…'
+    input.placeholder = i18n.t('table.filter.placeholder')
     input.title = explain
     input.value = current?.kind === 'text' ? current.needle : ''
     input.addEventListener('input', () => {
@@ -143,10 +154,12 @@ function buildTextControl(
 }
 
 function buildChoiceControl(
+    i18n: I18n,
     current: RowFilter | undefined,
     choices: string[],
     explain: string,
     onChange: (filter: RowFilter | undefined) => void,
+    labelOf: (choice: string) => string,
 ): HTMLElement {
     // Wrapped, because the chevron is drawn by the wrapper's `::after`: a `<select>`
     // cannot carry a pseudo-element, and the UA's own arrow is not dependable — a host
@@ -161,13 +174,13 @@ function buildChoiceControl(
 
     const any = document.createElement('option')
     any.value = ''
-    any.textContent = 'All'
+    any.textContent = i18n.t('table.filter.all')
     select.appendChild(any)
 
     for (const choice of choices) {
         const option = document.createElement('option')
         option.value = choice
-        option.textContent = choice
+        option.textContent = labelOf(choice)
         select.appendChild(option)
     }
 
@@ -177,7 +190,7 @@ function buildChoiceControl(
     if (chosen !== '' && !choices.includes(chosen)) {
         const orphan = document.createElement('option')
         orphan.value = chosen
-        orphan.textContent = chosen
+        orphan.textContent = labelOf(chosen)
         select.appendChild(orphan)
     }
     select.value = chosen
@@ -190,6 +203,7 @@ function buildChoiceControl(
 }
 
 function buildRangeControl(
+    i18n: I18n,
     current: RowFilter | undefined,
     explain: string,
     onChange: (filter: RowFilter | undefined) => void,
@@ -208,8 +222,8 @@ function buildRangeControl(
         onChange(min === null && max === null ? undefined : { kind: 'range', min, max })
     }
 
-    const minInput = buildBound('min', 'Min', range.min, explain, emit)
-    const maxInput = buildBound('max', 'Max', range.max, explain, emit)
+    const minInput = buildBound('min', i18n.t('table.filter.min.placeholder'), range.min, explain, emit)
+    const maxInput = buildBound('max', i18n.t('table.filter.max.placeholder'), range.max, explain, emit)
     wrapper.append(minInput, maxInput)
     return wrapper
 }

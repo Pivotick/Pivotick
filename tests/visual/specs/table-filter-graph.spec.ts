@@ -299,4 +299,22 @@ test.describe('table: applying column filters to the graph', () => {
         await expect.poll(() => harness(page, 'visibleNodeIds')).toEqual(['group'])
         expect(await harness(page, 'subgraphVisibleNodeIds', 'group')).toEqual(['c1', 'c2', 'c3'])
     })
+
+    // ── Counts in the tooltips ───────────────────────────────────────────────
+
+    test('the push tooltips count a single hidden node in the singular', async ({ page }) => {
+        /** What the button's tooltip says a press would do. */
+        const buttonTitle = () => applyButton(page).getAttribute('title')
+        /** What the summary's tooltip says the push is hiding. */
+        const summaryTitle = () => page.locator('.pvt-table-summary').getAttribute('title')
+
+        await openDock(page, 'pair')
+        await filterIn(page, 'pvt:label', 'text').fill('source')
+        await expect(page.locator('.pvt-table-row')).toHaveCount(1)
+        await expect.poll(buttonTitle).toBe('Hide the 1 node the column filters leave out')
+
+        await applyButton(page).click()
+        await expect.poll(buttonTitle).toBe('Stop filtering the graph from this table — 1 node hidden')
+        await expect.poll(summaryTitle).toBe('1 node hidden on the canvas by this table\'s column filters')
+    })
 })

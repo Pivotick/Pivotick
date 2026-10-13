@@ -2,11 +2,12 @@ import type { Edge } from '../../../Edge'
 import type { Node } from '../../../Node'
 import type { TableColumn, TableSortDirection, TableTab } from '../../../interfaces/GraphUI'
 import type { UIManager } from '../../UIManager'
-import { LABEL_COLUMN_KEY, VISIBILITY_COLUMN_KEY, readCell, resolveColumns } from './TableColumns'
+import { LABEL_COLUMN_KEY, VISIBILITY_COLUMN_KEY, readCell, resolveColumns, visibilityLabel } from './TableColumns'
 import { buildRowFilterControl, columnChoices, isRowFilterActive, rowFilterMatches } from './TableRowFilters'
 import type { RowFilter } from './TableRowFilters'
 import { nestedOffered, revealNested } from './TableNested'
 import { arrowDown, arrowUp, dataTable } from '../../icons'
+import type { I18n } from '../../../i18n/I18n'
 
 type Element = Node | Edge
 
@@ -133,6 +134,10 @@ export class TableGrid {
         this.source = source
         this.nestedOffered = !source && tab === 'nodes' && nestedOffered(uiManager)
         this.includeNested = this.nestedOffered
+    }
+
+    private get i18n(): I18n {
+        return this.uiManager.graph.i18n
     }
 
     /* ---------- nested rows ---------- */
@@ -302,10 +307,11 @@ export class TableGrid {
         if (!sort) return rows
 
         const direction = sort.direction === 'asc' ? 1 : -1
+        const collator = this.i18n.collator({ numeric: true, sensitivity: 'base' })
         // Sorting the array, never the DOM — the rendered rows are a projection of it.
         // Nested rows sort with the rest: they are peers, which is the whole reason they
         // are listed flat rather than under their cluster.
-        return [...rows].sort((a, b) => direction * compareValues(a.values.get(sort.key), b.values.get(sort.key)))
+        return [...rows].sort((a, b) => direction * compareValues(a.values.get(sort.key), b.values.get(sort.key), collator))
     }
 
     /* ---------- rendering ---------- */
@@ -388,7 +394,7 @@ export class TableGrid {
                 label.classList.add('pvt-table-sorted')
                 label.insertAdjacentHTML('beforeend', `<span class="pvt-table-sort-arrow">${this.sort!.direction === 'asc' ? arrowUp : arrowDown}</span>`)
             }
-            label.title = `Sort by ${column.label ?? column.key}`
+            label.title = this.i18n.t('table.column.sort.title', { column: column.label ?? column.key })
             label.addEventListener('click', () => this.toggleSort(column.key))
         } else {
             label.disabled = true
@@ -407,13 +413,16 @@ export class TableGrid {
      * user is typing into would take the focus and the caret with it.
      */
     private buildFilterControl(column: TableColumn<Element>): HTMLElement {
-        const choices = columnChoices(this.rows.map((row) => row.values.get(column.key)))
-        return buildRowFilterControl(column, this.rowFilters.get(column.key), choices, (filter) => {
+        const i18n = this.i18n
+        const choices = columnChoices(i18n, this.rows.map((row) => row.values.get(column.key)))
+        // The Visibility dropdown filters on the state and names it as the cell does.
+        const labelOf = column.key === VISIBILITY_COLUMN_KEY ? (choice: string) => visibilityLabel(i18n, choice) : undefined
+        return buildRowFilterControl(i18n, column, this.rowFilters.get(column.key), choices, (filter) => {
             if (filter) this.rowFilters.set(column.key, filter)
             else this.rowFilters.delete(column.key)
             this.renderRows()
             this.rowFiltersChanged?.()
-        })
+        }, labelOf)
     }
 
     private buildRows(): HTMLElement {
@@ -522,6 +531,7 @@ export class TableGrid {
             menu.openFor(event, row.element)
         })
 
+        const i18n = this.i18n
         for (const column of columns) {
             const cell = document.createElement('div')
             cell.className = 'pvt-table-td'
@@ -536,7 +546,7 @@ export class TableGrid {
                 cell.dataset.visibility = value
                 const chip = document.createElement('span')
                 chip.className = 'pvt-table-visibility'
-                chip.textContent = value
+                chip.textContent = visibilityLabel(i18n, value)
                 cell.appendChild(chip)
                 element.appendChild(cell)
                 continue
@@ -544,7 +554,7 @@ export class TableGrid {
 
             const formatted = column.format?.(value, row.element as never)
             if (formatted instanceof HTMLElement) cell.appendChild(formatted)
-            else cell.textContent = formatted ?? formatValue(value)
+            else cell.textContent = formatted ?? formatValue(i18n, value)
             element.appendChild(cell)
         }
         const action = this.source?.rowAction
@@ -588,9 +598,9 @@ export class TableGrid {
         empty.innerHTML = `<span class="pvt-table-empty-icon">${dataTable}</span>`
         const text = document.createElement('span')
         text.textContent = narrowed
-            ? 'No rows match the column filters.'
-            : this.scope ? `${this.scope.label()}: none left.`
-                : this.tab === 'edges' ? 'This graph has no edges.' : 'This graph has no nodes.'
+            ? this.i18n.t('table.empty.filtered')
+            : this.scope ? this.i18n.t('table.empty.scope', { scope: this.scope.label() })
+                : this.i18n.t(this.tab === 'edges' ? 'table.empty.edges' : 'table.empty.nodes')
         empty.appendChild(text)
         return empty
     }
@@ -721,13 +731,16 @@ export class TableGrid {
      * this table's doing; the exact sentence is in the summary's own title.
      */
     public describe(): string {
-        const noun = this.tab === 'edges' ? 'edge' : 'node'
+        const i18n = this.i18n
+        const edges = this.tab === 'edges'
         const total = this.rows.length
         const shown = this.visible.length
         const counted = shown === total
-            ? `${total} ${noun}${total === 1 ? '' : 's'}`
-            : `${shown} of ${total} ${noun}${total === 1 ? '' : 's'}`
-        return this.graphFilterCount > 0 ? `${counted} · ${this.graphFilterCount} hidden` : counted
+            ? i18n.t(edges ? 'count.edges' : 'count.nodes', { count: total })
+            : i18n.t(edges ? 'table.summary.someEdges' : 'table.summary.someNodes', { shown, count: total })
+        return this.graphFilterCount > 0
+            ? `${counted} · ${i18n.t('table.summary.hidden', { count: this.graphFilterCount })}`
+            : counted
     }
 
     public setSummaryTarget(element: HTMLSpanElement | undefined): void {
@@ -739,10 +752,8 @@ export class TableGrid {
         this.summary.textContent = this.describe()
         // "· 28 hidden" has to be short enough for the bar, so the sentence that says
         // whose doing it is goes here rather than into the count.
-        const noun = this.tab === 'edges' ? 'relations' : 'nodes'
-        this.summary.title = this.graphFilterCount > 0
-            ? `${this.graphFilterCount} ${noun} hidden on the canvas by this table's column filters`
-            : ''
+        const key = this.tab === 'edges' ? 'table.summary.hiddenEdges.title' : 'table.summary.hiddenNodes.title'
+        this.summary.title = this.graphFilterCount > 0 ? this.i18n.t(key, { count: this.graphFilterCount }) : ''
     }
 }
 
@@ -765,7 +776,7 @@ function safeRead(column: TableColumn<Element>, element: Element): unknown {
 }
 
 /** Numbers compare numerically, everything else as a locale-aware string. Blanks sort last. */
-function compareValues(a: unknown, b: unknown): number {
+function compareValues(a: unknown, b: unknown, collator: Intl.Collator): number {
     const aBlank = a === null || a === undefined || a === ''
     const bBlank = b === null || b === undefined || b === ''
     if (aBlank && bBlank) return 0
@@ -774,12 +785,13 @@ function compareValues(a: unknown, b: unknown): number {
 
     if (typeof a === 'number' && typeof b === 'number') return a - b
     if (typeof a === 'boolean' && typeof b === 'boolean') return Number(a) - Number(b)
-    return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' })
+    return collator.compare(String(a), String(b))
 }
 
 /** Cell text for a raw value. Arrays read as a list rather than as `[object Object]`. */
-function formatValue(value: unknown): string {
+function formatValue(i18n: I18n, value: unknown): string {
     if (value === null || value === undefined) return ''
+    if (typeof value === 'boolean') return i18n.t(value ? 'table.value.true' : 'table.value.false')
     if (Array.isArray(value)) return value.map((entry) => String(entry)).join(', ')
     if (typeof value === 'object') return JSON.stringify(value)
     return String(value)

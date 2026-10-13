@@ -51,7 +51,7 @@ export class TableGraphFilter {
         const engine = this.uiManager.graph.queryEngine
         const shared = {
             key: TABLE_FILTER_KEY,
-            label: 'From the table',
+            label: this.uiManager.graph.i18n.t('table.graphFilter.label'),
             type: 'multiselect' as const,
             matchMode: 'exact' as const,
         }

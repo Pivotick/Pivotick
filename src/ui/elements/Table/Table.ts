@@ -90,7 +90,7 @@ export class Table extends UIComponent {
         // registered later, since plugins install after the UI is built — lands after it.
         this.disposeTab = this.uiManager.addDockTab({
             id: DOCK_TAB_ID,
-            label: 'Table',
+            label: this.i18n.t('table.tab'),
             render: () => this.renderBody(),
             toolbar: () => this.buildToolbar(),
             onActivate: (handle) => this.activatePane(handle),
@@ -281,7 +281,7 @@ export class Table extends UIComponent {
             button.type = 'button'
             button.className = 'pvt-dock-view'
             button.dataset.tab = tab
-            button.textContent = tab === 'edges' ? 'Edges' : 'Nodes'
+            button.textContent = this.i18n.t(tab === 'edges' ? 'table.view.edges' : 'table.view.nodes')
             button.classList.toggle('active', tab === this.tab)
             button.setAttribute('aria-pressed', String(tab === this.tab))
             // Direct, not tracked: rebuilt on every activation, so a tracked disposer
@@ -330,8 +330,8 @@ export class Table extends UIComponent {
         const selectAll = document.createElement('button')
         selectAll.type = 'button'
         selectAll.className = 'pvt-table-selectall'
-        selectAll.textContent = 'Select all'
-        selectAll.title = 'Select every row currently listed'
+        selectAll.textContent = this.i18n.t('table.selectAll')
+        selectAll.title = this.i18n.t('table.selectAll.title')
         selectAll.addEventListener('click', () => this.grid?.selectAllListed())
         items.push(selectAll)
 
@@ -354,7 +354,7 @@ export class Table extends UIComponent {
             button.className = 'pvt-table-export'
             button.dataset.format = format
             button.textContent = format.toUpperCase()
-            button.title = `Export the rows and columns currently shown as ${format.toUpperCase()}`
+            button.title = this.i18n.t('table.export.title', { format: format.toUpperCase() })
             button.addEventListener('click', () => this.exportAs(format))
             items.push(button)
         }
@@ -362,8 +362,9 @@ export class Table extends UIComponent {
         this.pickerButton = document.createElement('button')
         this.pickerButton.type = 'button'
         this.pickerButton.className = 'pvt-table-columns-button'
-        this.pickerButton.innerHTML = `${sliderTune}<span>Columns</span>`
-        this.pickerButton.title = 'Choose which columns to show'
+        this.pickerButton.innerHTML = sliderTune
+        this.pickerButton.appendChild(textSpan(this.i18n.t('table.columns')))
+        this.pickerButton.title = this.i18n.t('table.columns.title')
         this.pickerButton.addEventListener('click', () => this.togglePicker())
         items.push(this.pickerButton)
 
@@ -394,8 +395,8 @@ export class Table extends UIComponent {
         const clear = document.createElement('button')
         clear.type = 'button'
         clear.className = 'pvt-table-scope-clear'
-        clear.title = 'List every node again'
-        clear.setAttribute('aria-label', 'List every node again')
+        clear.title = this.i18n.t('table.scope.clear.title')
+        clear.setAttribute('aria-label', this.i18n.t('table.scope.clear.title'))
         clear.textContent = '×'
         clear.addEventListener('click', () => {
             this.gridFor('nodes').setScope(undefined)
@@ -440,14 +441,14 @@ export class Table extends UIComponent {
 
         const label = document.createElement('label')
         label.className = 'pvt-table-nested-toggle'
-        label.title = 'List the nodes inside clusters alongside the graph\'s own'
+        label.title = this.i18n.t('table.nested.title')
         const input = document.createElement('input')
         input.type = 'checkbox'
         input.checked = grid.getIncludeNested()
         input.addEventListener('change', () => grid.setIncludeNested(input.checked))
         label.appendChild(input)
         const text = document.createElement('span')
-        text.textContent = 'Nested nodes'
+        text.textContent = this.i18n.t('table.nested')
         label.appendChild(text)
         wrap.appendChild(label)
         return wrap
@@ -482,8 +483,8 @@ export class Table extends UIComponent {
         // download outright. Say so rather than leaving a button that does nothing.
         if (!started) {
             this.uiManager.graph.notifier?.warning(
-                'Export blocked',
-                'This page will not let the file download. Try the example outside its frame.',
+                this.i18n.t('table.export.blocked'),
+                this.i18n.t('table.export.blocked.message'),
             )
         }
     }
@@ -517,7 +518,7 @@ export class Table extends UIComponent {
         const pushed = this.graphFilter.pushed(this.tab)
         const target = grid.graphFilterIds()
         const clears = this.pressClears(pushed, target)
-        const noun = this.tab === 'edges' ? 'relations' : 'nodes'
+        const edges = this.tab === 'edges'
 
         button.hidden = !grid.hasFilterableColumns()
         grid.setGraphFilterCount(pushed?.length ?? 0)
@@ -529,16 +530,15 @@ export class Table extends UIComponent {
         const action = clears ? 'clear' : 'push'
         if (button.dataset.action !== action) {
             button.dataset.action = action
-            button.innerHTML = clears
-                ? `${funnelClear}<span>Clear</span>`
-                : `${funnel}<span>Apply to graph</span>`
+            button.innerHTML = clears ? funnelClear : funnel
+            button.appendChild(textSpan(this.i18n.t(clears ? 'table.apply.clear' : 'table.apply')))
         }
 
         button.title = clears
-            ? `Stop filtering the graph from this table — ${pushed?.length ?? 0} ${noun} hidden`
+            ? this.i18n.t(edges ? 'table.apply.clearEdges.title' : 'table.apply.clearNodes.title', { count: pushed?.length ?? 0 })
             : button.disabled
-                ? 'Narrow a column first, then apply it to the graph'
-                : `Hide the ${target.length} ${noun} the column filters leave out`
+                ? this.i18n.t('table.apply.disabled.title')
+                : this.i18n.t(edges ? 'table.apply.edges.title' : 'table.apply.nodes.title', { count: target.length })
     }
 
     /** Push the current column filters onto the graph, or clear a push already on it. */
@@ -681,4 +681,11 @@ export class Table extends UIComponent {
     public dockTabId(): string {
         return DOCK_TAB_ID
     }
+}
+
+/** A `<span>` holding `text`, beside a button's icon. */
+function textSpan(text: string): HTMLSpanElement {
+    const span = document.createElement('span')
+    span.textContent = text
+    return span
 }

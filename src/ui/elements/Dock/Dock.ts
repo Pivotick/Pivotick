@@ -29,17 +29,8 @@ const COLLAPSE_ROOM_RATIO = 2.1
 /** Chevron that flips to read as both "fold this away" and "bring it back". */
 const COLLAPSE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M2.5 7.5L6 4l3.5 3.5"/></svg>'
 
-/**
- * What the dock is constructed with: the public {@link DockOptions} it resolves out of
- * `UI.dock` / `UI.table`, plus the name it puts on its own controls.
- */
-export interface DockConfig extends DockOptions {
-    /**
-     * What the region is called on the controls it draws itself ("Resize the dock").
-     * @default 'dock'
-     */
-    label?: string,
-}
+/** What the dock is constructed with: the public {@link DockOptions} it resolves out of `UI.dock` / `UI.table`. */
+export type DockConfig = DockOptions
 
 /**
  * The bottom dock: a grid row under the canvas that other panes fill.
@@ -133,11 +124,6 @@ export class Dock extends UIComponent {
         this.collapsed = startFolded || options.collapsed === true
     }
 
-    /** What the region is called on the controls it draws itself. */
-    private get label(): string {
-        return this.options.label ?? 'dock'
-    }
-
     /* ---------- lifecycle ---------- */
 
     protected onMount(container?: HTMLElement) {
@@ -150,7 +136,7 @@ export class Dock extends UIComponent {
         this.divider.className = 'pvt-dock-divider'
         this.divider.setAttribute('role', 'separator')
         this.divider.setAttribute('aria-orientation', 'horizontal')
-        this.divider.setAttribute('aria-label', `Resize the ${this.label}`)
+        this.divider.setAttribute('aria-label', this.i18n.t('dock.resize.aria'))
         this.root.appendChild(this.divider)
 
         this.header = document.createElement('div')
@@ -579,7 +565,7 @@ export class Dock extends UIComponent {
         this.root?.classList.toggle('pvt-dock-collapsed', this.collapsed)
         this.root?.classList.toggle('pvt-dock-open', this.open)
         this.toggle?.setAttribute('aria-expanded', String(!this.collapsed))
-        this.toggle?.setAttribute('title', `${this.collapsed ? 'Expand' : 'Collapse'} the ${this.label}`)
+        this.toggle?.setAttribute('title', this.i18n.t(this.collapsed ? 'dock.expand.title' : 'dock.collapse.title'))
 
         // A region with nothing in it is not a region. The original gate said the dock
         // must not outlive its occupant; with a registry the occupants can come and go,

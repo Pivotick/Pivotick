@@ -8,6 +8,8 @@ import { edgeNameGetter, nodeNameGetter } from '../../../utils/GraphGetters'
 import type { I18n } from '../../../i18n/I18n'
 import { FormFactory } from '../../../utils/FormFactory'
 import { nestedOffered } from './TableNested'
+import { messagesEn } from '../../../i18n/en'
+import type { MessageKey } from '../../../interfaces/I18n'
 
 /**
  * Keys of the library's own columns.
@@ -92,17 +94,18 @@ const COUNT_COLUMN_WIDTH = 96
  *
  * `label` and the edge `source` / `target` columns are resolved against the graph when the
  * dock builds them, so they read the same names the rest of the UI shows. Give a column
- * your own `accessor` to take that over.
+ * your own `accessor` to take that over. Their headings are written in the graph's
+ * language (`GraphOptions.i18n`) unless you give one a `label` of your own.
  */
 export const tableColumns = {
     /** The element's display name, as the rest of the UI resolves it. */
-    label: { key: RESERVED.label, label: 'Label', type: 'text', sortable: true } as TableColumn,
+    label: { key: RESERVED.label, label: messagesEn['table.column.label'], type: 'text', sortable: true } as TableColumn,
     /** Total edges touching the node. */
-    degree: { key: RESERVED.degree, label: 'Degree', type: 'numberRange', align: 'right', accessor: (node: Node) => node.degree(), width: COUNT_COLUMN_WIDTH } as TableColumn,
+    degree: { key: RESERVED.degree, label: messagesEn['table.column.degree'], type: 'numberRange', align: 'right', accessor: (node: Node) => node.degree(), width: COUNT_COLUMN_WIDTH } as TableColumn,
     /** Edges pointing at the node. */
-    degreeIn: { key: RESERVED.degreeIn, label: 'In', type: 'numberRange', align: 'right', accessor: (node: Node) => node.getEdgesIn().length, width: COUNT_COLUMN_WIDTH } as TableColumn,
+    degreeIn: { key: RESERVED.degreeIn, label: messagesEn['table.column.degreeIn'], type: 'numberRange', align: 'right', accessor: (node: Node) => node.getEdgesIn().length, width: COUNT_COLUMN_WIDTH } as TableColumn,
     /** Edges leaving the node. */
-    degreeOut: { key: RESERVED.degreeOut, label: 'Out', type: 'numberRange', align: 'right', accessor: (node: Node) => node.getEdgesOut().length, width: COUNT_COLUMN_WIDTH } as TableColumn,
+    degreeOut: { key: RESERVED.degreeOut, label: messagesEn['table.column.degreeOut'], type: 'numberRange', align: 'right', accessor: (node: Node) => node.getEdgesOut().length, width: COUNT_COLUMN_WIDTH } as TableColumn,
     /**
      * Whether the element is on the canvas, and if not, why — for a node, `filtered` by
      * the filter panel or `excluded` by hand; for an edge, `filtered` when its layer is
@@ -112,9 +115,9 @@ export const tableColumns = {
      * Narrow and fixed-width: it leads the derived column set as a status gutter, so it
      * should not eat the room the name needs.
      */
-    visibility: { key: RESERVED.visibility, label: 'Visibility', type: 'select', sortable: true, width: 104 } as TableColumn,
+    visibility: { key: RESERVED.visibility, label: messagesEn['table.column.visibility'], type: 'select', sortable: true, width: 104 } as TableColumn,
     /** Whether the node is pinned in place. */
-    pinned: { key: RESERVED.pinned, label: 'Pinned', type: 'boolean', accessor: (node: Node) => typeof node.fx === 'number' && typeof node.fy === 'number' } as TableColumn,
+    pinned: { key: RESERVED.pinned, label: messagesEn['table.column.pinned'], type: 'boolean', accessor: (node: Node) => typeof node.fx === 'number' && typeof node.fy === 'number' } as TableColumn,
     /**
      * How many nodes a cluster holds directly — `0` for a leaf.
      *
@@ -125,19 +128,19 @@ export const tableColumns = {
      * Direct children, not the whole subtree, so it matches the structure a nested
      * cluster's own row then reports one level down.
      */
-    children: { key: RESERVED.children, label: 'Children', type: 'numberRange', align: 'right', accessor: (node: Node) => node.children.length, width: COUNT_COLUMN_WIDTH } as TableColumn,
+    children: { key: RESERVED.children, label: messagesEn['table.column.children'], type: 'numberRange', align: 'right', accessor: (node: Node) => node.children.length, width: COUNT_COLUMN_WIDTH } as TableColumn,
     /**
      * The clusters a nested node sits inside, outermost first — empty for a node of the
      * root graph. The `flat` nested mode's answer to "where is this row from", since flat
      * rows carry no structure of their own.
      */
-    cluster: { key: RESERVED.cluster, label: 'Cluster', type: 'text' } as TableColumn,
+    cluster: { key: RESERVED.cluster, label: messagesEn['table.column.cluster'], type: 'text' } as TableColumn,
     /** The group `graph.simplify` put a node in, by its label; empty for a node in none. */
-    group: { key: RESERVED.group, label: 'Group', type: 'text' } as TableColumn,
+    group: { key: RESERVED.group, label: messagesEn['table.column.group'], type: 'text' } as TableColumn,
     /** An edge's origin, by display name. */
-    source: { key: RESERVED.source, label: 'Source', type: 'text' } as TableColumn<Edge>,
+    source: { key: RESERVED.source, label: messagesEn['table.column.source'], type: 'text' } as TableColumn<Edge>,
     /** An edge's destination, by display name. */
-    target: { key: RESERVED.target, label: 'Target', type: 'text' } as TableColumn<Edge>,
+    target: { key: RESERVED.target, label: messagesEn['table.column.target'], type: 'text' } as TableColumn<Edge>,
 }
 
 /** Where a node stands relative to the canvas — the `visibility` column's reading. */
@@ -165,16 +168,44 @@ export function edgeVisibility(edge: Edge): TableVisibility {
     return grouped ? 'grouped' : 'visible'
 }
 
+/** The built-in columns' headings, by column key. */
+const RESERVED_LABELS = new Map<string, MessageKey>(
+    (Object.keys(RESERVED) as Array<keyof typeof RESERVED>).map((name): [string, MessageKey] => [RESERVED[name], `table.column.${name}`]),
+)
+
+/** What the Visibility column shows for each state; the cell keeps the state itself. */
+const VISIBILITY_LABELS = new Map<string, MessageKey>(
+    (['visible', 'filtered', 'excluded', 'endpoint', 'nested', 'grouped'] satisfies TableVisibility[])
+        .map((state): [string, MessageKey] => [state, `table.visibility.${state}`]),
+)
+
+/** A Visibility value as the reader sees it; a value the column does not know is shown as is. */
+export function visibilityLabel(i18n: I18n, value: string): string {
+    const key = VISIBILITY_LABELS.get(value)
+    return key ? i18n.t(key) : value
+}
+
 /**
- * Bind the accessors that need the graph or the UI's own naming options. A column that
- * brought its own `accessor` is left alone, so a consumer can always override.
+ * A built-in column still carrying its English heading takes the graph's own; a heading
+ * the host wrote is kept.
+ */
+function translateReservedLabel(column: TableColumn<Node | Edge>, i18n: I18n): TableColumn<Node | Edge> {
+    const key = RESERVED_LABELS.get(column.key)
+    return key && column.label === messagesEn[key] ? { ...column, label: i18n.t(key) } : column
+}
+
+/**
+ * Bind the accessors that need the graph or the UI's own naming options, and the
+ * built-in headings to the graph's language. A column that brought its own `accessor` is
+ * left alone, so a consumer can always override.
  */
 function bindReservedAccessors(columns: TableColumn<Node | Edge>[], uiManager: UIManager): TableColumn<Node | Edge>[] {
     const graph = uiManager.graph
     const mainHeader = uiManager.getOptions().mainHeader
     const i18n = graph.i18n
 
-    return columns.map((column) => {
+    return columns.map((declared) => {
+        const column = translateReservedLabel(declared, graph.i18n)
         if (column.accessor) return column
         switch (column.key) {
             case RESERVED.label:

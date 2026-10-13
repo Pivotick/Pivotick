@@ -1,11 +1,11 @@
 import type { RawEdge, RawNode } from '../../../interfaces/GraphOptions'
 import type { PivotCandidate, PivotCandidateEdge, PivotCandidateSet } from '../../../interfaces/Pivot'
 import type { PivotManager } from '../../../PivotManager'
+import type { I18n } from '../../../i18n/I18n'
 import { collectDataAttributes, inferAttributeType } from '../../../utils/DataAttributes'
 import { arrowDown, arrowUp } from '../../icons'
 import type { FilterableColumn, RowFilter } from '../Table/TableRowFilters'
 import { buildRowFilterControl, columnChoices, isRowFilterActive, rowFilterMatches } from '../Table/TableRowFilters'
-import type { I18n } from '../../../i18n/I18n'
 import './pivot.scss'
 
 /** Rows on one page. Paging rather than windowing: the pane's height is the dock's. */
@@ -761,7 +761,7 @@ export class TriagePane {
             cell.appendChild(button)
 
             const values = this.set.nodes.map(row => column.read(row))
-            cell.appendChild(buildRowFilterControl(column, this.filters.get(column.key), columnChoices(values), filter => {
+            cell.appendChild(buildRowFilterControl(this.deps.i18n, column, this.filters.get(column.key), columnChoices(this.deps.i18n, values), filter => {
                 if (filter) this.filters.set(column.key, filter)
                 else this.filters.delete(column.key)
                 this.page = 0
