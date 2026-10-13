@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+### Translating the UI
+
+- **`GraphOptions.i18n`** puts the text the library writes itself in the host's language:
+  753 messages covering the rail, menus, sidebar, table, pivot panel, history, toasts,
+  `title` tooltips and `aria-label`s. `messages` replaces text by key, and
+  `translate(key, params, fallback)` bridges an existing translation library; English fills
+  every gap. Per-feature options such as `UI.emptyState.render` still win. See
+  [Translating the UI](./docs/i18n.md).
+- Keys are dotted ids typed from the English catalogue, which is exported as `messagesEn`
+  (`Pivotick.messagesEn` in the browser builds) to start a translation from. A message is text
+  with `{name}` placeholders, an object of CLDR plural forms chosen with `Intl.PluralRules`, or
+  a function. New types: `I18nOptions`, `Messages`, `MessageKey`, `MessageValue`,
+  `MessageParams`, `PluralForms`.
+- **`locale`** also picks how counts are written, how lists are joined and how the table, the
+  neighbours list and the triage pane sort. When declared it is set as `lang` on the graph's
+  root and on the parts mounted outside it.
+- `graph.i18n` and a plugin's `ctx.i18n` expose `t`, `formatNumber`, `formatList`, `compare`
+  and `collator`. Each graph has its own language; cluster subgraphs and the neighbours graph
+  share their parent's. The language is fixed when the graph is built.
+
+Changes an English interface shows too:
+
+- **Plurals are right.** "1 result", "0 connections", "1 node hidden", "1 new candidate is
+  ready", and no more "1 nodes" in counts.
+- **Counts are written with `Intl.NumberFormat`**, so "1,234" in English everywhere, where some
+  counters printed "1234" and others the browser's own format.
+- `HistoryEntry.act` (`'hide' | 'show' | 'group' | 'ungroup' | 'rename'`) and
+  `SimplifyRuleSetting.id` (`'minSize' | 'threshold' | 'level'`) say what an entry or a setting
+  is without reading its label.
+- `Flyout.headerRow`, `sectionLabel` and `toggleRow` treat their label and description as
+  text: markup passed to them now shows as written. Rail and tool-panel labels are set as text
+  too.
+- The default `nodeHeaderMap.title(node)` returns `''` for a node with no label; the header
+  still reads "Could not resolve title", now in the graph's language.
+- `tableColumns` keeps English labels; a built-in column still carrying its default is shown
+  in the graph's language, and a label the host wrote is kept.
+
 ### Host actions in the top bar
 
 - **`UI.topBar.actions`** declares pills beside the built-in ones, in their style:

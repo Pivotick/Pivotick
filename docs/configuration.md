@@ -22,6 +22,7 @@ Pivotick supports a wide range of options to customize behavior, layout, renderi
 | `render`     | `GraphRendererOptions`           | `{}`    | Customize rendering options such as node/edge appearance                  |
 | `simulation` | `SimulationOptions`              | `{}`    | Options to control the physics simulation (forces, iterations, etc.).     |
 | `UI`         | `GraphUI`                        | `{}`    | UI-specific options such as sidebar, selection, tooltips, and controls.   |
+| `i18n`       | `I18nOptions`                    | `{}`    | The language of the library's own text. See [Translating the UI](./i18n). |
 
 
 #### Usage

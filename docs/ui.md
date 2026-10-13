@@ -14,6 +14,7 @@ Pivotick provides a flexible UI layer on top of your graph, allowing you to cont
 - Dock a [**legend**](./ui-legend) on the canvas — a key for your colours that doubles as a filter, and that appears by itself when your colours are explained by a declared node type.
 - Fill any of those surfaces [**asynchronously**](#async-content), from data you fetch on demand.
 - [**Turn off**](#turning-features-off) any feature your integration has no use for.
+- Put the library's own text in your users' language: see [**Translating the UI**](./i18n).
 
 ### UI Mode {#ui-mode}
 The `mode` option controls the overall behavior and interaction level of the graph UI.
