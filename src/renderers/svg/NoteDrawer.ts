@@ -114,7 +114,7 @@ export class NoteDrawer {
     /** Small toggle beside the colour pills: switches jewel ↔ terminal surface. */
     private createSurfaceToggle(container: HTMLDivElement, note: Note): HTMLButtonElement {
         const toggle = createButton({
-            title: 'Toggle terminal look',
+            title: this.graph.i18n.t('noteCard.surfaceToggle.title'),
             svgIcon: contrast,
             class: ['pvt-note-surface-toggle'],
             variant: 'outline-secondary',
@@ -147,7 +147,7 @@ export class NoteDrawer {
         div.appendChild(linkIcon)
 
         const searchBtn = createButton({
-            title: 'Search for a note',
+            title: this.graph.i18n.t('noteCard.link.search.title'),
             svgIcon: magnifyingGlass,
             class: ['pvt-node-search-button'],
             variant: 'outline-secondary',
@@ -162,7 +162,7 @@ export class NoteDrawer {
                 evt.stopPropagation()
                 const node = await pickNode(
                     this.graph.UIManager,
-                    'Select a node to link to this note'
+                    this.graph.i18n.t('noteCard.link.pickTitle')
                 )
                 if (!node) return
                 note.setAttachedElement({ type: 'node', 'id': ((node as unknown) as Node).id })
@@ -230,8 +230,7 @@ export class NoteDrawer {
             } else {
                 const unresolved = document.createElement('span')
                 unresolved.classList.add('pvt-node-reference', 'unresolved')
-                unresolved.textContent =
-                    `Missing node: ${attached.id}`
+                unresolved.textContent = this.graph.i18n.t('noteCard.link.missing', { id: attached.id })
                 linkContent.appendChild(unresolved)
             }
         } else {
@@ -240,7 +239,7 @@ export class NoteDrawer {
             empty.classList.add('pvt-note-link-placeholder')
 
             const text = document.createElement('span')
-            text.textContent = 'Link this note to a node'
+            text.textContent = this.graph.i18n.t('noteCard.link.empty')
 
             empty.appendChild(text)
 
@@ -312,7 +311,7 @@ export class NoteDrawer {
         })
 
         const editButton = createButton({
-            title: 'Edit the note',
+            title: this.graph.i18n.t('noteCard.edit.title'),
             svgIcon: edit,
             class: ['pvt-note-edit-button'],
             variant: 'outline-secondary',
@@ -326,7 +325,7 @@ export class NoteDrawer {
             }
         })
         const closeButton = createButton({
-            title: 'Remove the note',
+            title: this.graph.i18n.t('noteCard.remove.title'),
             svgIcon: trash,
             class: ['pvt-node-remove-button'],
             variant: 'outline-danger',
@@ -363,11 +362,11 @@ export class NoteDrawer {
         if (isEditing) {
             editButton.classList.add('pivotick-button-success')
             editButton.classList.remove('pivotick-button-outline-secondary')
-            editIconContainer.setAttribute('title', 'Edit the note')
+            editIconContainer.setAttribute('title', this.graph.i18n.t('noteCard.edit.title'))
         } else {
             editButton.classList.add('pivotick-button-outline-secondary')
             editButton.classList.remove('pivotick-button-success')
-            editIconContainer.setAttribute('title', 'Save changes')
+            editIconContainer.setAttribute('title', this.graph.i18n.t('noteCard.save.title'))
         }
 
         editIconContainer.appendChild(icon)

@@ -708,8 +708,8 @@ export class Simulation {
             this.disable()
             this.graph.UIManager.showNotification({
                 level: 'warning',
-                title: 'Physics engine running slow',
-                message: 'The physic has been disabled.'
+                title: this.graph.i18n.t('simulation.slow.title'),
+                message: this.graph.i18n.t('simulation.slow.message'),
             })
             // Physics was disabled behind the user's back — resync the run/pause button.
             this.graph.UIManager.physicsFlyout?.syncRunState()

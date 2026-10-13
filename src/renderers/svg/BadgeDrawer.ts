@@ -142,7 +142,7 @@ function perPivotBadges(node: Node, graph: Graph): NodeBadge[] {
             text: compactCount(count),
             // Self-contained, because the automatic `+n` badge stacks the hidden badges'
             // titles one per line — a fragment becomes gibberish up there.
-            title: `~${count.toLocaleString()} · ${definition.label}`,
+            title: graph.i18n.t('pivotBadge.title', { count, pivot: definition.label }),
             onClick: (_event, clicked) => graph.UIManager?.openPivotMode([clicked], pivotId),
         })
     }
@@ -165,8 +165,8 @@ function summaryBadge(node: Node, graph: Graph): NodeBadge[] {
 
     const count = declared && declared > 0 ? declared : applies
     const title = declared && declared > 0
-        ? `~${declared.toLocaleString()} across ${applies} pivot${applies === 1 ? '' : 's'}`
-        : `${applies} pivot${applies === 1 ? '' : 's'} appl${applies === 1 ? 'ies' : 'y'}`
+        ? graph.i18n.t('pivotBadge.summary.declared', { total: declared, count: applies })
+        : graph.i18n.t('pivotBadge.summary.applies', { count: applies })
 
     return [{
         text: compactCount(count),

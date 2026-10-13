@@ -1,6 +1,7 @@
 import type { Graph } from '../Graph'
 import type { Node } from '../Node'
 import type { GraphUIMode } from '../interfaces/GraphUI'
+import type { MessageKey } from '../interfaces/I18n'
 import type {
     GraphView, GroupInfo, ManualGroupRecord, SimplifyOptions, SimplifyRule, SimplifyRuleSetting, SimplifyRuleStatus,
 } from '../interfaces/Simplify'
@@ -24,21 +25,21 @@ const FALLBACK_COLOR = 'var(--pvt-node-color, #007acc)'
 type BuiltinKind = Exclude<SimplifyRule['kind'], 'custom'>
 
 /** What a built-in rule says about itself on its card, in the order they are offered. */
-const BUILTIN_TEXT: Record<BuiltinKind, { label: string, description: string }> = {
-    neighbours: { label: 'Same neighbours', description: 'Nodes of one type linked to exactly the same nodes.' },
-    chains: { label: 'Chains', description: 'Nodes leading chains of the same shape, folded level by level.' },
-    degree: { label: 'Few links', description: 'Nodes with fewer links than this fold into the nodes they hang from.' },
-    kcore: { label: 'Outside the core', description: 'Peels off nodes with fewer links than this, again and again, into the core.' },
-    communities: { label: 'Communities', description: 'Whole neighbourhoods into a few super-nodes.' },
-    landings: { label: 'Pivot landings', description: 'What a pivot brought in, one group per type.' },
-    manual: { label: 'By hand', description: 'Groups made from a selection.' },
+const BUILTIN_TEXT: Record<BuiltinKind, { label: MessageKey, description: MessageKey }> = {
+    neighbours: { label: 'simplify.builtin.neighbours.label', description: 'simplify.builtin.neighbours.description' },
+    chains: { label: 'simplify.builtin.chains.label', description: 'simplify.builtin.chains.description' },
+    degree: { label: 'simplify.builtin.degree.label', description: 'simplify.builtin.degree.description' },
+    kcore: { label: 'simplify.builtin.kcore.label', description: 'simplify.builtin.kcore.description' },
+    communities: { label: 'simplify.builtin.communities.label', description: 'simplify.builtin.communities.description' },
+    landings: { label: 'simplify.builtin.landings.label', description: 'simplify.builtin.landings.description' },
+    manual: { label: 'simplify.builtin.manual.label', description: 'simplify.builtin.manual.description' },
 }
 
 /** Offered in full mode when no rule is declared; Communities only when declared. */
 const OFFERED: BuiltinKind[] = ['neighbours', 'chains', 'degree', 'kcore']
 
 /** The rules that fold nodes below a threshold, and what their setting is called. */
-const THRESHOLD_LABEL: Partial<Record<BuiltinKind, string>> = { degree: 'Fewest links', kcore: 'Core strength' }
+const THRESHOLD_LABEL: Partial<Record<BuiltinKind, MessageKey>> = { degree: 'simplify.setting.fewestLinks', kcore: 'simplify.setting.coreStrength' }
 
 /** The communities found for one shape of the graph: each level's key per node id. */
 interface CommunityCache {
@@ -162,8 +163,8 @@ export class Simplification {
             return {
                 id: state.id,
                 kind: state.rule.kind,
-                label: builtin?.label ?? custom?.label ?? state.id,
-                description: builtin?.description ?? custom?.description ?? '',
+                label: builtin ? this.graph.i18n.t(builtin.label) : custom?.label ?? state.id,
+                description: builtin ? this.graph.i18n.t(builtin.description) : custom?.description ?? '',
                 enabled: state.enabled,
                 minSize: setting?.id === 'minSize' ? setting.value : undefined,
                 setting,
@@ -179,14 +180,14 @@ export class Simplification {
     /** A rule's one setting, if it has one. */
     private settingOf(state: RuleState): SimplifyRuleSetting | undefined {
         if (state.level !== undefined) {
-            return { id: 'level', label: 'Level', value: state.level, min: 1, max: COMMUNITY_RESOLUTIONS.length, control: 'slider' }
+            return { id: 'level', label: this.graph.i18n.t('simplify.setting.level'), value: state.level, min: 1, max: COMMUNITY_RESOLUTIONS.length, control: 'slider' }
         }
         if (state.threshold !== undefined) {
-            return { id: 'threshold', label: THRESHOLD_LABEL[state.rule.kind as BuiltinKind]!, value: state.threshold, min: MIN_THRESHOLD, max: MAX_THRESHOLD, control: 'stepper' }
+            return { id: 'threshold', label: this.graph.i18n.t(THRESHOLD_LABEL[state.rule.kind as BuiltinKind]!), value: state.threshold, min: MIN_THRESHOLD, max: MAX_THRESHOLD, control: 'stepper' }
         }
         if (state.rule.kind === 'manual') return undefined
         if (state.rule.kind === 'custom' && state.rule.minSize === undefined) return undefined
-        return { id: 'minSize', label: 'Smallest group', value: state.minSize, min: MIN_GROUP_SIZE, max: MAX_GROUP_SIZE, control: 'stepper' }
+        return { id: 'minSize', label: this.graph.i18n.t('simplify.setting.minSize'), value: state.minSize, min: MIN_GROUP_SIZE, max: MAX_GROUP_SIZE, control: 'stepper' }
     }
 
     /** Switch one rule on or off. Switching a failed rule back on tries it again. */
@@ -370,7 +371,7 @@ export class Simplification {
         this.manual.push(record)
         this.ensureRule('manual', true)
         this.regroup()
-        this.manualHistory?.(before, 'group', `Grouped “${this.recordName(record)}”`, ids)
+        this.manualHistory?.(before, 'group', this.graph.i18n.t('history.entry.grouped', { group: this.recordName(record) }), ids)
         return id
     }
 
@@ -382,7 +383,9 @@ export class Simplification {
         const before = this.getManualGroups()
         this.manual = this.manual.filter(record => !ids.has(record.id))
         this.regroup()
-        const label = removed.length === 1 ? `Ungrouped “${this.recordName(removed[0])}”` : `Ungrouped ${removed.length} groups`
+        const label = removed.length === 1
+            ? this.graph.i18n.t('history.entry.ungrouped', { group: this.recordName(removed[0]) })
+            : this.graph.i18n.t('history.entry.ungroupedMany', { count: removed.length })
         this.manualHistory?.(before, 'ungroup', label, removed.flatMap(record => record.members))
     }
 
@@ -396,7 +399,7 @@ export class Simplification {
         const before = this.getManualGroups()
         record.title = next
         this.regroup()
-        this.manualHistory?.(before, 'rename', `Renamed to “${this.recordName(record)}”`, record.members)
+        this.manualHistory?.(before, 'rename', this.graph.i18n.t('history.entry.renamed', { group: this.recordName(record) }), record.members)
     }
 
     /** Whether this group was made by hand. */

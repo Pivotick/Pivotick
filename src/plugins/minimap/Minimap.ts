@@ -339,7 +339,7 @@ export class Minimap extends UIComponent {
         }
         this.publishFootprint()
 
-        const label = this.collapsed ? 'Show the minimap' : 'Collapse the minimap'
+        const label = this.i18n.t(this.collapsed ? 'minimap.expand.title' : 'minimap.collapse.title')
         this.toggle.title = label
         this.toggle.setAttribute('aria-label', label)
         this.toggle.setAttribute('aria-expanded', String(!this.collapsed))

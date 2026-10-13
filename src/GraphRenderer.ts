@@ -169,15 +169,17 @@ export abstract class GraphRenderer {
         if (!this.progressBar || !this.timerLabel || !this.textLabel) return
 
         this.progressBar.style.width = `${progress * 100}%`
-        this.timerLabel.textContent = `Elapsed time: ${(elapsedTime / 1000).toFixed(1)} sec`
+        const i18n = this.graph.i18n
+        const seconds = i18n.formatNumber(elapsedTime / 1000, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+        this.timerLabel.textContent = i18n.t('renderer.progress.elapsed', { seconds })
         if (this.layoutProgressType === 'simulation') {
-            this.textLabel.textContent = 'Optimizing node positions...'
+            this.textLabel.textContent = i18n.t('renderer.progress.simulating')
         } else if (this.layoutProgressType === 'rendering') {
             this.progressBar.style.width = '100%'
-            this.textLabel.textContent = 'Rendering in progress'
+            this.textLabel.textContent = i18n.t('renderer.progress.rendering')
         } else if (this.layoutProgressType === 'done') {
             this.progressBar.style.width = '100%'
-            this.timerLabel.textContent = 'All done'
+            this.timerLabel.textContent = i18n.t('renderer.progress.done')
         }
         this.toggleLayoutProgressVisibility()
     }
@@ -222,11 +224,11 @@ export abstract class GraphRenderer {
 
         const textLabel = document.createElement('span')
         textLabel.classList.add('label')
-        textLabel.textContent = 'Optimizing node positions...'
+        textLabel.textContent = this.graph.i18n.t('renderer.progress.simulating')
 
         const timerLabel = document.createElement('span')
         timerLabel.classList.add('label')
-        timerLabel.textContent = 'Elapsed time: 0 sec'
+        timerLabel.textContent = this.graph.i18n.t('renderer.progress.elapsed', { seconds: 0 })
 
         track.appendChild(progressFill)
         bg.appendChild(track)

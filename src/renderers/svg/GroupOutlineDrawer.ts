@@ -96,7 +96,7 @@ export class GroupOutlineDrawer {
 
         const label = document.createElement('span')
         label.className = 'pvt-group-chip-label'
-        label.title = `${this.graph.simplify.ruleLabel(group.info.rule)} · drag to move the group`
+        label.title = `${this.graph.simplify.ruleLabel(group.info.rule)} · ${this.graph.i18n.t('groupOutline.drag.title')}`
         const custom = this.graph.getOptions().render?.groupOutline?.(group.info)
         if (custom instanceof HTMLElement) label.append(custom)
         else label.textContent = typeof custom === 'string' && custom !== '' ? custom : this.graph.simplify.labelOf(group.info)
@@ -108,8 +108,8 @@ export class GroupOutlineDrawer {
         const close = document.createElement('button')
         close.type = 'button'
         close.className = 'pvt-group-chip-close'
-        close.title = 'Fold back into the group'
-        close.setAttribute('aria-label', 'Fold back into the group')
+        close.title = this.graph.i18n.t('groupOutline.close.title')
+        close.setAttribute('aria-label', this.graph.i18n.t('groupOutline.close.title'))
         close.textContent = '×'
         close.addEventListener('click', (event) => {
             event.stopPropagation()

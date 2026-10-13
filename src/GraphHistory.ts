@@ -13,6 +13,7 @@ import type { ManualGroupRecord } from './interfaces/Simplify'
 import type { Node } from './Node'
 import type { GroupNode } from './Simplification/GroupNode'
 import { generateSafeDomId } from './utils/ElementCreation'
+import type { I18n } from './i18n/I18n'
 
 /** An entry with the payload that makes it reversible. The payload never leaves this file. */
 interface HistoryRecord extends HistoryEntry {
@@ -260,7 +261,7 @@ export class GraphHistory implements GraphHistoryLike {
             kind: 'delete',
             nodeIds: nodes.map(node => node.id),
             edgeIds: edges.map(edge => edge.id),
-            label: deleteLabel(nodes.length, edges.length),
+            label: deleteLabel(this.graph.i18n, nodes.length, edges.length),
             sealed: persisted,
             persisted,
             at: Date.now(),
@@ -281,7 +282,7 @@ export class GraphHistory implements GraphHistoryLike {
             if (!this.pending.nodeIds.includes(nodeId)) this.pending.nodeIds.push(nodeId)
             return
         }
-        this.push(visibilityRecord(hidden, [nodeId]))
+        this.push(visibilityRecord(this.graph.i18n, hidden, [nodeId]))
     }
 
     /**
@@ -303,7 +304,7 @@ export class GraphHistory implements GraphHistoryLike {
             kind: 'create',
             nodeIds: node ? [node.id] : [],
             edgeIds: edge ? [edge.id] : [],
-            label: createLabel(node, edge),
+            label: createLabel(this.graph.i18n, node, edge),
             sealed: false,
             persisted,
             at: Date.now(),
@@ -632,9 +633,10 @@ export class GraphHistory implements GraphHistoryLike {
     }
 
     private removalLabel(source: string): string {
-        if (source === SEED_SOURCE) return 'Removed the loaded data'
-        if (source === MANUAL_SOURCE) return 'Removed hand-drawn work'
-        return `Removed “${this.graph.pivots.get(source)?.label ?? source}”`
+        const i18n = this.graph.i18n
+        if (source === SEED_SOURCE) return i18n.t('history.entry.removedSeed')
+        if (source === MANUAL_SOURCE) return i18n.t('history.entry.removedManual')
+        return i18n.t('history.entry.removedSource', { source: this.graph.pivots.get(source)?.label ?? source })
     }
 
     private push(record: HistoryRecord): void {
@@ -650,7 +652,7 @@ export class GraphHistory implements GraphHistoryLike {
     private flush(): void {
         const pending = this.pending
         this.pending = undefined
-        if (pending?.nodeIds.length) this.push(visibilityRecord(pending.hidden, pending.nodeIds))
+        if (pending?.nodeIds.length) this.push(visibilityRecord(this.graph.i18n, pending.hidden, pending.nodeIds))
     }
 
     /** Where an entry sits, within `[from, to)` of the timeline. */
@@ -699,13 +701,13 @@ function placementOf(node?: Node): Placement | undefined {
     return { x: node.x, y: node.y, radius: node.getCircleRadius(), fx: node.fx, fy: node.fy }
 }
 
-function visibilityRecord(hidden: boolean, nodeIds: string[]): HistoryRecord {
+function visibilityRecord(i18n: I18n, hidden: boolean, nodeIds: string[]): HistoryRecord {
     return {
         id: newId(),
         kind: 'visibility',
         nodeIds: [...nodeIds],
         edgeIds: [],
-        label: `${hidden ? 'Hid' : 'Showed'} ${count(nodeIds.length, 'node')}`,
+        label: i18n.t(hidden ? 'history.entry.hid' : 'history.entry.showed', { count: nodeIds.length }),
         act: hidden ? 'hide' : 'show',
         sealed: false,
         persisted: false,
@@ -714,21 +716,20 @@ function visibilityRecord(hidden: boolean, nodeIds: string[]): HistoryRecord {
     }
 }
 
-function deleteLabel(nodes: number, edges: number): string {
-    const parts: string[] = []
-    if (nodes) parts.push(count(nodes, 'node'))
-    if (edges) parts.push(count(edges, 'edge'))
-    return `Deleted ${parts.join(', ')}`
+/** A delete never records nothing, so at least one of the two counts is non-zero. */
+function deleteLabel(i18n: I18n, nodes: number, edges: number): string {
+    if (!edges) return i18n.t('history.entry.deletedNodes', { count: nodes })
+    if (!nodes) return i18n.t('history.entry.deletedEdges', { count: edges })
+    return i18n.t('history.entry.deletedBoth', {
+        nodes: i18n.t('count.nodes', { count: nodes }),
+        edges: i18n.t('count.edges', { count: edges }),
+    })
 }
 
-function createLabel(node?: Node, edge?: Edge): string {
+function createLabel(i18n: I18n, node?: Node, edge?: Edge): string {
     const label = node?.getData()?.label ?? edge?.getData()?.label
-    if (typeof label === 'string' && label.trim()) return `Created “${label.trim()}”`
-    return node ? 'Created a node' : 'Created an edge'
-}
-
-function count(n: number, noun: string): string {
-    return `${n.toLocaleString()} ${n === 1 ? noun : `${noun}s`}`
+    if (typeof label === 'string' && label.trim()) return i18n.t('history.entry.created', { label: label.trim() })
+    return i18n.t(node ? 'history.entry.createdNode' : 'history.entry.createdEdge')
 }
 
 function dedupe<T extends { id: string }>(elements: T[]): T[] {

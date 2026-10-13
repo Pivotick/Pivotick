@@ -15,7 +15,7 @@ export function resolveReferences(container: HTMLElement, graph: Graph): void {
             const node: Node | undefined = resolveNodeByName(nodeName, graph.getMutableNodes(), graph.UIManager.getOptions().mainHeader, graph.i18n)
             if (!node) {
                 ref.classList.add('unresolved')
-                ref.title = 'Could not resolve node'
+                ref.title = graph.i18n.t('noteCard.reference.unresolved.title')
                 return
             }
 

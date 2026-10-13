@@ -27,8 +27,10 @@ interface ResolvedDecision {
     persisted?: boolean
 }
 
-/** What a node with no consumer-supplied data carries, so it is at least addressable. */
-const DEFAULT_NODE_DATA: NodeData = { label: 'New node' }
+/** What a node with no consumer-supplied data carries, so it is at least addressable, in the graph's language. */
+function defaultNodeData(graph: Graph): NodeData {
+    return { label: graph.i18n.t('node.defaultLabel') }
+}
 
 /**
  * Run a user-initiated node create: ask
@@ -54,7 +56,7 @@ export async function runNodeCreateRequest(graph: Graph, request: NodeCreateRequ
         return null
     }
 
-    const node = new Node(id, decision.data ?? { ...DEFAULT_NODE_DATA }, decision.style ?? {}, id)
+    const node = new Node(id, decision.data ?? defaultNodeData(graph), decision.style ?? {}, id)
     node.x = request.position.x
     node.y = request.position.y
 

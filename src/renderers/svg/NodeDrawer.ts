@@ -1223,7 +1223,7 @@ export class NodeDrawer {
                 .attr('transform', `translate(${anchor.x}, ${anchor.y})`)
             svgG
                 .append('title')
-                .text(!node.expanded ? 'Expand node' : 'Collapse nodes')
+                .text(this.graph.i18n.t(!node.expanded ? 'node.expand.title' : 'node.collapse.title'))
             svgG
                 .append('circle')
                 .attr('r', iconRadius)
