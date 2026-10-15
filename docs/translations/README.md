@@ -8,7 +8,8 @@ redirect or external translation service is used by the built site.
 
 `source.json` maps stable message IDs to English prose and the pages using it. Each
 language JSON maps those IDs to translated prose. `⟦n⟧` placeholders protect inline code,
-links, markup and API names. Keep every placeholder exactly once. Code fences, executable
+links, markup and API names. Keep every placeholder exactly once. Validation also checks
+Markdown links and image targets. Code fences, executable
 Vue scripts, signatures and example data remain in their original language.
 
 The initial prose translations were prepared with Google Translate, with the project

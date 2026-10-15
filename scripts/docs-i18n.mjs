@@ -40,6 +40,16 @@ export function restore(translated, values) {
     return result
 }
 
+export function validateTranslation(source, translated) {
+    if (/[<>`]|\{\{/.test(translated)) throw new Error('Raw markup in translated prose')
+    const output = restore(translated, protect(source).values)
+    const links = text => markdown.parse(text, {}).flatMap(token => token.children ?? [])
+        .filter(token => token.type === 'link_open' || token.type === 'image')
+        .map(token => [token.type, token.attrGet('href') ?? token.attrGet('src')]).sort()
+    if (JSON.stringify(links(source)) !== JSON.stringify(links(output))) throw new Error('Changed Markdown links or images')
+    return output
+}
+
 const prose = text => /[A-Za-z]{2}/.test(protect(text).template.replace(/⟦\d+⟧/g, ''))
 const structuralHeading = /^(?:(?:(?:Abstract )?(?:Class|Interface)|Type Alias|Variable|Namespace|Enumeration|Function): |(?:Constructors?|Methods?|Properties|Accessors|Parameters|Returns|Throws|Examples?|Remarks|See|Default(?: Value)?|Type Parameters|Extends|Extended by|Implements|Implementation of|Inherited from|Index|References|Modules|Namespaces|Classes|Interfaces|Type Aliases|Variables|Functions|Enumeration Members|Type Declaration|Call Signature|Index Signature|Get Signature|Set Signature|Main Options|UI Options|Other)$)/
 
@@ -242,8 +252,8 @@ export async function main(command) {
         const catalogue = JSON.parse(await fs.readFile(path.join(docs, `translations/${language}.json`), 'utf8'))
         for (const [key, { source }] of Object.entries(units)) {
             if (typeof catalogue[key] !== 'string' || !catalogue[key].trim()) throw new Error(`${language}: missing translation ${key}`)
-            if (/[<>`]|\{\{/.test(catalogue[key])) throw new Error(`${language}: raw markup in translated prose ${key}`)
-            restore(catalogue[key], protect(source).values)
+            try { validateTranslation(source, catalogue[key]) }
+            catch (error) { throw new Error(`${language}: ${key}: ${error.message}`) }
         }
         translated[language] = catalogue
     }

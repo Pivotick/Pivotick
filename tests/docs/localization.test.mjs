@@ -5,7 +5,7 @@ import path from 'node:path'
 import { buildSync } from 'esbuild'
 import MarkdownIt from 'markdown-it'
 import { resolveConfig } from 'vitepress'
-import { docs, extract, sources, headingId, keyFor, languages, protect, restore, transformMarkdown, rebaseAssets } from '../../scripts/docs-i18n.mjs'
+import { docs, extract, sources, headingId, keyFor, languages, protect, restore, validateTranslation, transformMarkdown, rebaseAssets } from '../../scripts/docs-i18n.mjs'
 
 const compiled = buildSync({ entryPoints: [path.join(docs, '.vitepress/site-i18n.ts')], bundle: true, write: false, format: 'esm' })
 const { localizedLink, siteText, searchTerms } = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`)
@@ -17,6 +17,7 @@ test('translation markers preserve code, links, HTML, interpolation and API name
     assert.equal(restore(template, values), original)
     assert.throws(() => restore(template.replace('⟦0⟧', ''), values), /Missing/)
     assert.throws(() => restore(template + '⟦0⟧', values), /Invalid/)
+    assert.throws(() => validateTranslation('[Guide](/guide)', '⟦1⟧Guide⟦0⟧'), /Changed Markdown links/)
 })
 
 test('code fences, source inclusions and Vue scripts do not become prose', () => {
@@ -103,6 +104,9 @@ test('every translated page preserves executable components, scripts and fenced 
     const code = text => parser.parse(text, {}).filter(token => token.type === 'fence').map(token => token.content)
     const inlineCode = text => parser.parse(text, {}).flatMap(token => token.children ?? []).filter(token => token.type === 'code_inline').map(token => token.content).sort()
     const htmlCode = text => (text.match(/<code\b[^>]*>[\s\S]*?<\/code>/g) ?? []).sort()
+    const links = text => parser.parse(text, {}).flatMap(token => token.children ?? [])
+        .filter(token => token.type === 'link_open' || token.type === 'image')
+        .map(token => [token.type, token.attrGet('href') ?? token.attrGet('src')]).sort()
     const scripts = text => text.match(/<(?:script|style)\b[\s\S]*?<\/(?:script|style)>/g) ?? []
     const components = text => text.match(/<Pivotick\b(?:"[^"]*"|'[^']*'|[^'">])*>(?:\s*<\/Pivotick>)?/g) ?? []
     for (const page of await sources()) {
@@ -114,6 +118,7 @@ test('every translated page preserves executable components, scripts and fenced 
             assert.deepEqual(code(localized), code(original), `${language}: fences in ${page.route}`)
             assert.deepEqual(inlineCode(localized), inlineCode(original), `${language}: inline code in ${page.route}`)
             assert.deepEqual(htmlCode(localized), htmlCode(original), `${language}: HTML code in ${page.route}`)
+            assert.deepEqual(links(localized), links(expected), `${language}: links and images in ${page.route}`)
             assert.deepEqual(scripts(localized), scripts(expected), `${language}: script in ${page.route}`)
             assert.deepEqual(components(localized), components(expected), `${language}: component in ${page.route}`)
         }
