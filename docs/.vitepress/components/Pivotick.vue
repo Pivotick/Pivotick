@@ -4,6 +4,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useData } from 'vitepress'
 import { Pivotick } from './../../../src/index'
 import './../../../src/styles/style.scss'
 
@@ -39,9 +40,12 @@ const props = defineProps({
     }
 })
 
+const { lang } = useData()
+
 const localData = computed(() => ({ ...props.data }))
 const localOptions = computed(() => ({
     ...props.options,
+    i18n: { locale: lang.value, ...props.options.i18n },
     simulation: {
         // Keep any simulation tuning a card sets (e.g. force knobs). The worker
         // is bundled inline (Vite ?worker&inline) so it works in the docs bundle;

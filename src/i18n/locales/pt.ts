@@ -2,7 +2,7 @@
 /* eslint-disable quotes */
 import type { Messages } from '../../interfaces/I18n'
 
-export const messagesPt = {
+export const messagesPt: Messages = {
     "count.nodes": {
         "one": "{count} nó",
         "other": "{count} nós"
@@ -968,4 +968,4 @@ export const messagesPt = {
     "noteCard.reference.unresolved.title": "Não foi possível encontrar o nó",
     "minimap.expand.title": "Mostrar minimapa",
     "minimap.collapse.title": "Recolher minimapa"
-} satisfies Messages
+}

@@ -45,7 +45,7 @@ function readFrontmatter(file) {
  * card. Dropping a folder in (with the right frontmatter) is all it takes to
  * register a card — nothing here is hand-maintained.
  */
-export function discoverCards() {
+export function discoverCards(language = 'en') {
     if (!fs.existsSync(GALLERY_DIR)) return []
     return fs
         .readdirSync(GALLERY_DIR, { withFileTypes: true })
@@ -54,13 +54,14 @@ export function discoverCards() {
         .reduce((cards, slug) => {
             const contentPath = path.join(GALLERY_DIR, slug, 'content.md')
             if (!fs.existsSync(contentPath)) return cards
-            const { title, category, order } = readFrontmatter(contentPath)
+            const localized = path.resolve(__dirname, `../${language}/examples/gallery/${slug}/content.md`)
+            const { title, category, order } = readFrontmatter(language !== 'en' && fs.existsSync(localized) ? localized : contentPath)
             cards.push({
                 slug,
                 title: title || slug,
                 category: (category || '').toUpperCase(),
                 order: order != null ? Number(order) : null,
-                link: `/examples/gallery/${slug}/content`,
+                link: `${language === 'en' ? '' : '/' + language}/examples/gallery/${slug}/content`,
                 hasThumb: fs.existsSync(path.join(GALLERY_DIR, slug, 'pic.png')),
             })
             return cards
@@ -68,8 +69,8 @@ export function discoverCards() {
 }
 
 /** Cards grouped under every category (empty categories included for stable anchors). */
-export function galleryByCategory() {
-    const cards = discoverCards()
+export function galleryByCategory(language = 'en') {
+    const cards = discoverCards(language)
     return GALLERY_CATEGORIES.map((category) => ({
         ...category,
         cards: cards

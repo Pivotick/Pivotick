@@ -16,6 +16,10 @@
 
 ### Translating the UI
 
+- The documentation site now offers English (default), Simplified Chinese, French,
+  German and Portuguese. Guides, gallery descriptions and the generated API reference
+  share a language selector, stable section anchors and localized navigation and search.
+  Editable prose catalogues generate the translated pages during the documentation build.
 - **Complete bundled translations** for Simplified Chinese (`zh`), French (`fr`), German
   (`de`) and Portuguese (`pt`), selected by `i18n.locale`. Regional tags share the language
   catalogue and keep their own formatting. Explicit messages and translation hooks still win.

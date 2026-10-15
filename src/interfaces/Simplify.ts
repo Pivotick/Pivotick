@@ -215,7 +215,7 @@ export interface SimplifyOptions {
      */
     rules?: SimplifyRule[]
     /**
-     * The name of a group's part, e.g. `(type, count) => \`${count} IPs\``. `type` is
+     * The name of a group's part, e.g. ``(type, count) => `${count} IPs` ``. `type` is
      * `undefined` for nodes with no type.
      * @default `${count} × ${type}`
      */

@@ -2,7 +2,7 @@
 /* eslint-disable quotes */
 import type { Messages } from '../../interfaces/I18n'
 
-export const messagesDe = {
+export const messagesDe: Messages = {
     "count.nodes": {
         "one": "{count} Knoten",
         "other": "{count} Knoten"
@@ -968,4 +968,4 @@ export const messagesDe = {
     "noteCard.reference.unresolved.title": "Knoten konnte nicht ermittelt werden",
     "minimap.expand.title": "Minikarte anzeigen",
     "minimap.collapse.title": "Minikarte einklappen"
-} satisfies Messages
+}

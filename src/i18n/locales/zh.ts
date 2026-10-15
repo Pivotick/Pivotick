@@ -2,7 +2,7 @@
 /* eslint-disable quotes */
 import type { Messages } from '../../interfaces/I18n'
 
-export const messagesZh = {
+export const messagesZh: Messages = {
     "count.nodes": {
         "other": "{count} 个节点"
     },
@@ -899,4 +899,4 @@ export const messagesZh = {
     "noteCard.reference.unresolved.title": "无法找到节点",
     "minimap.expand.title": "显示缩略图",
     "minimap.collapse.title": "收起缩略图"
-} satisfies Messages
+}

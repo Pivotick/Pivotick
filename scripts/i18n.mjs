@@ -163,7 +163,7 @@ function moduleText(messages, locale) {
     return '// Generated from locales/' + locale + '.po by npm run i18n:compile. Do not edit.\n'
         + '/* eslint-disable quotes */\n'
         + "import type { Messages } from '../../interfaces/I18n'\n\n"
-        + `export const messages${locale[0].toUpperCase() + locale.slice(1)} = ${JSON.stringify(messages, null, 4)} satisfies Messages\n`
+        + `export const messages${locale[0].toUpperCase() + locale.slice(1)}: Messages = ${JSON.stringify(messages, null, 4)}\n`
 }
 
 async function references() {

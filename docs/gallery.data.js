@@ -4,8 +4,11 @@ import { galleryByCategory } from './.vitepress/gallery-files.js'
 // folder off disk and serialise the discovered cards into the client bundle.
 // Consumed via `import { data } from './gallery.data.js'`.
 export default {
-    watch: ['./examples/gallery/*/content.md', './examples/gallery/*/pic.png'],
+    watch: [
+        './examples/gallery/*/content.md', './examples/gallery/*/pic.png',
+        ...['zh', 'fr', 'de', 'pt'].map(language => `./${language}/examples/gallery/*/content.md`),
+    ],
     load() {
-        return galleryByCategory()
+        return Object.fromEntries(['en', 'zh', 'fr', 'de', 'pt'].map(language => [language, galleryByCategory(language)]))
     },
 }
