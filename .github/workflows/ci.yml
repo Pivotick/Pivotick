@@ -38,6 +38,12 @@ jobs:
       - name: Test documentation localization
         run: npm run test:docs
 
+      - name: Install Chromium for documentation checks
+        run: npx playwright install --with-deps chromium
+
+      - name: Test documentation in the browser
+        run: npm run test:docs:browser
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:

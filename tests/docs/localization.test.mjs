@@ -4,6 +4,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { buildSync } from 'esbuild'
 import MarkdownIt from 'markdown-it'
+import { resolveConfig } from 'vitepress'
 import { docs, extract, sources, headingId, keyFor, languages, protect, restore, transformMarkdown, rebaseAssets } from '../../scripts/docs-i18n.mjs'
 
 const compiled = buildSync({ entryPoints: [path.join(docs, '.vitepress/site-i18n.ts')], bundle: true, write: false, format: 'esm' })
@@ -76,6 +77,12 @@ test('relocated pages share original JavaScript and images', () => {
     assert.match(result, /\.\.\/\.\.\/\.\.\/\.\.\/examples\/gallery\/test\/options.js/)
     assert.match(result, /#data \[Data\]/)
     assert.match(result, /examples\/gallery\/test\/pic.png/)
+})
+
+test('site routes contain every language once and exclude public API sources and catalogues', async () => {
+    const config = await resolveConfig(docs, 'build', 'production')
+    const expected = (await sources()).flatMap(page => [page.route, ...languages.map(language => `${language}/${page.route}`)])
+    assert.deepEqual([...config.pages].sort(), expected.sort())
 })
 
 test('all guide, gallery and API pages have complete protected prose in four languages', async () => {

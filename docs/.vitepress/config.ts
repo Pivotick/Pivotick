@@ -9,7 +9,7 @@ const joinUrl = (base: string, path: string) => `${base.replace(/\/$/, '')}/${pa
 // https://vitepress.dev/reference/site-config
 const sharedTheme: DefaultTheme.Config = {
     // https://vitepress.dev/reference/default-theme-config
-    logo: '/logo.svg',
+    logo: '/pivotick.svg',
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Getting Started', link: '/getting-started' },
@@ -109,7 +109,7 @@ const searchLocales = Object.fromEntries(languages.map(language => {
 
 export default defineConfig({
   title: 'Pivotick', description: 'Pivotick documentation', base: baseurl,
-  srcExclude: ['translations/**'],
+  srcExclude: ['public/**', 'translations/**'],
   buildConcurrency: 8,
   lastUpdated: true, ignoreDeadLinks: true,
   locales: Object.fromEntries(languages.map(language => [language === 'en' ? 'root' : language, {

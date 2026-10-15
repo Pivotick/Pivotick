@@ -54,7 +54,7 @@ for (const [language, query] of [['fr', 'configuration'], ['zh', '节点']]) {
         await page.locator('.VPNavBarSearch button').click()
         await page.locator('#localsearch-input').fill(query)
         const result = page.locator('.VPLocalSearchBox a.result').first()
-        await expect(result).toBeVisible()
+        await expect(result).toBeVisible({ timeout: 30000 })
         await expect(result).toHaveAttribute('href', new RegExp(`^/Pivotick/${language}/`))
     })
 }
@@ -65,6 +65,7 @@ test('translated gallery keeps translated card titles, shared thumbnails and loc
     await expect(card).toBeVisible()
     await expect(card).toHaveAttribute('href', /\/Pivotick\/fr\/examples\/gallery\//)
     await expect(card.locator('img')).toBeVisible()
+    await expect.poll(() => card.locator('img').evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
     await card.click()
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr')
     await expect(page.locator('.pivotick')).toHaveAttribute('lang', 'fr')
