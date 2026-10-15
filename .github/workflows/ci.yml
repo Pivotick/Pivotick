@@ -3,6 +3,8 @@ name: CI Build
 on:
   push:
     branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
 
 permissions:
   contents: read
@@ -26,6 +28,9 @@ jobs:
 
       - name: Build library
         run: npm run build
+
+      - name: Test translation catalogues and lookup
+        run: npm run test:i18n
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

@@ -1,0 +1,4072 @@
+msgid ""
+msgstr "Project-Id-Version: Pivotick\nReport-Msgid-Bugs-To: https://github.com/Pivotick/Pivotick/issues\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nLanguage: zh\nPlural-Forms: nplurals=1; plural=0;\n"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/common.ts:5
+msgctxt "count.nodes"
+msgid "{count} node"
+msgid_plural "{count} nodes"
+msgstr[0] "{count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/common.ts:6
+msgctxt "count.edges"
+msgid "{count} edge"
+msgid_plural "{count} edges"
+msgstr[0] "{count} 条边"
+
+#: src/i18n/en/common.ts:9
+msgctxt "note.defaultContent"
+msgid "This is not a note."
+msgstr "这不是一条备注。"
+
+#. Preserve placeholders: {key}
+#: src/i18n/en/common.ts:12
+msgctxt "keys.ctrlCombo"
+msgid "Ctrl+{key}"
+msgstr "Ctrl+{key}"
+
+#: src/i18n/en/common.ts:13
+msgctxt "keys.escape"
+msgid "esc"
+msgstr "Esc"
+
+#: src/i18n/en/shell.ts:9
+msgctxt "asyncContent.error"
+msgid "Content could not be loaded"
+msgstr "无法加载内容"
+
+#: src/i18n/en/shell.ts:12
+msgctxt "busy.label"
+msgid "Waiting…"
+msgstr "正在等待…"
+
+#: src/i18n/en/shell.ts:15
+msgctxt "confirm.title"
+msgid "Confirm"
+msgstr "确认"
+
+#: src/i18n/en/shell.ts:16
+msgctxt "confirm.submit"
+msgid "Confirm"
+msgstr "确认"
+
+#: src/i18n/en/shell.ts:19
+msgctxt "emptyState.message"
+msgid "Nothing on the canvas yet"
+msgstr "画布上还没有内容"
+
+#: src/i18n/en/shell.ts:22
+msgctxt "prompt.title"
+msgid "Details"
+msgstr "详情"
+
+#: src/i18n/en/shell.ts:23
+msgctxt "prompt.submit"
+msgid "Add"
+msgstr "添加"
+
+#: src/i18n/en/shell.ts:24
+msgctxt "prompt.cancel"
+msgid "Cancel"
+msgstr "取消"
+
+#: src/i18n/en/shell.ts:25
+msgctxt "prompt.nodeTitle"
+msgid "Node details"
+msgstr "节点详情"
+
+#: src/i18n/en/shell.ts:26
+msgctxt "prompt.edgeTitle"
+msgid "Edge details"
+msgstr "边详情"
+
+#: src/i18n/en/shell.ts:27
+msgctxt "prompt.edgeLabelTitle"
+msgid "Edge label"
+msgstr "边标签"
+
+#: src/i18n/en/shell.ts:28
+msgctxt "prompt.edgeLabelPlaceholder"
+msgid "Label…"
+msgstr "标签…"
+
+#: src/i18n/en/shell.ts:31
+msgctxt "history.menu.aria"
+msgid "Graph history"
+msgstr "图历史记录"
+
+#: src/i18n/en/shell.ts:32
+msgctxt "history.menu.title"
+msgid "History"
+msgstr "历史记录"
+
+#: src/i18n/en/shell.ts:33
+msgctxt "history.menu.undoSide"
+msgid "Undo side"
+msgstr "可撤销的操作"
+
+#: src/i18n/en/shell.ts:34
+msgctxt "history.menu.redoSide"
+msgid "Redo side"
+msgstr "可重做的操作"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/shell.ts:35
+msgctxt "history.menu.count"
+msgid "{count} of {limit}"
+msgstr "{count} / {limit}"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/shell.ts:36
+msgctxt "history.menu.countFull"
+msgid "{count} of {limit} · oldest evicted"
+msgstr "{count} / {limit} · 最早的记录已移除"
+
+#: src/i18n/en/shell.ts:37
+msgctxt "history.menu.empty"
+msgid "Nothing has happened yet"
+msgstr "尚无操作"
+
+#: src/i18n/en/shell.ts:38
+msgctxt "history.menu.nothingAhead"
+msgid "Nothing ahead — nothing has been undone"
+msgstr "没有可重做的操作 — 尚未撤销任何操作"
+
+#: src/i18n/en/shell.ts:39
+msgctxt "history.menu.start"
+msgid "The start of the session"
+msgstr "会话开始"
+
+#: src/i18n/en/shell.ts:40
+msgctxt "history.menu.now"
+msgid "NOW"
+msgstr "现在"
+
+#. Preserve placeholders: {done}, {undone}
+#: src/i18n/en/shell.ts:41
+msgctxt "history.menu.nowMeta"
+msgid "{undone} undone · {done} done"
+msgstr "已撤销 {undone} 项 · 已完成 {done} 项"
+
+#: src/i18n/en/shell.ts:42
+msgctxt "history.menu.jump.title"
+msgid "Scroll back to now"
+msgstr "滚动到当前位置"
+
+#. Preserve placeholders: {label}, {ordinal}
+#: src/i18n/en/shell.ts:43
+msgctxt "history.row.pivotRun"
+msgid "{label} #{ordinal}"
+msgstr "{label} #{ordinal}"
+
+#: src/i18n/en/shell.ts:44
+msgctxt "history.row.kept"
+msgid "kept"
+msgstr "已保留"
+
+#: src/i18n/en/shell.ts:45
+msgctxt "history.row.locked"
+msgid "locked"
+msgstr "已锁定"
+
+#: src/i18n/en/shell.ts:46
+msgctxt "history.row.saved"
+msgid "saved"
+msgstr "已保存"
+
+#: src/i18n/en/shell.ts:47
+msgctxt "history.row.nothingLeft"
+msgid "Nothing left the canvas"
+msgstr "未从画布中移除任何内容"
+
+#: src/i18n/en/shell.ts:48
+msgctxt "history.foot.idle"
+msgid "Point at a row to travel there."
+msgstr "将指针移到某一行可预览该步骤。"
+
+#. Preserve placeholders: {ahead}, {behind}
+#: src/i18n/en/shell.ts:49
+msgctxt "history.foot.position"
+msgid "{ahead} ahead · {behind} behind"
+msgstr "向前 {ahead} 步 · 向后 {behind} 步"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:50
+msgctxt "history.foot.undoesSteps"
+msgid "Undoes {count} step"
+msgid_plural "Undoes {count} steps"
+msgstr[0] "撤销 {count} 步"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:51
+msgctxt "history.foot.redoesSteps"
+msgid "Redoes {count} step"
+msgid_plural "Redoes {count} steps"
+msgstr[0] "重做 {count} 步"
+
+#. Preserve placeholders: {acting}, {total}
+#: src/i18n/en/shell.ts:52
+msgctxt "history.foot.undoesSome"
+msgid "Undoes {acting} of {total}"
+msgstr "撤销 {acting} / {total} 项"
+
+#. Preserve placeholders: {acting}, {total}
+#: src/i18n/en/shell.ts:53
+msgctxt "history.foot.redoesSome"
+msgid "Redoes {acting} of {total}"
+msgstr "重做 {acting} / {total} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:54
+msgctxt "history.foot.keptSaved"
+msgid "{count} saved item kept"
+msgid_plural "{count} saved items kept"
+msgstr[0] "已保留 {count} 个已保存的项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:55
+msgctxt "history.foot.alreadyApplied"
+msgid "{count} already applied"
+msgstr "已应用 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:56
+msgctxt "history.foot.savedUpstream"
+msgid "{count} item saved upstream"
+msgid_plural "{count} items saved upstream"
+msgstr[0] "已在源系统中保存 {count} 项"
+
+#: src/i18n/en/shell.ts:57
+msgctxt "history.foot.nothingToReverse"
+msgid "Nothing to reverse"
+msgstr "没有可撤回的操作"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:58
+msgctxt "history.delta.nodesAdded"
+msgid "+{count} node"
+msgid_plural "+{count} nodes"
+msgstr[0] "+{count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:59
+msgctxt "history.delta.nodesRemoved"
+msgid "−{count} node"
+msgid_plural "−{count} nodes"
+msgstr[0] "−{count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:60
+msgctxt "history.delta.edgesAdded"
+msgid "+{count} edge"
+msgid_plural "+{count} edges"
+msgstr[0] "+{count} 条边"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:61
+msgctxt "history.delta.edgesRemoved"
+msgid "−{count} edge"
+msgid_plural "−{count} edges"
+msgstr[0] "−{count} 条边"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:62
+msgctxt "history.delta.shownNodes"
+msgid "{count} node back in view"
+msgid_plural "{count} nodes back in view"
+msgstr[0] "重新显示 {count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:63
+msgctxt "history.delta.shown"
+msgid "{count} back in view"
+msgstr "重新显示 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:64
+msgctxt "history.delta.hiddenNodes"
+msgid "{count} node hidden"
+msgid_plural "{count} nodes hidden"
+msgstr[0] "已隐藏 {count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:65
+msgctxt "history.delta.hidden"
+msgid "{count} hidden"
+msgstr "已隐藏 {count} 项"
+
+#: src/i18n/en/shell.ts:66
+msgctxt "history.delta.groups"
+msgid "groups change"
+msgstr "分组发生变化"
+
+#: src/i18n/en/shell.ts:67
+msgctxt "history.delta.none"
+msgid "nothing changes"
+msgstr "无变化"
+
+#: src/i18n/en/shell.ts:68
+msgctxt "history.time.now"
+msgid "now"
+msgstr "现在"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:69
+msgctxt "history.time.minutes"
+msgid "{count}m"
+msgstr "{count} 分钟"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:70
+msgctxt "history.time.hours"
+msgid "{count}h"
+msgstr "{count} 小时"
+
+#. Preserve placeholders: {hours}, {minutes}
+#: src/i18n/en/shell.ts:71
+msgctxt "history.time.hoursMinutes"
+msgid "{hours}h {minutes}m"
+msgstr "{hours} 小时 {minutes} 分钟"
+
+#: src/i18n/en/shell.ts:74
+msgctxt "jsonViewer.copy"
+msgid "Copy JSON"
+msgstr "复制 JSON"
+
+#: src/i18n/en/shell.ts:75
+msgctxt "jsonViewer.copied"
+msgid "Copied!"
+msgstr "已复制！"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:76
+msgctxt "jsonViewer.items"
+msgid "{count} item"
+msgid_plural "{count} items"
+msgstr[0] "{count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:77
+msgctxt "jsonViewer.properties"
+msgid "{count} property"
+msgid_plural "{count} properties"
+msgstr[0] "{count} 个属性"
+
+#: src/i18n/en/shell.ts:80
+msgctxt "modal.ok"
+msgid "Ok"
+msgstr "确定"
+
+#: src/i18n/en/shell.ts:81
+msgctxt "modal.close.aria"
+msgid "Close"
+msgstr "关闭"
+
+#: src/i18n/en/shell.ts:82
+msgctxt "modal.editNode.heading"
+msgid "Editing node:"
+msgstr "正在编辑节点："
+
+#: src/i18n/en/shell.ts:83
+msgctxt "modal.editNode.submit"
+msgid "Edit Node"
+msgstr "编辑节点"
+
+#: src/i18n/en/shell.ts:84
+msgctxt "modal.editEdge.heading"
+msgid "Editing edge:"
+msgstr "正在编辑边："
+
+#: src/i18n/en/shell.ts:85
+msgctxt "modal.editEdge.submit"
+msgid "Edit Edge"
+msgstr "编辑边"
+
+#. Preserve placeholders: {from}, {to}
+#: src/i18n/en/shell.ts:86
+msgctxt "modal.editEdge.endpoints"
+msgid "{from} → {to}"
+msgstr "{from} → {to}"
+
+#: src/i18n/en/shell.ts:87
+msgctxt "modal.editEdge.labelField"
+msgid "Label"
+msgstr "标签"
+
+#: src/i18n/en/shell.ts:88
+msgctxt "modal.inspect.properties"
+msgid "Properties"
+msgstr "属性"
+
+#: src/i18n/en/shell.ts:89
+msgctxt "modal.inspect.json"
+msgid "JSON"
+msgstr "JSON"
+
+#: src/i18n/en/shell.ts:92
+msgctxt "navigation.fit"
+msgid "Fit and center"
+msgstr "适应画布并居中"
+
+#: src/i18n/en/shell.ts:93
+msgctxt "navigation.zoomIn"
+msgid "Zoom In"
+msgstr "放大"
+
+#: src/i18n/en/shell.ts:94
+msgctxt "navigation.zoomOut"
+msgid "Zoom Out"
+msgstr "缩小"
+
+#: src/i18n/en/shell.ts:95
+msgctxt "navigation.fullscreen"
+msgid "Toggle Fullscreen"
+msgstr "切换全屏"
+
+#: src/i18n/en/shell.ts:98
+msgctxt "notification.dismiss.aria"
+msgid "Dismiss"
+msgstr "关闭"
+
+#: src/i18n/en/shell.ts:101
+msgctxt "rail.select"
+msgid "Select"
+msgstr "选择"
+
+#: src/i18n/en/shell.ts:102
+msgctxt "rail.create"
+msgid "Create"
+msgstr "创建"
+
+#: src/i18n/en/shell.ts:103
+msgctxt "rail.view"
+msgid "View"
+msgstr "视图"
+
+#: src/i18n/en/shell.ts:104
+msgctxt "rail.physics"
+msgid "Physics"
+msgstr "物理模拟"
+
+#: src/i18n/en/shell.ts:105
+msgctxt "rail.simplify"
+msgid "Simplify"
+msgstr "简化"
+
+#: src/i18n/en/shell.ts:106
+msgctxt "rail.lasso"
+msgid "Lasso"
+msgstr "套索"
+
+#: src/i18n/en/shell.ts:107
+msgctxt "rail.edge"
+msgid "Edge"
+msgstr "边"
+
+#. Preserve placeholders: {label}, {shortcut}
+#: src/i18n/en/shell.ts:108
+msgctxt "rail.button.title"
+msgid "{label} ({shortcut})"
+msgstr "{label}（{shortcut}）"
+
+#. Preserve placeholders: {folded}, {groups}
+#: src/i18n/en/shell.ts:109
+msgctxt "rail.simplify.summary"
+msgid "Simplify: {groups}, {folded}"
+msgstr "简化：{groups}，{folded}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:110
+msgctxt "rail.simplify.groups"
+msgid "{count} group"
+msgid_plural "{count} groups"
+msgstr[0] "{count} 个组"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:111
+msgctxt "rail.simplify.folded"
+msgid "{count} node folded"
+msgid_plural "{count} nodes folded"
+msgstr[0] "已折叠 {count} 个节点"
+
+#: src/i18n/en/shell.ts:114
+msgctxt "slidePanel.empty"
+msgid "- empty panel -"
+msgstr "- 空面板 -"
+
+#: src/i18n/en/shell.ts:117
+msgctxt "search.placeholder"
+msgid "Search"
+msgstr "搜索"
+
+#: src/i18n/en/shell.ts:118
+msgctxt "search.hint.navigate"
+msgid "to navigate"
+msgstr "导航"
+
+#: src/i18n/en/shell.ts:119
+msgctxt "search.hint.select"
+msgid "to select"
+msgstr "选择"
+
+#: src/i18n/en/shell.ts:120
+msgctxt "search.hint.showAll"
+msgid "to show all"
+msgstr "显示全部"
+
+#: src/i18n/en/shell.ts:121
+msgctxt "search.hint.close"
+msgid "to close"
+msgstr "关闭"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/shell.ts:122
+msgctxt "search.result.inGroup"
+msgid "in {group}"
+msgstr "位于 {group}"
+
+#: src/i18n/en/shell.ts:123
+msgctxt "search.summary.none"
+msgid "No results found"
+msgstr "未找到结果"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/shell.ts:124
+msgctxt "search.summary.top"
+msgid "Showing top {shown} of {count} results"
+msgstr "显示前 {shown} 项，共 {count} 项结果"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:125
+msgctxt "search.summary.all"
+msgid "{count} result"
+msgid_plural "{count} results"
+msgstr[0] "{count} 项结果"
+
+#: src/i18n/en/shell.ts:126
+msgctxt "search.showAll"
+msgid "Show all on the canvas"
+msgstr "在画布上显示全部"
+
+#: src/i18n/en/shell.ts:129
+msgctxt "toolPanel.select"
+msgid "Select"
+msgstr "选择"
+
+#: src/i18n/en/shell.ts:130
+msgctxt "toolPanel.create"
+msgid "Create"
+msgstr "创建"
+
+#: src/i18n/en/shell.ts:131
+msgctxt "toolPanel.pointer"
+msgid "Pointer"
+msgstr "指针"
+
+#: src/i18n/en/shell.ts:132
+msgctxt "toolPanel.lasso"
+msgid "Lasso"
+msgstr "套索"
+
+#: src/i18n/en/shell.ts:133
+msgctxt "toolPanel.pathSelect"
+msgid "Path select"
+msgstr "路径选择"
+
+#: src/i18n/en/shell.ts:134
+msgctxt "toolPanel.invertSelection"
+msgid "Invert selection"
+msgstr "反选"
+
+#: src/i18n/en/shell.ts:135
+msgctxt "toolPanel.addNode"
+msgid "Add node"
+msgstr "添加节点"
+
+#: src/i18n/en/shell.ts:136
+msgctxt "toolPanel.addEdge"
+msgid "Add edge"
+msgstr "添加边"
+
+#: src/i18n/en/shell.ts:137
+msgctxt "toolPanel.addNote"
+msgid "Add note"
+msgstr "添加备注"
+
+#: src/i18n/en/shell.ts:138
+msgctxt "toolPanel.editNode"
+msgid "Edit node"
+msgstr "编辑节点"
+
+#: src/i18n/en/shell.ts:139
+msgctxt "toolPanel.soon"
+msgid "SOON"
+msgstr "即将推出"
+
+#. Preserve placeholders: {tool}
+#: src/i18n/en/shell.ts:140
+msgctxt "toolPanel.soon.title"
+msgid "{tool} — coming soon"
+msgstr "{tool} — 即将推出"
+
+#: src/i18n/en/shell.ts:141
+msgctxt "toolPanel.resize.aria"
+msgid "Resize the tool panel"
+msgstr "调整工具面板大小"
+
+#: src/i18n/en/shell.ts:144
+msgctxt "topBar.search"
+msgid "Search"
+msgstr "搜索"
+
+#: src/i18n/en/shell.ts:145
+msgctxt "topBar.search.aria"
+msgid "Search for a node"
+msgstr "搜索节点"
+
+#: src/i18n/en/shell.ts:146
+msgctxt "topBar.filter"
+msgid "Filter Graph"
+msgstr "筛选图"
+
+#: src/i18n/en/shell.ts:147
+msgctxt "topBar.filter.aria"
+msgid "Filter the graph"
+msgstr "筛选图"
+
+#: src/i18n/en/shell.ts:148
+msgctxt "topBar.filter.panelTitle"
+msgid "Graph Filters"
+msgstr "图筛选条件"
+
+#: src/i18n/en/shell.ts:149
+msgctxt "topBar.notes"
+msgid "Notes"
+msgstr "备注"
+
+#: src/i18n/en/shell.ts:150
+msgctxt "topBar.undo"
+msgid "Undo"
+msgstr "撤销"
+
+#. Preserve placeholders: {shortcut}
+#: src/i18n/en/shell.ts:151
+msgctxt "topBar.undo.title"
+msgid "Undo ({shortcut})"
+msgstr "撤销（{shortcut}）"
+
+#. Preserve placeholders: {entry}, {shortcut}
+#: src/i18n/en/shell.ts:152
+msgctxt "topBar.undo.titleNamed"
+msgid "Undo — {entry} ({shortcut})"
+msgstr "撤销 — {entry}（{shortcut}）"
+
+#. Preserve placeholders: {entry}
+#: src/i18n/en/shell.ts:153
+msgctxt "topBar.undo.ariaNamed"
+msgid "Undo {entry}"
+msgstr "撤销 {entry}"
+
+#: src/i18n/en/shell.ts:154
+msgctxt "topBar.redo"
+msgid "Redo"
+msgstr "重做"
+
+#. Preserve placeholders: {shortcut}
+#: src/i18n/en/shell.ts:155
+msgctxt "topBar.redo.title"
+msgid "Redo ({shortcut})"
+msgstr "重做（{shortcut}）"
+
+#. Preserve placeholders: {entry}, {shortcut}
+#: src/i18n/en/shell.ts:156
+msgctxt "topBar.redo.titleNamed"
+msgid "Redo — {entry} ({shortcut})"
+msgstr "重做 — {entry}（{shortcut}）"
+
+#. Preserve placeholders: {entry}
+#: src/i18n/en/shell.ts:157
+msgctxt "topBar.redo.ariaNamed"
+msgid "Redo {entry}"
+msgstr "重做 {entry}"
+
+#: src/i18n/en/shell.ts:158
+msgctxt "topBar.undoHistory.aria"
+msgid "Undo history"
+msgstr "撤销历史记录"
+
+#: src/i18n/en/shell.ts:159
+msgctxt "topBar.redoHistory.aria"
+msgid "Redo history"
+msgstr "重做历史记录"
+
+#. Preserve placeholders: {action}
+#: src/i18n/en/shell.ts:160
+msgctxt "topBar.action.more.aria"
+msgid "More: {action}"
+msgstr "更多：{action}"
+
+#: src/i18n/en/shell.ts:161
+msgctxt "topBar.promptSubmit"
+msgid "OK"
+msgstr "确定"
+
+#: src/i18n/en/contextMenu.ts:6
+msgctxt "contextMenu.selectNeighbors"
+msgid "Select Neighbors"
+msgstr "选择相邻节点"
+
+#: src/i18n/en/contextMenu.ts:7
+msgctxt "contextMenu.ungroup"
+msgid "Ungroup"
+msgstr "取消分组"
+
+#: src/i18n/en/contextMenu.ts:10
+msgctxt "contextMenu.node.pin"
+msgid "Pin Node"
+msgstr "固定节点"
+
+#: src/i18n/en/contextMenu.ts:11
+msgctxt "contextMenu.node.unpin"
+msgid "Unpin Node"
+msgstr "取消固定节点"
+
+#: src/i18n/en/contextMenu.ts:12
+msgctxt "contextMenu.node.focus"
+msgid "Focus Node"
+msgstr "聚焦节点"
+
+#: src/i18n/en/contextMenu.ts:13
+msgctxt "contextMenu.node.hide"
+msgid "Hide Node"
+msgstr "隐藏节点"
+
+#: src/i18n/en/contextMenu.ts:14
+msgctxt "contextMenu.node.viewImage"
+msgid "View Image"
+msgstr "查看图片"
+
+#: src/i18n/en/contextMenu.ts:15
+msgctxt "contextMenu.node.hideChildren"
+msgid "Hide Children"
+msgstr "隐藏子节点"
+
+#: src/i18n/en/contextMenu.ts:16
+msgctxt "contextMenu.node.connect"
+msgid "Connect to..."
+msgstr "连接到…"
+
+#: src/i18n/en/contextMenu.ts:17
+msgctxt "contextMenu.node.connect.picker"
+msgid "Select the target node to link with"
+msgstr "选择要连接的目标节点"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/contextMenu.ts:18
+msgctxt "contextMenu.node.connect.pickerNode"
+msgid "\"{node}\""
+msgstr "“{node}”"
+
+#: src/i18n/en/contextMenu.ts:19
+msgctxt "contextMenu.node.expand"
+msgid "Expand Node"
+msgstr "展开节点"
+
+#: src/i18n/en/contextMenu.ts:20
+msgctxt "contextMenu.node.inspect"
+msgid "Inspect Properties"
+msgstr "检查属性"
+
+#: src/i18n/en/contextMenu.ts:21
+msgctxt "contextMenu.node.delete"
+msgid "Delete Node"
+msgstr "删除节点"
+
+#: src/i18n/en/contextMenu.ts:24
+msgctxt "contextMenu.group.pin"
+msgid "Pin Group"
+msgstr "固定组"
+
+#: src/i18n/en/contextMenu.ts:25
+msgctxt "contextMenu.group.unpin"
+msgid "Unpin Group"
+msgstr "取消固定组"
+
+#: src/i18n/en/contextMenu.ts:26
+msgctxt "contextMenu.group.focus"
+msgid "Focus Group"
+msgstr "聚焦组"
+
+#: src/i18n/en/contextMenu.ts:27
+msgctxt "contextMenu.group.selectNeighbors.title"
+msgid "Select the nodes this group links to"
+msgstr "选择与此组相连的节点"
+
+#: src/i18n/en/contextMenu.ts:28
+msgctxt "contextMenu.group.open"
+msgid "Open group"
+msgstr "打开组"
+
+#: src/i18n/en/contextMenu.ts:29
+msgctxt "contextMenu.group.open.title"
+msgid "Put the members back on the canvas"
+msgstr "将成员重新放回画布"
+
+#: src/i18n/en/contextMenu.ts:30
+msgctxt "contextMenu.group.selectMembers"
+msgid "Select members"
+msgstr "选择成员"
+
+#: src/i18n/en/contextMenu.ts:31
+msgctxt "contextMenu.group.selectMembers.title"
+msgid "Select the nodes in this group"
+msgstr "选择此组中的节点"
+
+#: src/i18n/en/contextMenu.ts:32
+msgctxt "contextMenu.group.viewInTable"
+msgid "View members in table"
+msgstr "在表格中查看成员"
+
+#: src/i18n/en/contextMenu.ts:33
+msgctxt "contextMenu.group.viewInTable.title"
+msgid "List the members in the data dock, to filter and search them"
+msgstr "在数据面板中列出成员，以便筛选和搜索"
+
+#: src/i18n/en/contextMenu.ts:34
+msgctxt "contextMenu.group.rename"
+msgid "Rename group"
+msgstr "重命名组"
+
+#: src/i18n/en/contextMenu.ts:35
+msgctxt "contextMenu.group.rename.title"
+msgid "Give this group a title"
+msgstr "为此组命名"
+
+#: src/i18n/en/contextMenu.ts:36
+msgctxt "contextMenu.group.ungroup.title"
+msgid "Draw the members as they were before this group"
+msgstr "按分组前的状态显示成员"
+
+#: src/i18n/en/contextMenu.ts:37
+msgctxt "contextMenu.group.deleteMembers"
+msgid "Delete members"
+msgstr "删除成员"
+
+#: src/i18n/en/contextMenu.ts:38
+msgctxt "contextMenu.group.deleteMembers.title"
+msgid "Delete every node in this group"
+msgstr "删除此组中的所有节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:41
+msgctxt "contextMenu.selection.count"
+msgid "{count} selected"
+msgstr "已选择 {count} 项"
+
+#: src/i18n/en/contextMenu.ts:42
+msgctxt "contextMenu.selection.pin"
+msgid "Pin Selected"
+msgstr "固定所选项"
+
+#: src/i18n/en/contextMenu.ts:43
+msgctxt "contextMenu.selection.unpin"
+msgid "Unpin Selected"
+msgstr "取消固定所选项"
+
+#: src/i18n/en/contextMenu.ts:44
+msgctxt "contextMenu.selection.hide"
+msgid "Hide Selected"
+msgstr "隐藏所选项"
+
+#: src/i18n/en/contextMenu.ts:45
+msgctxt "contextMenu.selection.selectNeighbors.title"
+msgid "Select the nodes linked to the selection"
+msgstr "选择与所选项相连的节点"
+
+#: src/i18n/en/contextMenu.ts:46
+msgctxt "contextMenu.selection.group"
+msgid "Group selected nodes"
+msgstr "将所选节点分组"
+
+#: src/i18n/en/contextMenu.ts:47
+msgctxt "contextMenu.selection.group.title"
+msgid "Fold the selection into one group with a title"
+msgstr "将所选项折叠到一个命名的组中"
+
+#: src/i18n/en/contextMenu.ts:48
+msgctxt "contextMenu.selection.ungroup.title"
+msgid "Draw the members of these hand-made groups as they were"
+msgstr "按分组前的状态显示这些手动分组的成员"
+
+#: src/i18n/en/contextMenu.ts:49
+msgctxt "contextMenu.selection.delete"
+msgid "Delete Selected"
+msgstr "删除所选项"
+
+#: src/i18n/en/contextMenu.ts:50
+msgctxt "contextMenu.selection.delete.title"
+msgid "Delete every selected node"
+msgstr "删除所有所选节点"
+
+#: src/i18n/en/contextMenu.ts:53
+msgctxt "contextMenu.membership.pullOut"
+msgid "Pull out of group"
+msgstr "移出组"
+
+#: src/i18n/en/contextMenu.ts:54
+msgctxt "contextMenu.membership.pullOut.title"
+msgid "Keep these nodes out of their groups"
+msgstr "使这些节点保持在组外"
+
+#: src/i18n/en/contextMenu.ts:55
+msgctxt "contextMenu.membership.putBack"
+msgid "Put back in group"
+msgstr "放回组中"
+
+#: src/i18n/en/contextMenu.ts:56
+msgctxt "contextMenu.membership.putBack.title"
+msgid "Let these nodes be grouped again"
+msgstr "允许这些节点重新分组"
+
+#: src/i18n/en/contextMenu.ts:59
+msgctxt "contextMenu.edge.edit"
+msgid "Edit Edge"
+msgstr "编辑边"
+
+#: src/i18n/en/contextMenu.ts:60
+msgctxt "contextMenu.edge.delete"
+msgid "Delete Edge"
+msgstr "删除边"
+
+#: src/i18n/en/contextMenu.ts:63
+msgctxt "contextMenu.note.hide"
+msgid "Hide Note"
+msgstr "隐藏备注"
+
+#: src/i18n/en/contextMenu.ts:64
+msgctxt "contextMenu.note.remove"
+msgid "Remove Note"
+msgstr "移除备注"
+
+#: src/i18n/en/contextMenu.ts:67
+msgctxt "contextMenu.canvas.pinAll"
+msgid "Pin All"
+msgstr "全部固定"
+
+#: src/i18n/en/contextMenu.ts:68
+msgctxt "contextMenu.canvas.unpinAll"
+msgid "Unpin All"
+msgstr "全部取消固定"
+
+#: src/i18n/en/contextMenu.ts:69
+msgctxt "contextMenu.canvas.addNode"
+msgid "Add Node Here"
+msgstr "在此添加节点"
+
+#: src/i18n/en/contextMenu.ts:70
+msgctxt "contextMenu.canvas.addNote"
+msgid "Add Note"
+msgstr "添加备注"
+
+#: src/i18n/en/contextMenu.ts:71
+msgctxt "contextMenu.canvas.releasePinned"
+msgid "Release pinned nodes"
+msgstr "释放已固定的节点"
+
+#: src/i18n/en/contextMenu.ts:72
+msgctxt "contextMenu.canvas.releasePinned.title"
+msgid "Unpin every pinned node so the layout can move them again"
+msgstr "取消固定所有节点，使布局能够再次移动它们"
+
+#: src/i18n/en/contextMenu.ts:75
+msgctxt "contextMenu.pivot"
+msgid "Pivot"
+msgstr "拓展"
+
+#: src/i18n/en/contextMenu.ts:76
+msgctxt "contextMenu.pivot.openPanel"
+msgid "Open pivot panel…"
+msgstr "打开拓展面板…"
+
+#: src/i18n/en/contextMenu.ts:77
+msgctxt "contextMenu.pivot.openPanel.title"
+msgid "Read the counts, narrow, then run"
+msgstr "查看数量，缩小范围，然后运行"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:78
+msgctxt "contextMenu.pivot.peek"
+msgid "~{count}"
+msgstr "~{count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:79
+msgctxt "contextMenu.pivot.peek.title"
+msgid "About {count} out there"
+msgstr "约有 {count} 项可用"
+
+#. Preserve placeholders: {count}, {nodes}
+#: src/i18n/en/contextMenu.ts:80
+msgctxt "contextMenu.pivot.peek.titleAcross"
+msgid "About {count} across {nodes}"
+msgstr "{nodes} 中约有 {count} 项"
+
+#: src/i18n/en/contextMenu.ts:81
+msgctxt "contextMenu.pivot.peek.failed.title"
+msgid "This pivot could not say what is out there"
+msgstr "此拓展无法估计可用结果的数量"
+
+#: src/i18n/en/sidebar.ts:6
+msgctxt "sidebar.collapse.aria"
+msgid "Collapse sidebar"
+msgstr "收起侧栏"
+
+#: src/i18n/en/sidebar.ts:7
+msgctxt "sidebar.expand.aria"
+msgid "Expand sidebar"
+msgstr "展开侧栏"
+
+#: src/i18n/en/sidebar.ts:8
+msgctxt "sidebar.clearSelection"
+msgid "Clear selection"
+msgstr "清除选择"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:11
+msgctxt "sidebar.header.representedEdges"
+msgid "Stands for {count} edge"
+msgid_plural "Stands for {count} edges"
+msgstr[0] "代表 {count} 条边"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:12
+msgctxt "sidebar.header.nodesSelected"
+msgid "{count} node selected"
+msgid_plural "{count} nodes selected"
+msgstr[0] "已选择 {count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:13
+msgctxt "sidebar.header.edgesSelected"
+msgid "{count} edge selected"
+msgid_plural "{count} edges selected"
+msgstr[0] "已选择 {count} 条边"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:14
+msgctxt "sidebar.header.nodesTotal"
+msgid "Out of {count} total"
+msgstr "共 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:15
+msgctxt "sidebar.header.edgesTotal"
+msgid "Out of {count} total"
+msgstr "共 {count} 项"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/sidebar.ts:16
+msgctxt "sidebar.header.showing"
+msgid "Showing {nodes} and {edges}"
+msgstr "正在显示 {nodes} 和 {edges}"
+
+#: src/i18n/en/sidebar.ts:19
+msgctxt "headerMap.untitled"
+msgid "Could not resolve title"
+msgstr "无法确定标题"
+
+#: src/i18n/en/sidebar.ts:20
+msgctxt "headerMap.nameFallback"
+msgid "Optional name or label"
+msgstr "可选的名称或标签"
+
+#: src/i18n/en/sidebar.ts:21
+msgctxt "headerMap.descriptionFallback"
+msgid "Optional subtitle or description"
+msgstr "可选的副标题或描述"
+
+#: src/i18n/en/sidebar.ts:24
+msgctxt "sidebar.bulk.pin"
+msgid "Pin"
+msgstr "固定"
+
+#: src/i18n/en/sidebar.ts:25
+msgctxt "sidebar.bulk.unpin"
+msgid "Unpin"
+msgstr "取消固定"
+
+#: src/i18n/en/sidebar.ts:26
+msgctxt "sidebar.bulk.hide"
+msgid "Hide"
+msgstr "隐藏"
+
+#: src/i18n/en/sidebar.ts:27
+msgctxt "sidebar.bulk.isolate"
+msgid "Isolate"
+msgstr "隔离"
+
+#: src/i18n/en/sidebar.ts:28
+msgctxt "sidebar.bulk.group"
+msgid "Group"
+msgstr "分组"
+
+#: src/i18n/en/sidebar.ts:29
+msgctxt "sidebar.bulk.ungroup"
+msgid "Ungroup"
+msgstr "取消分组"
+
+#: src/i18n/en/sidebar.ts:30
+msgctxt "sidebar.bulk.bulkEdit"
+msgid "Bulk edit"
+msgstr "批量编辑"
+
+#: src/i18n/en/sidebar.ts:31
+msgctxt "sidebar.bulk.delete"
+msgid "Delete"
+msgstr "删除"
+
+#. Preserve placeholders: {action}
+#: src/i18n/en/sidebar.ts:32
+msgctxt "sidebar.bulk.soon.title"
+msgid "{action} — coming soon"
+msgstr "{action} — 即将推出"
+
+#: src/i18n/en/sidebar.ts:35
+msgctxt "sidebar.properties.nodeHeading"
+msgid "Basic Node Properties"
+msgstr "节点基本属性"
+
+#: src/i18n/en/sidebar.ts:36
+msgctxt "sidebar.properties.edgeHeading"
+msgid "Basic Edge Properties"
+msgstr "边基本属性"
+
+#: src/i18n/en/sidebar.ts:37
+msgctxt "sidebar.properties.nodesHeading"
+msgid "Aggregated Node Properties"
+msgstr "节点聚合属性"
+
+#: src/i18n/en/sidebar.ts:38
+msgctxt "sidebar.properties.edgesHeading"
+msgid "Aggregated Edge Properties"
+msgstr "边聚合属性"
+
+#: src/i18n/en/sidebar.ts:39
+msgctxt "sidebar.properties.keep.title"
+msgid "Keep only nodes with this value"
+msgstr "仅保留具有此值的节点"
+
+#: src/i18n/en/sidebar.ts:40
+msgctxt "sidebar.properties.exclude.title"
+msgid "Exclude nodes with this value"
+msgstr "排除具有此值的节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:43
+msgctxt "sidebar.facets.unique"
+msgid "{count} unique"
+msgstr "{count} 个不同值"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:44
+msgctxt "sidebar.facets.values"
+msgid "{count} value"
+msgid_plural "{count} values"
+msgstr[0] "{count} 个值"
+
+#: src/i18n/en/sidebar.ts:45
+msgctxt "sidebar.facets.shared"
+msgid "shared"
+msgstr "共享"
+
+#: src/i18n/en/sidebar.ts:46
+msgctxt "sidebar.facets.empty"
+msgid "— empty —"
+msgstr "— 空 —"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:47
+msgctxt "sidebar.facets.allNodes"
+msgid "all {count} node"
+msgid_plural "all {count} nodes"
+msgstr[0] "全部 {count} 个节点"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/sidebar.ts:48
+msgctxt "sidebar.facets.someNodes"
+msgid "{count} of {total}"
+msgstr "{count} / {total}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:49
+msgctxt "sidebar.facets.percent"
+msgid "{count}%"
+msgstr "{count}%"
+
+#. Preserve placeholders: {count}, {percent}, {value}
+#: src/i18n/en/sidebar.ts:50
+msgctxt "sidebar.facets.segment.title"
+msgid "{value} — {count} ({percent}%)"
+msgstr "{value} — {count}（{percent}%）"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:51
+msgctxt "sidebar.facets.otherValues"
+msgid "{count} other value"
+msgid_plural "{count} other values"
+msgstr[0] "{count} 个其他值"
+
+#. Preserve placeholders: {count}, {percent}, {values}
+#: src/i18n/en/sidebar.ts:52
+msgctxt "sidebar.facets.other.title"
+msgid "{values} — {count} ({percent}%)"
+msgstr "{values} — {count}（{percent}%）"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:53
+msgctxt "sidebar.facets.moreValues"
+msgid "+{count} more value"
+msgid_plural "+{count} more values"
+msgstr[0] "另有 {count} 个值"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:54
+msgctxt "sidebar.facets.moreChips"
+msgid "+{count} more"
+msgstr "另有 {count} 项"
+
+#: src/i18n/en/sidebar.ts:55
+msgctxt "sidebar.facets.noRepeats"
+msgid "no repeated values"
+msgstr "无重复值"
+
+#: src/i18n/en/sidebar.ts:56
+msgctxt "sidebar.facets.filterHint"
+msgid "Click to keep only · Alt-click to exclude"
+msgstr "单击以仅保留此值 · Alt+单击以排除"
+
+#: src/i18n/en/sidebar.ts:59
+msgctxt "propertyList.label"
+msgid "PROPERTIES"
+msgstr "属性"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:60
+msgctxt "propertyList.fields"
+msgid "{count} field"
+msgid_plural "{count} fields"
+msgstr[0] "{count} 个字段"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:61
+msgctxt "propertyList.items"
+msgid "{count} item"
+msgid_plural "{count} items"
+msgstr[0] "{count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:62
+msgctxt "propertyList.keys"
+msgid "{count} key"
+msgid_plural "{count} keys"
+msgstr[0] "{count} 个键"
+
+#: src/i18n/en/sidebar.ts:63
+msgctxt "propertyList.copy.title"
+msgid "Copy"
+msgstr "复制"
+
+#: src/i18n/en/sidebar.ts:66
+msgctxt "sidebar.neighbors.tab.graph"
+msgid "Neighbor Graph"
+msgstr "相邻节点图"
+
+#: src/i18n/en/sidebar.ts:67
+msgctxt "sidebar.neighbors.tab.stats"
+msgid "Stats"
+msgstr "统计"
+
+#: src/i18n/en/sidebar.ts:68
+msgctxt "sidebar.neighbors.tab.list"
+msgid "List"
+msgstr "列表"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:69
+msgctxt "sidebar.neighbors.connections"
+msgid "{count} connection"
+msgid_plural "{count} connections"
+msgstr[0] "{count} 个连接"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:70
+msgctxt "sidebar.neighbors.moreNode"
+msgid "{count} more"
+msgstr "另有 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:71
+msgctxt "sidebar.neighbors.aggregate.count"
+msgid "+{count}"
+msgstr "+{count}"
+
+#: src/i18n/en/sidebar.ts:72
+msgctxt "sidebar.neighbors.aggregate.group"
+msgid "Group"
+msgstr "组"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:73
+msgctxt "sidebar.neighbors.row.outgoing"
+msgid "Outgoing connection — {node}"
+msgstr "出向连接 — {node}"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:74
+msgctxt "sidebar.neighbors.row.incoming"
+msgid "Incoming connection — {node}"
+msgstr "入向连接 — {node}"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:75
+msgctxt "sidebar.neighbors.row.undirected"
+msgid "Connection — {node}"
+msgstr "连接 — {node}"
+
+#: src/i18n/en/sidebar.ts:76
+msgctxt "sidebar.neighbors.stats.degree"
+msgid "Degree"
+msgstr "度数"
+
+#: src/i18n/en/sidebar.ts:77
+msgctxt "sidebar.neighbors.stats.degree.title"
+msgid "Total connections"
+msgstr "连接总数"
+
+#: src/i18n/en/sidebar.ts:78
+msgctxt "sidebar.neighbors.stats.outgoing.title"
+msgid "Outgoing edges"
+msgstr "出向边"
+
+#: src/i18n/en/sidebar.ts:79
+msgctxt "sidebar.neighbors.stats.incoming.title"
+msgid "Incoming edges"
+msgstr "入向边"
+
+#: src/i18n/en/sidebar.ts:80
+msgctxt "sidebar.neighbors.stats.label"
+msgid "Label"
+msgstr "标签"
+
+#: src/i18n/en/sidebar.ts:81
+msgctxt "sidebar.neighbors.stats.select.title"
+msgid "Select nodes linked with this label"
+msgstr "选择通过此标签相连的节点"
+
+#: src/i18n/en/sidebar.ts:82
+msgctxt "sidebar.neighbors.stats.exclude.title"
+msgid "Exclude nodes linked with this label"
+msgstr "排除通过此标签相连的节点"
+
+#: src/i18n/en/sidebar.ts:85
+msgctxt "sidebar.group.open"
+msgid "Open"
+msgstr "打开"
+
+#: src/i18n/en/sidebar.ts:86
+msgctxt "sidebar.group.cancel"
+msgid "Cancel"
+msgstr "取消"
+
+#: src/i18n/en/sidebar.ts:87
+msgctxt "sidebar.group.close"
+msgid "Close"
+msgstr "关闭"
+
+#: src/i18n/en/sidebar.ts:88
+msgctxt "sidebar.group.selectMembers"
+msgid "Select members"
+msgstr "选择成员"
+
+#: src/i18n/en/sidebar.ts:89
+msgctxt "sidebar.group.rename"
+msgid "Rename"
+msgstr "重命名"
+
+#: src/i18n/en/sidebar.ts:90
+msgctxt "sidebar.group.ungroup"
+msgid "Ungroup"
+msgstr "取消分组"
+
+#: src/i18n/en/sidebar.ts:91
+msgctxt "sidebar.group.ungroup.title"
+msgid "Draw the members as they were before this group"
+msgstr "按分组前的状态显示成员"
+
+#: src/i18n/en/sidebar.ts:92
+msgctxt "sidebar.group.viewInTable"
+msgid "View in table"
+msgstr "在表格中查看"
+
+#: src/i18n/en/sidebar.ts:93
+msgctxt "sidebar.group.viewInTable.title"
+msgid "List the members in the data dock, to filter and search them"
+msgstr "在数据面板中列出成员，以便筛选和搜索"
+
+#: src/i18n/en/sidebar.ts:94
+msgctxt "sidebar.group.pivot"
+msgid "Pivot ▸"
+msgstr "拓展 ▸"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:95
+msgctxt "sidebar.group.delete"
+msgid "Delete {count}"
+msgstr "删除 {count} 项"
+
+#: src/i18n/en/sidebar.ts:96
+msgctxt "sidebar.group.edit"
+msgid "Edit"
+msgstr "编辑"
+
+#: src/i18n/en/sidebar.ts:97
+msgctxt "sidebar.group.edit.title"
+msgid "A group has no data of its own to edit"
+msgstr "组本身没有可编辑的数据"
+
+#: src/i18n/en/sidebar.ts:98
+msgctxt "sidebar.group.members"
+msgid "Members"
+msgstr "成员"
+
+#: src/i18n/en/sidebar.ts:99
+msgctxt "sidebar.group.pullOut"
+msgid "Pull out"
+msgstr "移出"
+
+#: src/i18n/en/sidebar.ts:100
+msgctxt "sidebar.group.pullOut.title"
+msgid "Keep this node out of the group"
+msgstr "使此节点保持在组外"
+
+#. Preserve placeholders: {rule}
+#: src/i18n/en/sidebar.ts:103
+msgctxt "groupSummary.subtitle"
+msgid "Group · {rule}"
+msgstr "组 · {rule}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/sidebar.ts:104
+msgctxt "groupSummary.match"
+msgid "{count} of {total} match"
+msgstr "{count} / {total} 项匹配"
+
+#. Preserve placeholders: {count}, {query}, {total}
+#: src/i18n/en/sidebar.ts:105
+msgctxt "groupSummary.matchQuery"
+msgid "{count} of {total} match \"{query}\""
+msgstr "{count} / {total} 项匹配“{query}”"
+
+#: src/i18n/en/sidebar.ts:106
+msgctxt "groupSummary.members"
+msgid "Members"
+msgstr "成员"
+
+#: src/i18n/en/sidebar.ts:107
+msgctxt "groupSummary.linkedTo"
+msgid "Linked to"
+msgstr "连接到"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:108
+msgctxt "groupSummary.more"
+msgid "{count} more"
+msgstr "另有 {count} 项"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/sidebar.ts:111
+msgctxt "groupActions.openAsk"
+msgid "Put {group} on the canvas?"
+msgstr "将 {group} 放到画布上？"
+
+#: src/i18n/en/sidebar.ts:112
+msgctxt "groupActions.open"
+msgid "Open"
+msgstr "打开"
+
+#: src/i18n/en/sidebar.ts:113
+msgctxt "groupActions.titleField.aria"
+msgid "Group title"
+msgstr "组标题"
+
+#: src/i18n/en/sidebar.ts:114
+msgctxt "groupActions.group.heading"
+msgid "Group nodes"
+msgstr "节点分组"
+
+#: src/i18n/en/sidebar.ts:115
+msgctxt "groupActions.group.submit"
+msgid "Group"
+msgstr "分组"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:116
+msgctxt "groupActions.group.left"
+msgid "{count} of the selected node stays out: annotated, or an open cluster."
+msgid_plural "{count} of the selected nodes stay out: annotated, or an open cluster."
+msgstr[0] "{count} 个所选节点未分组：带有备注或本身为已展开的聚类。"
+
+#: src/i18n/en/sidebar.ts:120
+msgctxt "groupActions.rename.heading"
+msgid "Rename group"
+msgstr "重命名组"
+
+#: src/i18n/en/sidebar.ts:121
+msgctxt "groupActions.rename.submit"
+msgid "Rename"
+msgstr "重命名"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/sidebar.ts:122
+msgctxt "groupActions.tableScope"
+msgid "Members of {group}"
+msgstr "{group} 的成员"
+
+#: src/i18n/en/sidebar.ts:125
+msgctxt "tooltip.pin"
+msgid "Pin Tooltip"
+msgstr "固定提示框"
+
+#: src/i18n/en/sidebar.ts:126
+msgctxt "tooltip.close"
+msgid "Close Tooltip"
+msgstr "关闭提示框"
+
+#: src/i18n/en/sidebar.ts:127
+msgctxt "tooltip.focus"
+msgid "Focus Element in Graph"
+msgstr "在图中聚焦元素"
+
+#: src/i18n/en/sidebar.ts:128
+msgctxt "tooltip.select"
+msgid "Select Element in Graph"
+msgstr "在图中选择元素"
+
+#: src/i18n/en/sidebar.ts:129
+msgctxt "tooltip.image.title"
+msgid "Click to view full size"
+msgstr "单击查看原始大小"
+
+#: src/i18n/en/sidebar.ts:130
+msgctxt "tooltip.groupHint"
+msgid "Double-click to open · Select for the member list"
+msgstr "双击打开 · 选中以查看成员列表"
+
+#: src/i18n/en/sidebar.ts:133
+msgctxt "noteSidebar.empty"
+msgid "No notes yet"
+msgstr "暂无备注"
+
+#: src/i18n/en/sidebar.ts:134
+msgctxt "noteSidebar.untitled"
+msgid "Untitled note"
+msgstr "无标题备注"
+
+#: src/i18n/en/sidebar.ts:135
+msgctxt "noteSidebar.hide.title"
+msgid "Hide note"
+msgstr "隐藏备注"
+
+#: src/i18n/en/sidebar.ts:136
+msgctxt "noteSidebar.restore.title"
+msgid "Restore hidden note"
+msgstr "恢复已隐藏的备注"
+
+#: src/i18n/en/sidebar.ts:137
+msgctxt "noteSidebar.remove.title"
+msgid "Remove note"
+msgstr "移除备注"
+
+#: src/i18n/en/sidebar.ts:138
+msgctxt "noteSidebar.add"
+msgid "Add Note"
+msgstr "添加备注"
+
+#: src/i18n/en/sidebar.ts:139
+msgctxt "noteSidebar.hideAll"
+msgid "Hide all"
+msgstr "全部隐藏"
+
+#: src/i18n/en/sidebar.ts:140
+msgctxt "noteSidebar.hideAll.title"
+msgid "Hide all notes"
+msgstr "隐藏所有备注"
+
+#: src/i18n/en/sidebar.ts:141
+msgctxt "noteSidebar.hidden.heading"
+msgid "Hidden notes"
+msgstr "已隐藏的备注"
+
+#: src/i18n/en/sidebar.ts:142
+msgctxt "noteSidebar.showAll"
+msgid "Show all notes"
+msgstr "显示所有备注"
+
+#: src/i18n/en/sidebar.ts:143
+msgctxt "noteSidebar.showAll.title"
+msgid "Restore hidden notes"
+msgstr "恢复已隐藏的备注"
+
+#: src/i18n/en/sidebar.ts:146
+msgctxt "nodePreview.imageUnavailable"
+msgid "Image unavailable"
+msgstr "图片不可用"
+
+#: src/i18n/en/table.ts:6
+msgctxt "table.tab"
+msgid "Table"
+msgstr "表格"
+
+#: src/i18n/en/table.ts:7
+msgctxt "table.view.nodes"
+msgid "Nodes"
+msgstr "节点"
+
+#: src/i18n/en/table.ts:8
+msgctxt "table.view.edges"
+msgid "Edges"
+msgstr "边"
+
+#: src/i18n/en/table.ts:11
+msgctxt "table.column.label"
+msgid "Label"
+msgstr "标签"
+
+#: src/i18n/en/table.ts:12
+msgctxt "table.column.degree"
+msgid "Degree"
+msgstr "度数"
+
+#: src/i18n/en/table.ts:13
+msgctxt "table.column.degreeIn"
+msgid "In"
+msgstr "入度"
+
+#: src/i18n/en/table.ts:14
+msgctxt "table.column.degreeOut"
+msgid "Out"
+msgstr "出度"
+
+#: src/i18n/en/table.ts:15
+msgctxt "table.column.visibility"
+msgid "Visibility"
+msgstr "可见性"
+
+#: src/i18n/en/table.ts:16
+msgctxt "table.column.pinned"
+msgid "Pinned"
+msgstr "已固定"
+
+#: src/i18n/en/table.ts:17
+msgctxt "table.column.children"
+msgid "Children"
+msgstr "子节点"
+
+#: src/i18n/en/table.ts:18
+msgctxt "table.column.cluster"
+msgid "Cluster"
+msgstr "聚类"
+
+#: src/i18n/en/table.ts:19
+msgctxt "table.column.group"
+msgid "Group"
+msgstr "组"
+
+#: src/i18n/en/table.ts:20
+msgctxt "table.column.source"
+msgid "Source"
+msgstr "源"
+
+#: src/i18n/en/table.ts:21
+msgctxt "table.column.target"
+msgid "Target"
+msgstr "目标"
+
+#. Preserve placeholders: {column}
+#: src/i18n/en/table.ts:22
+msgctxt "table.column.sort.title"
+msgid "Sort by {column}"
+msgstr "按 {column} 排序"
+
+#: src/i18n/en/table.ts:25
+msgctxt "table.visibility.visible"
+msgid "visible"
+msgstr "可见"
+
+#: src/i18n/en/table.ts:26
+msgctxt "table.visibility.filtered"
+msgid "filtered"
+msgstr "已筛选"
+
+#: src/i18n/en/table.ts:27
+msgctxt "table.visibility.excluded"
+msgid "excluded"
+msgstr "已排除"
+
+#: src/i18n/en/table.ts:28
+msgctxt "table.visibility.endpoint"
+msgid "endpoint"
+msgstr "端点"
+
+#: src/i18n/en/table.ts:29
+msgctxt "table.visibility.nested"
+msgid "nested"
+msgstr "嵌套"
+
+#: src/i18n/en/table.ts:30
+msgctxt "table.visibility.grouped"
+msgid "grouped"
+msgstr "已分组"
+
+#: src/i18n/en/table.ts:33
+msgctxt "table.value.true"
+msgid "true"
+msgstr "真"
+
+#: src/i18n/en/table.ts:34
+msgctxt "table.value.false"
+msgid "false"
+msgstr "假"
+
+#. Preserve placeholders: {column}
+#: src/i18n/en/table.ts:37
+msgctxt "table.filter.title"
+msgid "Narrow the rows by {column}"
+msgstr "按 {column} 筛选行"
+
+#: src/i18n/en/table.ts:38
+msgctxt "table.filter.placeholder"
+msgid "Filter rows…"
+msgstr "筛选行…"
+
+#: src/i18n/en/table.ts:39
+msgctxt "table.filter.all"
+msgid "All"
+msgstr "全部"
+
+#: src/i18n/en/table.ts:40
+msgctxt "table.filter.min.placeholder"
+msgid "Min"
+msgstr "最小值"
+
+#: src/i18n/en/table.ts:41
+msgctxt "table.filter.max.placeholder"
+msgid "Max"
+msgstr "最大值"
+
+#: src/i18n/en/table.ts:44
+msgctxt "table.empty.filtered"
+msgid "No rows match the column filters."
+msgstr "没有行符合列筛选条件。"
+
+#. Preserve placeholders: {scope}
+#: src/i18n/en/table.ts:45
+msgctxt "table.empty.scope"
+msgid "{scope}: none left."
+msgstr "{scope}：无剩余项。"
+
+#: src/i18n/en/table.ts:46
+msgctxt "table.empty.nodes"
+msgid "This graph has no nodes."
+msgstr "此图没有节点。"
+
+#: src/i18n/en/table.ts:47
+msgctxt "table.empty.edges"
+msgid "This graph has no edges."
+msgstr "此图没有边。"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/table.ts:50
+msgctxt "table.summary.someNodes"
+msgid "{shown} of {count} node"
+msgid_plural "{shown} of {count} nodes"
+msgstr[0] "{shown} / {count} 个节点"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/table.ts:51
+msgctxt "table.summary.someEdges"
+msgid "{shown} of {count} edge"
+msgid_plural "{shown} of {count} edges"
+msgstr[0] "{shown} / {count} 条边"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:52
+msgctxt "table.summary.hidden"
+msgid "{count} hidden"
+msgstr "已隐藏 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:53
+msgctxt "table.summary.hiddenNodes.title"
+msgid "{count} node hidden on the canvas by this table's column filters"
+msgid_plural "{count} nodes hidden on the canvas by this table's column filters"
+msgstr[0] "此表格的列筛选条件在画布上隐藏了 {count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:57
+msgctxt "table.summary.hiddenEdges.title"
+msgid "{count} relation hidden on the canvas by this table's column filters"
+msgid_plural "{count} relations hidden on the canvas by this table's column filters"
+msgstr[0] "此表格的列筛选条件在画布上隐藏了 {count} 条关系"
+
+#: src/i18n/en/table.ts:63
+msgctxt "table.selectAll"
+msgid "Select all"
+msgstr "全选"
+
+#: src/i18n/en/table.ts:64
+msgctxt "table.selectAll.title"
+msgid "Select every row currently listed"
+msgstr "选择当前列出的所有行"
+
+#. Preserve placeholders: {format}
+#: src/i18n/en/table.ts:65
+msgctxt "table.export.title"
+msgid "Export the rows and columns currently shown as {format}"
+msgstr "将当前显示的行和列导出为 {format}"
+
+#: src/i18n/en/table.ts:66
+msgctxt "table.export.blocked"
+msgid "Export blocked"
+msgstr "导出被阻止"
+
+#: src/i18n/en/table.ts:67
+msgctxt "table.export.blocked.message"
+msgid "This page will not let the file download. Try the example outside its frame."
+msgstr "此页面不允许下载文件。请在框架外打开示例后重试。"
+
+#: src/i18n/en/table.ts:68
+msgctxt "table.columns"
+msgid "Columns"
+msgstr "列"
+
+#: src/i18n/en/table.ts:69
+msgctxt "table.columns.title"
+msgid "Choose which columns to show"
+msgstr "选择要显示的列"
+
+#: src/i18n/en/table.ts:70
+msgctxt "table.scope.clear.title"
+msgid "List every node again"
+msgstr "重新列出所有节点"
+
+#: src/i18n/en/table.ts:71
+msgctxt "table.nested"
+msgid "Nested nodes"
+msgstr "嵌套节点"
+
+#: src/i18n/en/table.ts:72
+msgctxt "table.nested.title"
+msgid "List the nodes inside clusters alongside the graph's own"
+msgstr "将聚类内部的节点与图中的节点一同列出"
+
+#: src/i18n/en/table.ts:75
+msgctxt "table.apply"
+msgid "Apply to graph"
+msgstr "应用到图"
+
+#: src/i18n/en/table.ts:76
+msgctxt "table.apply.clear"
+msgid "Clear"
+msgstr "清除"
+
+#: src/i18n/en/table.ts:77
+msgctxt "table.apply.disabled.title"
+msgid "Narrow a column first, then apply it to the graph"
+msgstr "先筛选某一列，再应用到图"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:78
+msgctxt "table.apply.nodes.title"
+msgid "Hide the {count} node the column filters leave out"
+msgid_plural "Hide the {count} nodes the column filters leave out"
+msgstr[0] "隐藏列筛选条件排除的 {count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:82
+msgctxt "table.apply.edges.title"
+msgid "Hide the {count} relation the column filters leave out"
+msgid_plural "Hide the {count} relations the column filters leave out"
+msgstr[0] "隐藏列筛选条件排除的 {count} 条关系"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:86
+msgctxt "table.apply.clearNodes.title"
+msgid "Stop filtering the graph from this table — {count} node hidden"
+msgid_plural "Stop filtering the graph from this table — {count} nodes hidden"
+msgstr[0] "停止通过此表格筛选图 — 已隐藏 {count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:90
+msgctxt "table.apply.clearEdges.title"
+msgid "Stop filtering the graph from this table — {count} relation hidden"
+msgid_plural "Stop filtering the graph from this table — {count} relations hidden"
+msgstr[0] "停止通过此表格筛选图 — 已隐藏 {count} 条关系"
+
+#: src/i18n/en/table.ts:94
+msgctxt "table.graphFilter.label"
+msgid "From the table"
+msgstr "来自表格"
+
+#: src/i18n/en/table.ts:97
+msgctxt "dock.resize.aria"
+msgid "Resize the dock"
+msgstr "调整数据面板大小"
+
+#: src/i18n/en/table.ts:98
+msgctxt "dock.expand.title"
+msgid "Expand the dock"
+msgstr "展开数据面板"
+
+#: src/i18n/en/table.ts:99
+msgctxt "dock.collapse.title"
+msgid "Collapse the dock"
+msgstr "收起数据面板"
+
+#: src/i18n/en/panels.ts:6
+msgctxt "filter.attributes"
+msgid "Attributes"
+msgstr "属性"
+
+#: src/i18n/en/panels.ts:7
+msgctxt "filter.reset"
+msgid "Reset"
+msgstr "重置"
+
+#: src/i18n/en/panels.ts:8
+msgctxt "filter.reset.title"
+msgid "Clear all attribute filters"
+msgstr "清除所有属性筛选条件"
+
+#: src/i18n/en/panels.ts:9
+msgctxt "filter.value.true"
+msgid "true"
+msgstr "真"
+
+#: src/i18n/en/panels.ts:10
+msgctxt "filter.value.false"
+msgid "false"
+msgstr "假"
+
+#: src/i18n/en/panels.ts:11
+msgctxt "filter.invalidPattern"
+msgid "Invalid pattern"
+msgstr "无效的模式"
+
+#: src/i18n/en/panels.ts:12
+msgctxt "filter.layers"
+msgid "Relationships"
+msgstr "关系"
+
+#: src/i18n/en/panels.ts:13
+msgctxt "filter.layers.showAll"
+msgid "Show all"
+msgstr "显示全部"
+
+#: src/i18n/en/panels.ts:14
+msgctxt "filter.layers.showAll.title"
+msgid "Show every relationship layer"
+msgstr "显示所有关系图层"
+
+#. Preserve placeholders: {layer}
+#: src/i18n/en/panels.ts:15
+msgctxt "filter.layer.hide.title"
+msgid "Hide {layer}"
+msgstr "隐藏 {layer}"
+
+#. Preserve placeholders: {layer}
+#: src/i18n/en/panels.ts:16
+msgctxt "filter.layer.show.title"
+msgid "Show {layer}"
+msgstr "显示 {layer}"
+
+#: src/i18n/en/panels.ts:17
+msgctxt "filter.fromTable"
+msgid "From the table"
+msgstr "来自表格"
+
+#: src/i18n/en/panels.ts:18
+msgctxt "filter.fromTable.clear"
+msgid "Clear"
+msgstr "清除"
+
+#: src/i18n/en/panels.ts:19
+msgctxt "filter.fromTable.clearNodes.title"
+msgid "Stop hiding the nodes the table's column filters leave out"
+msgstr "不再隐藏表格列筛选条件排除的节点"
+
+#: src/i18n/en/panels.ts:20
+msgctxt "filter.fromTable.clearEdges.title"
+msgid "Stop hiding the relations the table's column filters leave out"
+msgstr "不再隐藏表格列筛选条件排除的关系"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:21
+msgctxt "filter.fromTable.nodesHidden"
+msgid "{count} node hidden"
+msgid_plural "{count} nodes hidden"
+msgstr[0] "已隐藏 {count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:22
+msgctxt "filter.fromTable.edgesHidden"
+msgid "{count} relation hidden"
+msgid_plural "{count} relations hidden"
+msgstr[0] "已隐藏 {count} 条关系"
+
+#: src/i18n/en/panels.ts:23
+msgctxt "filter.hiddenNodes"
+msgid "Hidden nodes"
+msgstr "已隐藏的节点"
+
+#: src/i18n/en/panels.ts:24
+msgctxt "filter.hiddenNodes.showAll"
+msgid "Show all"
+msgstr "显示全部"
+
+#: src/i18n/en/panels.ts:25
+msgctxt "filter.hiddenNodes.showAll.title"
+msgid "Restore manually hidden nodes"
+msgstr "恢复手动隐藏的节点"
+
+#: src/i18n/en/panels.ts:26
+msgctxt "filter.hiddenNode.show"
+msgid "Show node"
+msgstr "显示节点"
+
+#: src/i18n/en/panels.ts:27
+msgctxt "filter.hiddenNode.show.title"
+msgid "Restore manually hidden node"
+msgstr "恢复手动隐藏的节点"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/panels.ts:28
+msgctxt "filter.hiddenNode.inspect.aria"
+msgid "Inspect {node}"
+msgstr "检查 {node}"
+
+#: src/i18n/en/panels.ts:32
+msgctxt "filter.button.active"
+msgid "active filter"
+msgid_plural "active filters"
+msgstr[0] "个生效的筛选条件"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:33
+msgctxt "filter.button.hidden"
+msgid "{count} hidden"
+msgstr "已隐藏 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:34
+msgctxt "filter.button.hiddenEdges"
+msgid "{count} edge hidden"
+msgid_plural "{count} edges hidden"
+msgstr[0] "已隐藏 {count} 条边"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/panels.ts:35
+msgctxt "filter.button.hiddenNodesAndEdges"
+msgid "{nodes}, {edges} hidden"
+msgstr "已隐藏 {nodes}、{edges}"
+
+#: src/i18n/en/panels.ts:38
+msgctxt "form.pattern.placeholder"
+msgid "pattern…"
+msgstr "模式…"
+
+#: src/i18n/en/panels.ts:39
+msgctxt "form.min.placeholder"
+msgid "Min"
+msgstr "最小值"
+
+#: src/i18n/en/panels.ts:40
+msgctxt "form.max.placeholder"
+msgid "Max"
+msgstr "最大值"
+
+#. Preserve placeholders: {field}
+#: src/i18n/en/panels.ts:41
+msgctxt "form.negate.aria"
+msgid "How {field} filters"
+msgstr "{field} 的筛选方式"
+
+#: src/i18n/en/panels.ts:42
+msgctxt "form.negate.is"
+msgid "is"
+msgstr "是"
+
+#: src/i18n/en/panels.ts:43
+msgctxt "form.negate.is.title"
+msgid "Keep what matches"
+msgstr "保留匹配项"
+
+#: src/i18n/en/panels.ts:44
+msgctxt "form.negate.not"
+msgid "is not"
+msgstr "不是"
+
+#: src/i18n/en/panels.ts:45
+msgctxt "form.negate.not.title"
+msgid "Keep what does not match, and what has no value"
+msgstr "保留不匹配项和无值项"
+
+#: src/i18n/en/panels.ts:46
+msgctxt "picker.placeholder"
+msgid "Select..."
+msgstr "选择…"
+
+#: src/i18n/en/panels.ts:47
+msgctxt "picker.search.placeholder"
+msgid "Search..."
+msgstr "搜索…"
+
+#: src/i18n/en/panels.ts:48
+msgctxt "picker.empty"
+msgid "No options available"
+msgstr "没有可用选项"
+
+#. Preserve placeholders: {option}
+#: src/i18n/en/panels.ts:49
+msgctxt "picker.remove.aria"
+msgid "Remove {option}"
+msgstr "移除 {option}"
+
+#: src/i18n/en/panels.ts:52
+msgctxt "legend.title"
+msgid "Legend"
+msgstr "图例"
+
+#: src/i18n/en/panels.ts:53
+msgctxt "legend.title.type"
+msgid "Type"
+msgstr "类型"
+
+#: src/i18n/en/panels.ts:54
+msgctxt "legend.showAll.title"
+msgid "Show every category"
+msgstr "显示所有类别"
+
+#: src/i18n/en/panels.ts:55
+msgctxt "legend.invert.title"
+msgid "Invert which categories are shown"
+msgstr "反转显示的类别"
+
+#: src/i18n/en/panels.ts:56
+msgctxt "legend.expand.title"
+msgid "Expand this section"
+msgstr "展开此部分"
+
+#: src/i18n/en/panels.ts:57
+msgctxt "legend.collapse.title"
+msgid "Collapse this section"
+msgstr "收起此部分"
+
+#: src/i18n/en/panels.ts:58
+msgctxt "legend.expandAll.title"
+msgid "Expand this section (alt-click for every section)"
+msgstr "展开此部分（Alt+单击展开全部）"
+
+#: src/i18n/en/panels.ts:59
+msgctxt "legend.collapseAll.title"
+msgid "Collapse this section (alt-click for every section)"
+msgstr "收起此部分（Alt+单击收起全部）"
+
+#. Preserve placeholders: {category}
+#: src/i18n/en/panels.ts:60
+msgctxt "legend.entry.show.title"
+msgid "Show {category}"
+msgstr "显示 {category}"
+
+#. Preserve placeholders: {category}
+#: src/i18n/en/panels.ts:61
+msgctxt "legend.entry.hide.title"
+msgid "Hide {category} (alt-click to show only this one)"
+msgstr "隐藏 {category}（Alt+单击仅显示此类别）"
+
+#: src/i18n/en/panels.ts:62
+msgctxt "legend.entry.lastShown.title"
+msgid "The last shown category can't be hidden while the legend drives the filter panel's facet."
+msgstr "图例控制筛选面板的分面时，不能隐藏最后一个可见类别。"
+
+#: src/i18n/en/panels.ts:65
+msgctxt "physicsFlyout.title"
+msgid "Physics"
+msgstr "物理模拟"
+
+#: src/i18n/en/panels.ts:66
+msgctxt "physicsFlyout.section"
+msgid "LAYOUT & SIMULATION"
+msgstr "布局与模拟"
+
+#: src/i18n/en/panels.ts:67
+msgctxt "physicsFlyout.layout.force"
+msgid "Force"
+msgstr "力导向"
+
+#: src/i18n/en/panels.ts:68
+msgctxt "physicsFlyout.layout.force.title"
+msgid "Force — positions nodes freely using the physics simulation."
+msgstr "力导向 — 通过物理模拟自由定位节点。"
+
+#: src/i18n/en/panels.ts:69
+msgctxt "physicsFlyout.layout.treeV"
+msgid "Vertical"
+msgstr "垂直"
+
+#: src/i18n/en/panels.ts:70
+msgctxt "physicsFlyout.layout.treeV.title"
+msgid "Tree — hierarchical layout flowing from top to bottom."
+msgstr "树形 — 从上到下的层级布局。"
+
+#: src/i18n/en/panels.ts:71
+msgctxt "physicsFlyout.layout.treeH"
+msgid "Horizontal"
+msgstr "水平"
+
+#: src/i18n/en/panels.ts:72
+msgctxt "physicsFlyout.layout.treeH.title"
+msgid "Tree — hierarchical layout flowing from left to right."
+msgstr "树形 — 从左到右的层级布局。"
+
+#: src/i18n/en/panels.ts:73
+msgctxt "physicsFlyout.layout.treeR"
+msgid "Radial"
+msgstr "径向"
+
+#: src/i18n/en/panels.ts:74
+msgctxt "physicsFlyout.layout.treeR.title"
+msgid "Tree — hierarchical layout radiating out from a central root."
+msgstr "树形 — 从中心根节点向外辐射的层级布局。"
+
+#: src/i18n/en/panels.ts:75
+msgctxt "physicsFlyout.root"
+msgid "Root"
+msgstr "根节点"
+
+#: src/i18n/en/panels.ts:76
+msgctxt "physicsFlyout.root.selected"
+msgid "Selected node"
+msgstr "所选节点"
+
+#: src/i18n/en/panels.ts:77
+msgctxt "physicsFlyout.root.selected.description"
+msgid "Hangs the tree from the node you have selected, following edges either way round."
+msgstr "以所选节点为根节点，沿两个方向遍历边。"
+
+#: src/i18n/en/panels.ts:78
+msgctxt "physicsFlyout.root.firstSource"
+msgid "First source"
+msgstr "首个源节点"
+
+#: src/i18n/en/panels.ts:79
+msgctxt "physicsFlyout.root.firstSource.description"
+msgid "The first node nothing points at."
+msgstr "第一个没有入向边的节点。"
+
+#: src/i18n/en/panels.ts:80
+msgctxt "physicsFlyout.root.widestReach"
+msgid "Widest reach"
+msgstr "最大可达范围"
+
+#: src/i18n/en/panels.ts:81
+msgctxt "physicsFlyout.root.widestReach.description"
+msgid "Reaches the most other nodes."
+msgstr "可到达最多其他节点。"
+
+#: src/i18n/en/panels.ts:82
+msgctxt "physicsFlyout.root.shallowest"
+msgid "Shallowest"
+msgstr "最小深度"
+
+#: src/i18n/en/panels.ts:83
+msgctxt "physicsFlyout.root.shallowest.description"
+msgid "Makes the tree as shallow as it can be."
+msgstr "使树的深度尽可能小。"
+
+#: src/i18n/en/panels.ts:84
+msgctxt "physicsFlyout.root.selectFirst"
+msgid "Select a node first."
+msgstr "请先选择一个节点。"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/panels.ts:85
+msgctxt "physicsFlyout.root.pinned.title"
+msgid "The tree is hung from \"{node}\". Pick again to change it."
+msgstr "树以“{node}”为根节点。再次选择可更改。"
+
+#. Preserve placeholders: {description}, {label}
+#: src/i18n/en/panels.ts:86
+msgctxt "physicsFlyout.root.finder.title"
+msgid "{label}: {description}"
+msgstr "{label}：{description}"
+
+#: src/i18n/en/panels.ts:87
+msgctxt "physicsFlyout.spacing"
+msgid "Spacing"
+msgstr "间距"
+
+#: src/i18n/en/panels.ts:88
+msgctxt "physicsFlyout.spacing.auto"
+msgid "Auto"
+msgstr "自动"
+
+#: src/i18n/en/panels.ts:89
+msgctxt "physicsFlyout.spacing.auto.title"
+msgid "Let the tree work out its own distances from the size of the nodes and the shape of the tree — and keep working them out as the graph changes."
+msgstr "根据节点大小和树的形状自动计算间距，并随图的变化持续调整。"
+
+#: src/i18n/en/panels.ts:90
+msgctxt "physicsFlyout.spacing.level"
+msgid "Level distance"
+msgstr "层级间距"
+
+#: src/i18n/en/panels.ts:91
+msgctxt "physicsFlyout.spacing.level.title"
+msgid "How far apart consecutive levels of the tree sit — the gap between rings, in the radial layout."
+msgstr "树的相邻层级之间的距离；在径向布局中为圆环之间的间距。"
+
+#: src/i18n/en/panels.ts:92
+msgctxt "physicsFlyout.spacing.sibling"
+msgid "Sibling distance"
+msgstr "同级间距"
+
+#: src/i18n/en/panels.ts:93
+msgctxt "physicsFlyout.spacing.sibling.title"
+msgid "How far apart nodes on the same level sit. The radial layout spreads a level over the whole circle, so it ignores this one."
+msgstr "同一层级节点之间的距离。径向布局将同一层级分布在整个圆周上，因此忽略此值。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:94
+msgctxt "physicsFlyout.spacing.value"
+msgid "{count}×"
+msgstr "{count}×"
+
+#: src/i18n/en/panels.ts:95
+msgctxt "physicsFlyout.simulation"
+msgid "Simulation"
+msgstr "模拟"
+
+#: src/i18n/en/panels.ts:96
+msgctxt "physicsFlyout.pause.title"
+msgid "Pause physics"
+msgstr "暂停物理模拟"
+
+#: src/i18n/en/panels.ts:97
+msgctxt "physicsFlyout.resume.title"
+msgid "Resume physics"
+msgstr "继续物理模拟"
+
+#: src/i18n/en/panels.ts:98
+msgctxt "physicsFlyout.preset.auto"
+msgid "Auto"
+msgstr "自动"
+
+#: src/i18n/en/panels.ts:99
+msgctxt "physicsFlyout.preset.auto.title"
+msgid "Let the layout tune itself from the number of nodes, their size and the canvas — and keep tuning as the graph changes."
+msgstr "根据节点数量、大小和画布自动调整布局，并随图的变化持续调整。"
+
+#: src/i18n/en/panels.ts:100
+msgctxt "physicsFlyout.preset.tight"
+msgid "Tight"
+msgstr "紧凑"
+
+#: src/i18n/en/panels.ts:101
+msgctxt "physicsFlyout.preset.tight.title"
+msgid "Compact layout with nodes packed closely together."
+msgstr "节点紧密排列的紧凑布局。"
+
+#: src/i18n/en/panels.ts:102
+msgctxt "physicsFlyout.preset.loose"
+msgid "Loose"
+msgstr "宽松"
+
+#: src/i18n/en/panels.ts:103
+msgctxt "physicsFlyout.preset.loose.title"
+msgid "Spacious layout with nodes spread further apart."
+msgstr "节点间距较大的宽松布局。"
+
+#: src/i18n/en/panels.ts:104
+msgctxt "physicsFlyout.knob.repulsion"
+msgid "Repulsion"
+msgstr "排斥力"
+
+#: src/i18n/en/panels.ts:105
+msgctxt "physicsFlyout.knob.repulsion.title"
+msgid "How strongly nodes push each other apart. Higher values spread the graph out."
+msgstr "节点相互排斥的强度。值越大，图越分散。"
+
+#: src/i18n/en/panels.ts:106
+msgctxt "physicsFlyout.knob.linkDistance"
+msgid "Link distance"
+msgstr "连接距离"
+
+#: src/i18n/en/panels.ts:107
+msgctxt "physicsFlyout.knob.linkDistance.title"
+msgid "The resting length of edges, in pixels. Higher values place connected nodes further apart."
+msgstr "边的静止长度，单位为像素。值越大，相连节点之间的距离越大。"
+
+#: src/i18n/en/panels.ts:108
+msgctxt "physicsFlyout.knob.collisionRadius"
+msgid "Collision radius"
+msgstr "碰撞半径"
+
+#: src/i18n/en/panels.ts:109
+msgctxt "physicsFlyout.knob.collisionRadius.title"
+msgid "The clear space kept around each node to prevent overlap. Higher values keep nodes further apart."
+msgstr "为避免重叠而在每个节点周围保留的空间。值越大，节点间距越大。"
+
+#: src/i18n/en/panels.ts:110
+msgctxt "physicsFlyout.knob.friction"
+msgid "Friction"
+msgstr "摩擦力"
+
+#: src/i18n/en/panels.ts:111
+msgctxt "physicsFlyout.knob.friction.title"
+msgid "How quickly node motion is damped. Higher values calm the layout and settle it faster."
+msgstr "节点运动衰减的速度。值越大，布局越快稳定。"
+
+#: src/i18n/en/panels.ts:112
+msgctxt "physicsFlyout.knob.centering"
+msgid "Centering"
+msgstr "居中力"
+
+#: src/i18n/en/panels.ts:113
+msgctxt "physicsFlyout.knob.centering.title"
+msgid "How strongly the graph is pulled toward the middle of the canvas. Higher values keep disconnected parts in frame."
+msgstr "将图拉向画布中心的强度。值越大，越能使不相连的部分保持在画面内。"
+
+#: src/i18n/en/panels.ts:114
+msgctxt "physicsFlyout.knob.settleTime"
+msgid "Settle time"
+msgstr "稳定时间"
+
+#: src/i18n/en/panels.ts:115
+msgctxt "physicsFlyout.knob.settleTime.title"
+msgid "How long the layout is given to settle, in seconds. Higher values let large graphs unfold further before they stop."
+msgstr "布局达到稳定的时间，单位为秒。值越大，大图在停止前可以展开得更充分。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:116
+msgctxt "physicsFlyout.knob.seconds"
+msgid "{count}s"
+msgstr "{count} 秒"
+
+#: src/i18n/en/panels.ts:119
+msgctxt "viewFlyout.title"
+msgid "View"
+msgstr "视图"
+
+#: src/i18n/en/panels.ts:120
+msgctxt "viewFlyout.section"
+msgid "GRID & CANVAS"
+msgstr "网格与画布"
+
+#: src/i18n/en/panels.ts:121
+msgctxt "viewFlyout.background"
+msgid "Background"
+msgstr "背景"
+
+#: src/i18n/en/panels.ts:122
+msgctxt "viewFlyout.background.grid"
+msgid "Grid"
+msgstr "网格"
+
+#: src/i18n/en/panels.ts:123
+msgctxt "viewFlyout.background.grid.title"
+msgid "Rule the canvas with grid lines."
+msgstr "在画布上显示网格线。"
+
+#: src/i18n/en/panels.ts:124
+msgctxt "viewFlyout.background.dots"
+msgid "Dots"
+msgstr "点阵"
+
+#: src/i18n/en/panels.ts:125
+msgctxt "viewFlyout.background.dots.title"
+msgid "Mark the grid with dots instead of lines."
+msgstr "使用点代替线显示网格。"
+
+#: src/i18n/en/panels.ts:126
+msgctxt "viewFlyout.background.none"
+msgid "None"
+msgstr "无"
+
+#: src/i18n/en/panels.ts:127
+msgctxt "viewFlyout.background.none.title"
+msgid "Leave the canvas plain."
+msgstr "保持画布无图案。"
+
+#: src/i18n/en/panels.ts:128
+msgctxt "viewFlyout.background.image"
+msgid "Image"
+msgstr "图片"
+
+#: src/i18n/en/panels.ts:129
+msgctxt "viewFlyout.background.image.title"
+msgid "Paint an image behind the graph."
+msgstr "在图后方显示图片。"
+
+#: src/i18n/en/panels.ts:130
+msgctxt "viewFlyout.canvasColour"
+msgid "Canvas colour"
+msgstr "画布颜色"
+
+#: src/i18n/en/panels.ts:131
+msgctxt "viewFlyout.canvasColour.custom.title"
+msgid "Custom canvas colour"
+msgstr "自定义画布颜色"
+
+#: src/i18n/en/panels.ts:132
+msgctxt "viewFlyout.gridColour"
+msgid "Grid colour"
+msgstr "网格颜色"
+
+#: src/i18n/en/panels.ts:133
+msgctxt "viewFlyout.gridColour.custom.title"
+msgid "Custom grid colour"
+msgstr "自定义网格颜色"
+
+#: src/i18n/en/panels.ts:134
+msgctxt "viewFlyout.colour.default"
+msgid "Theme default"
+msgstr "主题默认值"
+
+#: src/i18n/en/panels.ts:135
+msgctxt "viewFlyout.colour.white"
+msgid "White"
+msgstr "白色"
+
+#: src/i18n/en/panels.ts:136
+msgctxt "viewFlyout.colour.lightGrey"
+msgid "Light grey"
+msgstr "浅灰色"
+
+#: src/i18n/en/panels.ts:137
+msgctxt "viewFlyout.colour.darkGrey"
+msgid "Dark grey"
+msgstr "深灰色"
+
+#: src/i18n/en/panels.ts:138
+msgctxt "viewFlyout.colour.black"
+msgid "Black"
+msgstr "黑色"
+
+#: src/i18n/en/panels.ts:139
+msgctxt "viewFlyout.highlightGrid"
+msgid "Highlight grid"
+msgstr "突出显示网格"
+
+#: src/i18n/en/panels.ts:140
+msgctxt "viewFlyout.highlightGrid.title"
+msgid "Make the background grid lines more visible."
+msgstr "使背景网格线更加明显。"
+
+#: src/i18n/en/panels.ts:141
+msgctxt "viewFlyout.image.url.placeholder"
+msgid "Image URL..."
+msgstr "图片 URL…"
+
+#: src/i18n/en/panels.ts:142
+msgctxt "viewFlyout.image.browse"
+msgid "Browse"
+msgstr "浏览"
+
+#: src/i18n/en/panels.ts:143
+msgctxt "viewFlyout.image.browse.title"
+msgid "Pick an image file from this device."
+msgstr "从此设备选择图片文件。"
+
+#: src/i18n/en/panels.ts:144
+msgctxt "viewFlyout.image.fit.cover"
+msgid "Cover"
+msgstr "覆盖"
+
+#: src/i18n/en/panels.ts:145
+msgctxt "viewFlyout.image.fit.cover.title"
+msgid "Scale the image to fill the canvas, cropping whatever overflows."
+msgstr "缩放图片以填满画布，并裁剪超出部分。"
+
+#: src/i18n/en/panels.ts:146
+msgctxt "viewFlyout.image.fit.contain"
+msgid "Contain"
+msgstr "适应"
+
+#: src/i18n/en/panels.ts:147
+msgctxt "viewFlyout.image.fit.contain.title"
+msgid "Scale the image until all of it fits on the canvas."
+msgstr "缩放图片，使其完整显示在画布内。"
+
+#: src/i18n/en/panels.ts:148
+msgctxt "viewFlyout.image.fit.tile"
+msgid "Tile"
+msgstr "平铺"
+
+#: src/i18n/en/panels.ts:149
+msgctxt "viewFlyout.image.fit.tile.title"
+msgid "Keep the image at its own size and repeat it across the canvas."
+msgstr "保持图片原始大小，并在画布上重复显示。"
+
+#: src/i18n/en/panels.ts:150
+msgctxt "viewFlyout.image.remove"
+msgid "Remove image"
+msgstr "移除图片"
+
+#: src/i18n/en/panels.ts:151
+msgctxt "viewFlyout.snap"
+msgid "Snap to grid"
+msgstr "对齐网格"
+
+#: src/i18n/en/panels.ts:152
+msgctxt "viewFlyout.snap.title"
+msgid "Align nodes to the grid while you drag them."
+msgstr "拖动节点时将其对齐网格。"
+
+#: src/i18n/en/panels.ts:153
+msgctxt "viewFlyout.freeze"
+msgid "Freeze on drag"
+msgstr "拖动后固定"
+
+#: src/i18n/en/panels.ts:154
+msgctxt "viewFlyout.freeze.title"
+msgid "Keep nodes pinned where you drop them instead of letting physics move them again."
+msgstr "将节点固定在放下的位置，不再由物理模拟移动。"
+
+#: src/i18n/en/panels.ts:155
+msgctxt "viewFlyout.fit"
+msgid "Fit on expand/collapse"
+msgstr "展开或折叠时适应视图"
+
+#: src/i18n/en/panels.ts:156
+msgctxt "viewFlyout.fit.title"
+msgid "Zoom and re-center to fit the graph when clusters or groups are expanded or collapsed."
+msgstr "展开或折叠聚类或组时，缩放并重新居中以适应图。"
+
+#: src/i18n/en/panels.ts:157
+msgctxt "viewFlyout.orphans"
+msgid "Hide unconnected"
+msgstr "隐藏未连接的节点"
+
+#: src/i18n/en/panels.ts:158
+msgctxt "viewFlyout.orphans.title"
+msgid "Hide nodes that have no visible relation left. Unlike hiding a relationship layer, this moves the graph."
+msgstr "隐藏没有可见关系的节点。与隐藏关系图层不同，此操作会移动图。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:159
+msgctxt "viewFlyout.orphans.note.title"
+msgid "{count} unconnected node hidden"
+msgid_plural "{count} unconnected nodes hidden"
+msgstr[0] "已隐藏 {count} 个未连接的节点"
+
+#: src/i18n/en/panels.ts:162
+msgctxt "simplifyFlyout.title"
+msgid "Simplify"
+msgstr "简化"
+
+#: src/i18n/en/panels.ts:163
+msgctxt "simplifyFlyout.onCanvas"
+msgid "On the canvas"
+msgstr "画布上"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/panels.ts:164
+msgctxt "simplifyFlyout.shown"
+msgid "{shown} of {count} node"
+msgid_plural "{shown} of {count} nodes"
+msgstr[0] "{shown} / {count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:165
+msgctxt "simplifyFlyout.groups"
+msgid "{count} group"
+msgid_plural "{count} groups"
+msgstr[0] "{count} 个组"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:166
+msgctxt "simplifyFlyout.folded"
+msgid "{count} folded"
+msgstr "已折叠 {count} 项"
+
+#: src/i18n/en/panels.ts:167
+msgctxt "simplifyFlyout.rule.app"
+msgid "app"
+msgstr "应用"
+
+#: src/i18n/en/panels.ts:168
+msgctxt "simplifyFlyout.smaller.aria"
+msgid "Smaller"
+msgstr "更小"
+
+#: src/i18n/en/panels.ts:169
+msgctxt "simplifyFlyout.larger.aria"
+msgid "Larger"
+msgstr "更大"
+
+#: src/i18n/en/panels.ts:170
+msgctxt "simplifyFlyout.slider.fine"
+msgid "Fine"
+msgstr "精细"
+
+#: src/i18n/en/panels.ts:171
+msgctxt "simplifyFlyout.slider.coarse"
+msgid "Coarse"
+msgstr "粗略"
+
+#: src/i18n/en/panels.ts:172
+msgctxt "simplifyFlyout.result.failed"
+msgid "This rule failed"
+msgstr "此规则执行失败"
+
+#: src/i18n/en/panels.ts:173
+msgctxt "simplifyFlyout.result.grouping"
+msgid "Grouping…"
+msgstr "正在分组…"
+
+#: src/i18n/en/panels.ts:174
+msgctxt "simplifyFlyout.result.nothing"
+msgid "Nothing to fold"
+msgstr "没有可折叠的内容"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:175
+msgctxt "simplifyFlyout.result.nothingAt"
+msgid "Nothing to fold at {count} or more"
+msgstr "阈值为 {count} 或以上时，没有可折叠的内容"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:176
+msgctxt "simplifyFlyout.result.nothingByDegree"
+msgid "Every node has {count} link or more"
+msgid_plural "Every node has {count} links or more"
+msgstr[0] "每个节点至少有 {count} 个连接"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:177
+msgctxt "simplifyFlyout.result.nothingByCore"
+msgid "Every node is in the {count}-core"
+msgstr "每个节点都位于 {count}-核中"
+
+#: src/i18n/en/pivot.ts:6
+msgctxt "pivot.retry"
+msgid "Retry"
+msgstr "重试"
+
+#: src/i18n/en/pivot.ts:7
+msgctxt "pivot.cancel"
+msgid "Cancel"
+msgstr "取消"
+
+#: src/i18n/en/pivot.ts:8
+msgctxt "pivot.close"
+msgid "Close"
+msgstr "关闭"
+
+#: src/i18n/en/pivot.ts:9
+msgctxt "pivot.dismiss"
+msgid "Dismiss"
+msgstr "关闭"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:10
+msgctxt "pivot.more"
+msgid "…and {count} more"
+msgstr "…另有 {count} 项"
+
+#: src/i18n/en/pivot.ts:13
+msgctxt "pivot.mode.label"
+msgid "Pivot"
+msgstr "拓展"
+
+#: src/i18n/en/pivot.ts:14
+msgctxt "pivot.mode.pickOrigin"
+msgid "Pick origin"
+msgstr "选择起点"
+
+#: src/i18n/en/pivot.ts:15
+msgctxt "pivot.mode.lassoOrigin"
+msgid "Lasso origin"
+msgstr "套索选择起点"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:18
+msgctxt "pivot.toast.fetchFailed"
+msgid "Couldn't fetch {pivot}"
+msgstr "无法获取 {pivot}"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:19
+msgctxt "pivot.toast.refused.title"
+msgid "{pivot} returned too much"
+msgstr "{pivot} 返回了过多结果"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:20
+msgctxt "pivot.toast.refused.message"
+msgid "{count} candidate, over the {limit} limit. Nothing was ingested — narrow and run again."
+msgid_plural "{count} candidates, over the {limit} limit. Nothing was ingested — narrow and run again."
+msgstr[0] "{count} 个候选项，超过 {limit} 项的限制。未导入任何内容 — 请缩小范围后重新运行。"
+
+#: src/i18n/en/pivot.ts:26
+msgctxt "pivot.save.promptTitle"
+msgid "Save"
+msgstr "保存"
+
+#: src/i18n/en/pivot.ts:27
+msgctxt "pivot.save.promptSubmit"
+msgid "Save"
+msgstr "保存"
+
+#: src/i18n/en/pivot.ts:28
+msgctxt "pivot.save.saving"
+msgid "Saving…"
+msgstr "正在保存…"
+
+#. Preserve placeholders: {elements}
+#: src/i18n/en/pivot.ts:29
+msgctxt "pivot.save.saved"
+msgid "Saved {elements}"
+msgstr "已保存 {elements}"
+
+#. Preserve placeholders: {elements}
+#: src/i18n/en/pivot.ts:30
+msgctxt "pivot.save.failed"
+msgid "Couldn't save {elements}"
+msgstr "无法保存 {elements}"
+
+#: src/i18n/en/pivot.ts:31
+msgctxt "pivot.save.failedDetail"
+msgid "Nothing was written, and nothing left the canvas."
+msgstr "未写入任何内容，也未从画布中移除任何内容。"
+
+#. Preserve placeholders: {saved}, {total}
+#: src/i18n/en/pivot.ts:32
+msgctxt "pivot.save.partial"
+msgid "Saved {saved} of {total}"
+msgstr "已保存 {saved} / {total} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:33
+msgctxt "pivot.save.partialDetail"
+msgid "{count} still unsaved."
+msgstr "仍有 {count} 项未保存。"
+
+#: src/i18n/en/pivot.ts:34
+msgctxt "pivot.save.nothing"
+msgid "nothing"
+msgstr "无"
+
+#: src/i18n/en/pivot.ts:37
+msgctxt "pivot.ingest.failed"
+msgid "Ingest failed"
+msgstr "导入失败"
+
+#: src/i18n/en/pivot.ts:38
+msgctxt "pivot.ingest.cancelled"
+msgid "Ingest cancelled"
+msgstr "导入已取消"
+
+#: src/i18n/en/pivot.ts:39
+msgctxt "pivot.ingest.nothing"
+msgid "Nothing was ingested"
+msgstr "未导入任何内容"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:40
+msgctxt "pivot.ingest.nodes"
+msgid "Ingested {count} node"
+msgid_plural "Ingested {count} nodes"
+msgstr[0] "已导入 {count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:41
+msgctxt "pivot.ingest.edges"
+msgid "Ingested {count} edge"
+msgid_plural "Ingested {count} edges"
+msgstr[0] "已导入 {count} 条边"
+
+#. Preserve placeholders: {count}, {landed}
+#: src/i18n/en/pivot.ts:42
+msgctxt "pivot.ingest.someNodes"
+msgid "Ingested {landed} of {count} node"
+msgid_plural "Ingested {landed} of {count} nodes"
+msgstr[0] "已导入 {landed} / {count} 个节点"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/pivot.ts:44
+msgctxt "pivot.ingest.nodesAndEdges"
+msgid "Ingested {nodes}, {edges}"
+msgstr "已导入 {nodes}、{edges}"
+
+#. Preserve placeholders: {count}, {landed}
+#: src/i18n/en/pivot.ts:45
+msgctxt "pivot.ingest.nodesOfAsked"
+msgid "{landed} of {count} node"
+msgid_plural "{landed} of {count} nodes"
+msgstr[0] "{landed} / {count} 个节点"
+
+#: src/i18n/en/pivot.ts:48
+msgctxt "pivot.panel.filter.placeholder"
+msgid "Filter pivots"
+msgstr "筛选拓展"
+
+#: src/i18n/en/pivot.ts:49
+msgctxt "pivot.panel.filter.aria"
+msgid "Filter pivots"
+msgstr "筛选拓展"
+
+#: src/i18n/en/pivot.ts:50
+msgctxt "pivot.panel.filter.clear.title"
+msgid "Clear the filter"
+msgstr "清除筛选条件"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:51
+msgctxt "pivot.panel.hits.selected"
+msgid "Showing your {count} selected"
+msgstr "正在显示所选的 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:52
+msgctxt "pivot.panel.hits.matching"
+msgid "{count} match"
+msgstr "{count} 项匹配"
+
+#: src/i18n/en/pivot.ts:53
+msgctxt "pivot.panel.selectNone"
+msgid "Select none"
+msgstr "取消全选"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:54
+msgctxt "pivot.panel.deselect"
+msgid "Deselect {count}"
+msgstr "取消选择 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:55
+msgctxt "pivot.panel.selectMatching"
+msgid "Select {count} matching"
+msgstr "选择 {count} 个匹配项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:56
+msgctxt "pivot.panel.selectAll"
+msgid "Select all {count}"
+msgstr "选择全部 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:57
+msgctxt "pivot.panel.tray.selected"
+msgid "{count} selected"
+msgstr "已选择 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:58
+msgctxt "pivot.panel.tray.hidden"
+msgid "{count} hidden"
+msgstr "已隐藏 {count} 项"
+
+#: src/i18n/en/pivot.ts:59
+msgctxt "pivot.panel.tray.none"
+msgid "Nothing selected"
+msgstr "未选择任何内容"
+
+#: src/i18n/en/pivot.ts:60
+msgctxt "pivot.panel.tray.reveal.title"
+msgid "Show only what is selected"
+msgstr "仅显示所选项"
+
+#: src/i18n/en/pivot.ts:61
+msgctxt "pivot.panel.tray.unreveal.title"
+msgid "Back to the filtered list"
+msgstr "返回筛选后的列表"
+
+#: src/i18n/en/pivot.ts:62
+msgctxt "pivot.panel.tray.clear"
+msgid "Clear"
+msgstr "清除"
+
+#: src/i18n/en/pivot.ts:63
+msgctxt "pivot.panel.tray.clear.title"
+msgid "Clear the selection"
+msgstr "清除选择"
+
+#: src/i18n/en/pivot.ts:64
+msgctxt "pivot.panel.tray.run"
+msgid "Run"
+msgstr "运行"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:65
+msgctxt "pivot.panel.tray.runCount"
+msgid "Run {count}"
+msgstr "运行 {count} 项"
+
+#: src/i18n/en/pivot.ts:66
+msgctxt "pivot.panel.tray.run.title"
+msgid "Run every selected pivot"
+msgstr "运行所有所选拓展"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:67
+msgctxt "pivot.panel.tray.caution"
+msgid "{count} pivot is over {limit} — this asks every one of them at once."
+msgid_plural "{count} pivots is over {limit} — this asks every one of them at once."
+msgstr[0] "{count} 个拓展超过 {limit} 的限制 — 此操作会同时查询全部拓展。"
+
+#. Preserve placeholders: {query}
+#: src/i18n/en/pivot.ts:71
+msgctxt "pivot.panel.noMatch"
+msgid "No pivot matches “{query}”."
+msgstr "没有拓展匹配“{query}”。"
+
+#: src/i18n/en/pivot.ts:72
+msgctxt "pivot.panel.noMatch.reveal"
+msgid "Nothing selected."
+msgstr "未选择任何内容。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:73
+msgctxt "pivot.panel.originless"
+msgid "Without an origin ({count})"
+msgstr "无需起点（{count}）"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:76
+msgctxt "pivot.panel.unsaved"
+msgid "{count} unsaved"
+msgstr "{count} 项未保存"
+
+#: src/i18n/en/pivot.ts:77
+msgctxt "pivot.panel.unsaved.title"
+msgid "Brought in by a pivot this session, and not written back"
+msgstr "在本次会话中通过拓展导入，尚未写回源系统"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/pivot.ts:78
+msgctxt "pivot.panel.unsaved.titleCounts"
+msgid "{nodes} and {edges} this session's pivots brought in and have not written back"
+msgstr "本次会话的拓展导入了 {nodes} 和 {edges}，尚未写回源系统"
+
+#: src/i18n/en/pivot.ts:79
+msgctxt "pivot.panel.save"
+msgid "Save"
+msgstr "保存"
+
+#: src/i18n/en/pivot.ts:80
+msgctxt "pivot.panel.save.saving"
+msgid "Saving…"
+msgstr "正在保存…"
+
+#: src/i18n/en/pivot.ts:81
+msgctxt "pivot.panel.save.title"
+msgid "Write these back to the source system"
+msgstr "写回源系统"
+
+#: src/i18n/en/pivot.ts:84
+msgctxt "pivot.panel.origin"
+msgid "Origin"
+msgstr "起点"
+
+#: src/i18n/en/pivot.ts:85
+msgctxt "pivot.panel.origin.empty"
+msgid "Nothing picked — click a node on the canvas to see what can be run on it"
+msgstr "尚未选择起点 — 单击画布上的节点，查看可对其运行的拓展"
+
+#: src/i18n/en/pivot.ts:86
+msgctxt "pivot.panel.origin.emptyOriginless"
+msgid "Nothing picked — click a node on the canvas, or run one of the pivots below"
+msgstr "尚未选择起点 — 单击画布上的节点，或运行下方的某个拓展"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:87
+msgctxt "pivot.panel.origin.more"
+msgid "+{count}"
+msgstr "+{count}"
+
+#: src/i18n/en/pivot.ts:88
+msgctxt "pivot.panel.origin.clear"
+msgid "Clear"
+msgstr "清除"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:89
+msgctxt "pivot.panel.heading"
+msgid "{count} pivot applies"
+msgid_plural "{count} pivots apply"
+msgstr[0] "{count} 个可用拓展"
+
+#: src/i18n/en/pivot.ts:90
+msgctxt "pivot.panel.heading.none"
+msgid "No pivots apply to this origin"
+msgstr "没有适用于此起点的拓展"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:93
+msgctxt "pivot.entry.select.aria"
+msgid "Select {pivot}"
+msgstr "选择 {pivot}"
+
+#: src/i18n/en/pivot.ts:94
+msgctxt "pivot.entry.fetching"
+msgid "Fetching…"
+msgstr "正在获取…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:95
+msgctxt "pivot.entry.fetchingCount"
+msgid "Fetching ~{count}…"
+msgstr "正在获取约 {count} 项…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:96
+msgctxt "pivot.entry.ingested"
+msgid "{count} ingested"
+msgstr "已导入 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:97
+msgctxt "pivot.entry.declared"
+msgid "~{count} declared"
+msgstr "已声明约 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:98
+msgctxt "pivot.entry.count"
+msgid "~{count}"
+msgstr "~{count}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/pivot.ts:99
+msgctxt "pivot.entry.countAcross"
+msgid "~{total} across {count} node"
+msgid_plural "~{total} across {count} nodes"
+msgstr[0] "{count} 个节点中约有 {total} 项"
+
+#. Preserve placeholders: {count}, {taken}
+#: src/i18n/en/pivot.ts:100
+msgctxt "pivot.entry.scope"
+msgid "Applies to {taken} of the {count} picked"
+msgstr "适用于所选 {count} 项中的 {taken} 项"
+
+#. Preserve placeholders: {count}, {label}
+#: src/i18n/en/pivot.ts:102
+msgctxt "pivot.entry.breakdownItem"
+msgid "{count} {label}"
+msgstr "{count} {label}"
+
+#: src/i18n/en/pivot.ts:103
+msgctxt "pivot.entry.error"
+msgid "Couldn't reach the source."
+msgstr "无法访问数据源。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:104
+msgctxt "pivot.entry.gate.over"
+msgid "Over the cap of {count} — narrow further to fetch"
+msgstr "超过 {count} 项的上限 — 请进一步缩小范围后获取"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:105
+msgctxt "pivot.entry.gate.within"
+msgid "Within the cap of {count}"
+msgstr "未超过 {count} 项的上限"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:106
+msgctxt "pivot.entry.gate.refused"
+msgid "The source returned {count} candidate, over the {limit} limit. Nothing was staged — narrow and run again."
+msgid_plural "The source returned {count} candidates, over the {limit} limit. Nothing was staged — narrow and run again."
+msgstr[0] "数据源返回了 {count} 个候选项，超过 {limit} 项的限制。未暂存任何内容 — 请缩小范围后重新运行。"
+
+#: src/i18n/en/pivot.ts:110
+msgctxt "pivot.entry.run"
+msgid "Run"
+msgstr "运行"
+
+#: src/i18n/en/pivot.ts:111
+msgctxt "pivot.entry.fetch"
+msgid "Fetch"
+msgstr "获取"
+
+#: src/i18n/en/pivot.ts:112
+msgctxt "pivot.entry.runIngest"
+msgid "Run & ingest"
+msgstr "运行并导入"
+
+#: src/i18n/en/pivot.ts:113
+msgctxt "pivot.entry.fetchIngest"
+msgid "Fetch & ingest"
+msgstr "获取并导入"
+
+#: src/i18n/en/pivot.ts:114
+msgctxt "pivot.entry.ingest.title"
+msgid "Add every result to the graph without reviewing it first"
+msgstr "直接将所有结果添加到图中，无需先审核"
+
+#: src/i18n/en/pivot.ts:115
+msgctxt "pivot.entry.clearNarrowing"
+msgid "Clear narrowing"
+msgstr "清除筛选条件"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:116
+msgctxt "pivot.entry.inTriage"
+msgid "{count} in triage"
+msgstr "{count} 项待审核"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:117
+msgctxt "pivot.entry.rejected"
+msgid "{count} rejected"
+msgstr "已拒绝 {count} 项"
+
+#: src/i18n/en/pivot.ts:118
+msgctxt "pivot.entry.rejected.title"
+msgid "What you rejected here this session. It is not offered again until restored."
+msgstr "本次会话中在此拒绝的项。恢复前不会再次提供。"
+
+#: src/i18n/en/pivot.ts:119
+msgctxt "pivot.entry.rejected.note"
+msgid "Not offered again this session. Restoring one brings it back on the next run."
+msgstr "本次会话中不会再次提供。恢复后将在下次运行时重新提供。"
+
+#: src/i18n/en/pivot.ts:120
+msgctxt "pivot.entry.restore"
+msgid "restore"
+msgstr "恢复"
+
+#: src/i18n/en/pivot.ts:121
+msgctxt "pivot.entry.restore.title"
+msgid "Offer this again on the next run"
+msgstr "下次运行时重新提供"
+
+#: src/i18n/en/pivot.ts:122
+msgctxt "pivot.entry.restoreAll"
+msgid "Restore all"
+msgstr "全部恢复"
+
+#: src/i18n/en/pivot.ts:123
+msgctxt "pivot.entry.restoreAll.title"
+msgid "Take back every rejection this pivot holds"
+msgstr "撤回此拓展的所有拒绝操作"
+
+#: src/i18n/en/pivot.ts:126
+msgctxt "pivot.review.tab"
+msgid "Review"
+msgstr "审核"
+
+#: src/i18n/en/pivot.ts:127
+msgctxt "pivot.review.tabLoading"
+msgid "Review…"
+msgstr "正在审核…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:128
+msgctxt "pivot.review.tabWaiting"
+msgid "Review ({count})"
+msgstr "审核（{count}）"
+
+#: src/i18n/en/pivot.ts:129
+msgctxt "pivot.review.strip.aria"
+msgid "Staged providers"
+msgstr "已暂存的数据源"
+
+#: src/i18n/en/pivot.ts:130
+msgctxt "pivot.review.closeFailed"
+msgid "Close failed"
+msgstr "关闭失败项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:131
+msgctxt "pivot.review.closeFailed.title"
+msgid "Drop the one provider whose fetch brought nothing back"
+msgid_plural "Drop the {count} providers whose fetches brought nothing back"
+msgstr[0] "移除获取结果为空的 {count} 个数据源"
+
+#: src/i18n/en/pivot.ts:135
+msgctxt "pivot.review.closeAll"
+msgid "Close all"
+msgstr "全部关闭"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:136
+msgctxt "pivot.review.closeAll.title"
+msgid "Drop {count} staged provider. Nothing is rejected."
+msgid_plural "Drop all {count} staged providers. Nothing is rejected."
+msgstr[0] "移除全部 {count} 个已暂存的数据源。不会拒绝任何项。"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:140
+msgctxt "pivot.review.item.fetching"
+msgid "{provider} — fetching"
+msgstr "{provider} — 正在获取"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:141
+msgctxt "pivot.review.item.failed"
+msgid "{provider} — the fetch failed"
+msgstr "{provider} — 获取失败"
+
+#. Preserve placeholders: {count}, {provider}
+#: src/i18n/en/pivot.ts:142
+msgctxt "pivot.review.item.waiting"
+msgid "{provider} — {count} waiting for a verdict"
+msgstr "{provider} — {count} 项等待处理"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:143
+msgctxt "pivot.review.item.idle"
+msgid "{provider} — nothing waiting"
+msgstr "{provider} — 无待处理项"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:144
+msgctxt "pivot.review.item.close.aria"
+msgid "Close {provider}"
+msgstr "关闭 {provider}"
+
+#: src/i18n/en/pivot.ts:145
+msgctxt "pivot.review.item.close.title"
+msgid "Drop these candidates. Nothing is rejected."
+msgstr "移除这些候选项。不会拒绝任何项。"
+
+#: src/i18n/en/pivot.ts:148
+msgctxt "pivot.triage.search.placeholder"
+msgid "Search rows…"
+msgstr "搜索行…"
+
+#: src/i18n/en/pivot.ts:149
+msgctxt "pivot.triage.search.patternPlaceholder"
+msgid "Match rows by pattern…"
+msgstr "按模式匹配行…"
+
+#: src/i18n/en/pivot.ts:150
+msgctxt "pivot.triage.search.title"
+msgid "Narrow the candidates. Nothing here touches the graph."
+msgstr "缩小候选项范围。此处的操作不会影响图。"
+
+#: src/i18n/en/pivot.ts:151
+msgctxt "pivot.triage.regex"
+msgid "regex"
+msgstr "正则"
+
+#: src/i18n/en/pivot.ts:152
+msgctxt "pivot.triage.regex.title"
+msgid "Read the search box as a regular expression"
+msgstr "将搜索内容解释为正则表达式"
+
+#: src/i18n/en/pivot.ts:153
+msgctxt "pivot.triage.rerun"
+msgid "Re-run"
+msgstr "重新运行"
+
+#: src/i18n/en/pivot.ts:154
+msgctxt "pivot.triage.rerun.title"
+msgid "Fetch again with the same narrowing"
+msgstr "使用相同的筛选条件重新获取"
+
+#: src/i18n/en/pivot.ts:157
+msgctxt "pivot.triage.loading"
+msgid "Fetching candidates…"
+msgstr "正在获取候选项…"
+
+#: src/i18n/en/pivot.ts:158
+msgctxt "pivot.triage.loading.sub"
+msgid "Nothing is on the canvas yet — candidates are staged, not merged."
+msgstr "画布上尚无内容 — 候选项仅暂存，尚未合并。"
+
+#: src/i18n/en/pivot.ts:159
+msgctxt "pivot.triage.error"
+msgid "Couldn't fetch candidates."
+msgstr "无法获取候选项。"
+
+#: src/i18n/en/pivot.ts:160
+msgctxt "pivot.triage.error.sub"
+msgid "Nothing was staged. Retrying runs the same request with the narrowing you already chose."
+msgstr "未暂存任何内容。重试将使用已选的筛选条件重新执行相同请求。"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:161
+msgctxt "pivot.triage.refused"
+msgid "The source returned {count} candidate, over the {limit} limit."
+msgid_plural "The source returned {count} candidates, over the {limit} limit."
+msgstr[0] "数据源返回了 {count} 个候选项，超过 {limit} 项的限制。"
+
+#: src/i18n/en/pivot.ts:165
+msgctxt "pivot.triage.refused.sub"
+msgid "Nothing was staged — narrow and run again."
+msgstr "未暂存任何内容 — 请缩小范围后重新运行。"
+
+#: src/i18n/en/pivot.ts:166
+msgctxt "pivot.triage.empty"
+msgid "No candidates came back"
+msgstr "未返回候选项"
+
+#: src/i18n/en/pivot.ts:167
+msgctxt "pivot.triage.empty.sub"
+msgid "The narrowing may be tighter than the data."
+msgstr "筛选条件可能过于严格。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:168
+msgctxt "pivot.triage.allRejected"
+msgid "The only candidate was rejected earlier this session"
+msgid_plural "All {count} were rejected earlier this session"
+msgstr[0] "全部 {count} 项已在本次会话中被拒绝"
+
+#: src/i18n/en/pivot.ts:172
+msgctxt "pivot.triage.allRejected.sub"
+msgid "Nothing new came back. Restoring one offers it again on the next run."
+msgstr "未返回新内容。恢复某项后，下次运行时将重新提供。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:173
+msgctxt "pivot.triage.allOnCanvas"
+msgid "The only candidate is already on the canvas — nothing to triage"
+msgid_plural "All {count} are already on the canvas — nothing to triage"
+msgstr[0] "全部 {count} 项已在画布上 — 无需审核"
+
+#: src/i18n/en/pivot.ts:177
+msgctxt "pivot.triage.allOnCanvas.sub"
+msgid "Nothing was changed: an id already here is left exactly as it was."
+msgstr "未进行任何更改：已存在的 ID 保持原样。"
+
+#: src/i18n/en/pivot.ts:178
+msgctxt "pivot.triage.done"
+msgid "Nothing left to triage"
+msgstr "没有剩余待审核项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:179
+msgctxt "pivot.triage.done.ingested"
+msgid "{count} ingested"
+msgstr "已导入 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:180
+msgctxt "pivot.triage.done.rejected"
+msgid "{count} rejected"
+msgstr "已拒绝 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:181
+msgctxt "pivot.triage.done.onCanvas"
+msgid "{count} already on canvas"
+msgstr "{count} 项已在画布上"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:182
+msgctxt "pivot.triage.showRejected"
+msgid "Show the {count} rejected"
+msgstr "显示已拒绝的 {count} 项"
+
+#: src/i18n/en/pivot.ts:183
+msgctxt "pivot.triage.hideRejected"
+msgid "Hide the rejected"
+msgstr "隐藏已拒绝项"
+
+#: src/i18n/en/pivot.ts:186
+msgctxt "pivot.triage.banner.running"
+msgid "Running again…"
+msgstr "正在重新运行…"
+
+#: src/i18n/en/pivot.ts:187
+msgctxt "pivot.triage.banner.failed"
+msgid "The re-run failed. What is below is untouched."
+msgstr "重新运行失败。下方内容保持不变。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:188
+msgctxt "pivot.triage.banner.ready"
+msgid "This pivot was run again. {count} new candidate is ready."
+msgid_plural "This pivot was run again. {count} new candidates are ready."
+msgstr[0] "此拓展已重新运行。{count} 个新候选项已就绪。"
+
+#: src/i18n/en/pivot.ts:192
+msgctxt "pivot.triage.banner.show"
+msgid "Show new"
+msgstr "显示新候选项"
+
+#: src/i18n/en/pivot.ts:193
+msgctxt "pivot.triage.banner.keep"
+msgid "Keep triaging"
+msgstr "继续审核"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:196
+msgctxt "pivot.triage.head.fetched"
+msgid "{count} fetched"
+msgstr "已获取 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:197
+msgctxt "pivot.triage.head.deduped"
+msgid "{count} already on canvas (skipped)"
+msgstr "{count} 项已在画布上（已跳过）"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:198
+msgctxt "pivot.triage.head.suppressed"
+msgid "{count} rejected earlier"
+msgstr "此前已拒绝 {count} 项"
+
+#: src/i18n/en/pivot.ts:199
+msgctxt "pivot.triage.head.suppressed.title"
+msgid "Suppressed because they were rejected earlier this session"
+msgstr "因在本次会话中此前已被拒绝而不再提供"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:200
+msgctxt "pivot.triage.head.unsaved"
+msgid "{count} unsaved"
+msgstr "{count} 项未保存"
+
+#: src/i18n/en/pivot.ts:201
+msgctxt "pivot.triage.head.save"
+msgid "save"
+msgstr "保存"
+
+#: src/i18n/en/pivot.ts:202
+msgctxt "pivot.triage.head.saving"
+msgid "saving…"
+msgstr "正在保存…"
+
+#: src/i18n/en/pivot.ts:203
+msgctxt "pivot.triage.head.save.title"
+msgid "Write this provider's ingested results back to the source system"
+msgstr "将此数据源已导入的结果写回源系统"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:204
+msgctxt "pivot.triage.head.origin"
+msgid "{count} origin node"
+msgid_plural "{count} origin nodes"
+msgstr[0] "{count} 个起点节点"
+
+#: src/i18n/en/pivot.ts:205
+msgctxt "pivot.triage.head.noOrigin"
+msgid "no origin"
+msgstr "无起点"
+
+#: src/i18n/en/pivot.ts:206
+msgctxt "pivot.triage.head.narrowed"
+msgid "narrowed"
+msgstr "已缩小范围"
+
+#: src/i18n/en/pivot.ts:209
+msgctxt "pivot.triage.suppressed.note"
+msgid "Rejected earlier, so not offered again this session. Restoring one brings it back on the next run."
+msgstr "此前已拒绝，本次会话中不会再次提供。恢复后将在下次运行时重新提供。"
+
+#: src/i18n/en/pivot.ts:210
+msgctxt "pivot.triage.restore"
+msgid "restore"
+msgstr "恢复"
+
+#: src/i18n/en/pivot.ts:211
+msgctxt "pivot.triage.restoreAll"
+msgid "restore all"
+msgstr "全部恢复"
+
+#: src/i18n/en/pivot.ts:214
+msgctxt "pivot.triage.column.candidate"
+msgid "Candidate"
+msgstr "候选项"
+
+#: src/i18n/en/pivot.ts:215
+msgctxt "pivot.triage.column.children"
+msgid "Children"
+msgstr "子节点"
+
+#: src/i18n/en/pivot.ts:216
+msgctxt "pivot.triage.column.from"
+msgid "From"
+msgstr "起点"
+
+#: src/i18n/en/pivot.ts:217
+msgctxt "pivot.triage.column.to"
+msgid "To"
+msgstr "终点"
+
+#: src/i18n/en/pivot.ts:218
+msgctxt "pivot.triage.section.nodes"
+msgid "Nodes"
+msgstr "节点"
+
+#: src/i18n/en/pivot.ts:219
+msgctxt "pivot.triage.section.edges"
+msgid "Edges"
+msgstr "边"
+
+#: src/i18n/en/pivot.ts:220
+msgctxt "pivot.triage.section.edges.note"
+msgid "both ends are already on the canvas"
+msgstr "两个端点都已在画布上"
+
+#. Preserve placeholders: {from}, {to}
+#: src/i18n/en/pivot.ts:221
+msgctxt "pivot.triage.edge.endpoints"
+msgid "{from} → {to}"
+msgstr "{from} → {to}"
+
+#. Preserve placeholders: {row}
+#: src/i18n/en/pivot.ts:222
+msgctxt "pivot.triage.row.select.aria"
+msgid "Select {row}"
+msgstr "选择 {row}"
+
+#: src/i18n/en/pivot.ts:223
+msgctxt "pivot.triage.row.onCanvas"
+msgid "on canvas"
+msgstr "在画布上"
+
+#: src/i18n/en/pivot.ts:224
+msgctxt "pivot.triage.row.undo"
+msgid "undo"
+msgstr "撤销"
+
+#: src/i18n/en/pivot.ts:225
+msgctxt "pivot.triage.row.willIngest"
+msgid "will ingest"
+msgstr "将导入"
+
+#: src/i18n/en/pivot.ts:226
+msgctxt "pivot.triage.children.show.title"
+msgid "Show what this row holds"
+msgstr "显示此行的内容"
+
+#: src/i18n/en/pivot.ts:227
+msgctxt "pivot.triage.children.hide.title"
+msgid "Hide what this row holds"
+msgstr "隐藏此行的内容"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:228
+msgctxt "pivot.triage.children.summary"
+msgid "{count} child — ingesting this row takes all of them."
+msgid_plural "{count} children — ingesting this row takes all of them."
+msgstr[0] "{count} 个子节点 — 导入此行将包含所有子节点。"
+
+#. Preserve placeholders: {key}, {value}
+#: src/i18n/en/pivot.ts:233
+msgctxt "pivot.triage.children.field"
+msgid "{key}: {value}"
+msgstr "{key}：{value}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:234
+msgctxt "pivot.triage.children.nested"
+msgid "+{count} inside"
+msgstr "内部另有 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:237
+msgctxt "pivot.triage.foot.ingest"
+msgid "Ingest selected ({count})"
+msgstr "导入所选项（{count}）"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:238
+msgctxt "pivot.triage.foot.ingestLoose"
+msgid "Ingest loose ({count})"
+msgstr "分散导入（{count}）"
+
+#: src/i18n/en/pivot.ts:239
+msgctxt "pivot.triage.foot.ingestLoose.title"
+msgid "Land the selected rows as separate nodes"
+msgstr "将所选行作为独立节点导入"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:240
+msgctxt "pivot.triage.foot.ingestGrouped"
+msgid "Ingest in a group ({count})"
+msgstr "分组导入（{count}）"
+
+#: src/i18n/en/pivot.ts:241
+msgctxt "pivot.triage.foot.ingestGrouped.title"
+msgid "Land the selected rows folded, one group per type"
+msgstr "折叠导入所选行，每种类型一个组"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:242
+msgctxt "pivot.triage.foot.ingestAll"
+msgid "Ingest all {count}"
+msgstr "导入全部 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:243
+msgctxt "pivot.triage.foot.selectAll"
+msgid "Select all {count}"
+msgstr "选择全部 {count} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:244
+msgctxt "pivot.triage.foot.selectMatching"
+msgid "Select all {count} matching"
+msgstr "选择全部 {count} 个匹配项"
+
+#: src/i18n/en/pivot.ts:245
+msgctxt "pivot.triage.foot.rejectSelected"
+msgid "Reject selected"
+msgstr "拒绝所选项"
+
+#: src/i18n/en/pivot.ts:246
+msgctxt "pivot.triage.foot.rejectRemaining"
+msgid "Reject all remaining"
+msgstr "拒绝所有剩余项"
+
+#. Preserve placeholders: {count}, {from}, {to}
+#: src/i18n/en/pivot.ts:247
+msgctxt "pivot.triage.foot.page"
+msgid "{from}–{to} of {count}"
+msgstr "{from}–{to} / {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:248
+msgctxt "pivot.triage.foot.shown"
+msgid "{count} shown"
+msgstr "已显示 {count} 项"
+
+#: src/i18n/en/pivot.ts:249
+msgctxt "pivot.triage.foot.note"
+msgid "closing this pane rejects nothing — leftovers are re-offered next run"
+msgstr "关闭此面板不会拒绝任何项 — 剩余项将在下次运行时重新提供"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:6
+msgctxt "history.entry.hid"
+msgid "Hid {count} node"
+msgid_plural "Hid {count} nodes"
+msgstr[0] "已隐藏 {count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:7
+msgctxt "history.entry.showed"
+msgid "Showed {count} node"
+msgid_plural "Showed {count} nodes"
+msgstr[0] "已显示 {count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:8
+msgctxt "history.entry.deletedNodes"
+msgid "Deleted {count} node"
+msgid_plural "Deleted {count} nodes"
+msgstr[0] "已删除 {count} 个节点"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:9
+msgctxt "history.entry.deletedEdges"
+msgid "Deleted {count} edge"
+msgid_plural "Deleted {count} edges"
+msgstr[0] "已删除 {count} 条边"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/core.ts:10
+msgctxt "history.entry.deletedBoth"
+msgid "Deleted {nodes}, {edges}"
+msgstr "已删除 {nodes}、{edges}"
+
+#. Preserve placeholders: {label}
+#: src/i18n/en/core.ts:11
+msgctxt "history.entry.created"
+msgid "Created “{label}”"
+msgstr "已创建“{label}”"
+
+#: src/i18n/en/core.ts:12
+msgctxt "history.entry.createdNode"
+msgid "Created a node"
+msgstr "已创建节点"
+
+#: src/i18n/en/core.ts:13
+msgctxt "history.entry.createdEdge"
+msgid "Created an edge"
+msgstr "已创建边"
+
+#: src/i18n/en/core.ts:14
+msgctxt "history.entry.removedSeed"
+msgid "Removed the loaded data"
+msgstr "已移除加载的数据"
+
+#: src/i18n/en/core.ts:15
+msgctxt "history.entry.removedManual"
+msgid "Removed hand-drawn work"
+msgstr "已移除手动绘制的内容"
+
+#. Preserve placeholders: {source}
+#: src/i18n/en/core.ts:16
+msgctxt "history.entry.removedSource"
+msgid "Removed “{source}”"
+msgstr "已移除“{source}”"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:17
+msgctxt "history.entry.grouped"
+msgid "Grouped “{group}”"
+msgstr "已将“{group}”分组"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:18
+msgctxt "history.entry.ungrouped"
+msgid "Ungrouped “{group}”"
+msgstr "已取消“{group}”的分组"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:19
+msgctxt "history.entry.ungroupedMany"
+msgid "Ungrouped {count} group"
+msgid_plural "Ungrouped {count} groups"
+msgstr[0] "已取消 {count} 个组的分组"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:20
+msgctxt "history.entry.renamed"
+msgid "Renamed to “{group}”"
+msgstr "已重命名为“{group}”"
+
+#. Preserve placeholders: {count}, {type}
+#: src/i18n/en/core.ts:23
+msgctxt "simplify.typeLabel"
+msgid "{count} × {type}"
+msgstr "{count} × {type}"
+
+#: src/i18n/en/core.ts:24
+msgctxt "simplify.untyped"
+msgid "node"
+msgstr "节点"
+
+#: src/i18n/en/core.ts:27
+msgctxt "simplify.builtin.neighbours.label"
+msgid "Same neighbours"
+msgstr "相同邻居"
+
+#: src/i18n/en/core.ts:28
+msgctxt "simplify.builtin.neighbours.description"
+msgid "Nodes of one type linked to exactly the same nodes."
+msgstr "同一类型且连接到完全相同节点的节点。"
+
+#: src/i18n/en/core.ts:29
+msgctxt "simplify.builtin.chains.label"
+msgid "Chains"
+msgstr "链"
+
+#: src/i18n/en/core.ts:30
+msgctxt "simplify.builtin.chains.description"
+msgid "Nodes leading chains of the same shape, folded level by level."
+msgstr "将引出相同形状链的节点逐层折叠。"
+
+#: src/i18n/en/core.ts:31
+msgctxt "simplify.builtin.degree.label"
+msgid "Few links"
+msgstr "少量连接"
+
+#: src/i18n/en/core.ts:32
+msgctxt "simplify.builtin.degree.description"
+msgid "Nodes with fewer links than this fold into the nodes they hang from."
+msgstr "将连接数低于此阈值的节点折叠到其相连的节点中。"
+
+#: src/i18n/en/core.ts:33
+msgctxt "simplify.builtin.kcore.label"
+msgid "Outside the core"
+msgstr "核心之外"
+
+#: src/i18n/en/core.ts:34
+msgctxt "simplify.builtin.kcore.description"
+msgid "Peels off nodes with fewer links than this, again and again, into the core."
+msgstr "反复将连接数低于此阈值的外围节点折叠到核心中。"
+
+#: src/i18n/en/core.ts:35
+msgctxt "simplify.builtin.communities.label"
+msgid "Communities"
+msgstr "社区"
+
+#: src/i18n/en/core.ts:36
+msgctxt "simplify.builtin.communities.description"
+msgid "Whole neighbourhoods into a few super-nodes."
+msgstr "将整个邻域归并为少量超级节点。"
+
+#: src/i18n/en/core.ts:37
+msgctxt "simplify.builtin.landings.label"
+msgid "Pivot landings"
+msgstr "拓展导入结果"
+
+#: src/i18n/en/core.ts:38
+msgctxt "simplify.builtin.landings.description"
+msgid "What a pivot brought in, one group per type."
+msgstr "拓展导入的内容，每种类型一个组。"
+
+#: src/i18n/en/core.ts:39
+msgctxt "simplify.builtin.manual.label"
+msgid "By hand"
+msgstr "手动"
+
+#: src/i18n/en/core.ts:40
+msgctxt "simplify.builtin.manual.description"
+msgid "Groups made from a selection."
+msgstr "通过所选项创建的组。"
+
+#: src/i18n/en/core.ts:43
+msgctxt "simplify.setting.level"
+msgid "Level"
+msgstr "层级"
+
+#: src/i18n/en/core.ts:44
+msgctxt "simplify.setting.minSize"
+msgid "Smallest group"
+msgstr "最小组大小"
+
+#: src/i18n/en/core.ts:45
+msgctxt "simplify.setting.fewestLinks"
+msgid "Fewest links"
+msgstr "最少连接数"
+
+#: src/i18n/en/core.ts:46
+msgctxt "simplify.setting.coreStrength"
+msgid "Core strength"
+msgstr "核心强度"
+
+#: src/i18n/en/core.ts:49
+msgctxt "renderer.progress.simulating"
+msgid "Optimizing node positions..."
+msgstr "正在优化节点位置…"
+
+#: src/i18n/en/core.ts:50
+msgctxt "renderer.progress.rendering"
+msgid "Rendering in progress"
+msgstr "正在渲染"
+
+#. Preserve placeholders: {seconds}
+#: src/i18n/en/core.ts:51
+msgctxt "renderer.progress.elapsed"
+msgid "Elapsed time: {seconds} sec"
+msgstr "已用时间：{seconds} 秒"
+
+#: src/i18n/en/core.ts:52
+msgctxt "renderer.progress.done"
+msgid "All done"
+msgstr "已完成"
+
+#: src/i18n/en/core.ts:55
+msgctxt "simulation.slow.title"
+msgid "Physics engine running slow"
+msgstr "物理引擎运行缓慢"
+
+#: src/i18n/en/core.ts:56
+msgctxt "simulation.slow.message"
+msgid "The physic has been disabled."
+msgstr "物理模拟已禁用。"
+
+#: src/i18n/en/core.ts:59
+msgctxt "node.expand.title"
+msgid "Expand node"
+msgstr "展开节点"
+
+#: src/i18n/en/core.ts:60
+msgctxt "node.collapse.title"
+msgid "Collapse nodes"
+msgstr "折叠节点"
+
+#: src/i18n/en/core.ts:61
+msgctxt "node.defaultLabel"
+msgid "New node"
+msgstr "新节点"
+
+#: src/i18n/en/core.ts:64
+msgctxt "groupOutline.drag.title"
+msgid "drag to move the group"
+msgstr "拖动以移动组"
+
+#: src/i18n/en/core.ts:65
+msgctxt "groupOutline.close.title"
+msgid "Fold back into the group"
+msgstr "折叠回组中"
+
+#. Preserve placeholders: {count}, {pivot}
+#: src/i18n/en/core.ts:68
+msgctxt "pivotBadge.title"
+msgid "~{count} · {pivot}"
+msgstr "~{count} · {pivot}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/core.ts:69
+msgctxt "pivotBadge.summary.declared"
+msgid "~{total} across {count} pivot"
+msgid_plural "~{total} across {count} pivots"
+msgstr[0] "{count} 个拓展中约有 {total} 项"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:70
+msgctxt "pivotBadge.summary.applies"
+msgid "{count} pivot applies"
+msgid_plural "{count} pivots apply"
+msgstr[0] "{count} 个可用拓展"
+
+#: src/i18n/en/core.ts:73
+msgctxt "noteCard.surfaceToggle.title"
+msgid "Toggle terminal look"
+msgstr "切换终端外观"
+
+#: src/i18n/en/core.ts:74
+msgctxt "noteCard.edit.title"
+msgid "Edit the note"
+msgstr "编辑备注"
+
+#: src/i18n/en/core.ts:75
+msgctxt "noteCard.save.title"
+msgid "Save changes"
+msgstr "保存更改"
+
+#: src/i18n/en/core.ts:76
+msgctxt "noteCard.remove.title"
+msgid "Remove the note"
+msgstr "移除备注"
+
+#: src/i18n/en/core.ts:77
+msgctxt "noteCard.link.search.title"
+msgid "Search for a note"
+msgstr "搜索备注"
+
+#: src/i18n/en/core.ts:78
+msgctxt "noteCard.link.pickTitle"
+msgid "Select a node to link to this note"
+msgstr "选择要与此备注关联的节点"
+
+#: src/i18n/en/core.ts:79
+msgctxt "noteCard.link.empty"
+msgid "Link this note to a node"
+msgstr "将此备注关联到节点"
+
+#. Preserve placeholders: {id}
+#: src/i18n/en/core.ts:80
+msgctxt "noteCard.link.missing"
+msgid "Missing node: {id}"
+msgstr "节点缺失：{id}"
+
+#: src/i18n/en/core.ts:81
+msgctxt "noteCard.reference.unresolved.title"
+msgid "Could not resolve node"
+msgstr "无法找到节点"
+
+#: src/i18n/en/core.ts:84
+msgctxt "minimap.expand.title"
+msgid "Show the minimap"
+msgstr "显示缩略图"
+
+#: src/i18n/en/core.ts:85
+msgctxt "minimap.collapse.title"
+msgid "Collapse the minimap"
+msgstr "收起缩略图"

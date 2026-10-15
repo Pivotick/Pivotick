@@ -28,7 +28,8 @@
   },
   "type": "module",
   "files": [
-    "dist"
+    "dist",
+    "locales"
   ],
   "main": "./dist/pivotick.umd.js",
   "module": "./dist/pivotick.es.js",
@@ -41,14 +42,15 @@
       "default": "./dist/pivotick.umd.js"
     },
     "./dist/*": "./dist/*",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./locales/*": "./locales/*"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run clean && tsc && npm run build:es && npm run build:browser && npm run build:worker && npm run build:types",
+    "build": "npm run clean && npm run i18n:check && tsc && npm run build:es && npm run build:browser && npm run build:worker && npm run build:types",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build:es": "vite build --config vite.config.es.js",
     "build:browser": "vite build --config vite.config.browser.js",
@@ -70,7 +72,11 @@
     "test:visual:ui": "playwright test --ui",
     "test:visual:headed": "playwright test --headed --workers=1",
     "test:visual:report": "playwright show-report tests/visual/.report",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "i18n:extract": "node scripts/i18n.mjs extract",
+    "i18n:compile": "node scripts/i18n.mjs compile",
+    "i18n:check": "node scripts/i18n.mjs check",
+    "test:i18n": "node tests/i18n/catalogues.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",

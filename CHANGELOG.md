@@ -16,6 +16,13 @@
 
 ### Translating the UI
 
+- **Complete bundled translations** for Simplified Chinese (`zh`), French (`fr`), German
+  (`de`) and Portuguese (`pt`), selected by `i18n.locale`. Regional tags share the language
+  catalogue and keep their own formatting. Explicit messages and translation hooks still win.
+- **Gettext PO catalogues** and an English POT template ship in `locales/`, with extraction,
+  compilation and validation commands. The build checks all 758 messages in every language
+  for completeness, current source text, plural forms and preserved placeholders.
+
 - **`GraphOptions.i18n`** puts the text the library writes itself in the host's language:
   753 messages covering the rail, menus, sidebar, table, pivot panel, history, toasts,
   `title` tooltips and `aria-label`s. `messages` replaces text by key, and

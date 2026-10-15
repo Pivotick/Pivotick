@@ -1,5 +1,6 @@
 import type { I18nOptions, MessageKey, MessageParams, MessageValue, PluralForms } from '../interfaces/I18n'
 import { messagesEn } from './en'
+import { bundledMessages } from './locales'
 
 const ENGLISH = 'en'
 const PLACEHOLDER = /\{(\w+)\}/g
@@ -18,6 +19,7 @@ export class I18n {
     public readonly lang: string | undefined
 
     private readonly messages: Partial<Record<MessageKey, MessageValue>>
+    private readonly bundled: Partial<Record<MessageKey, MessageValue>>
     private readonly translateHook?: I18nOptions['translate']
     private readonly pluralRules = new Map<string, Intl.PluralRules>()
     private readonly numberFormats = new Map<string, Intl.NumberFormat>()
@@ -28,6 +30,9 @@ export class I18n {
         this.locale = this.lang ?? ENGLISH
         this.messages = options.messages ?? {}
         this.translateHook = options.translate
+        const language = this.locale.split('-')[0] as keyof typeof bundledMessages
+        this.bundled = Object.prototype.hasOwnProperty.call(bundledMessages, language)
+            ? bundledMessages[language] : {}
     }
 
     /**
@@ -40,13 +45,16 @@ export class I18n {
 
         // English text keeps English plural rules: French would say "0 node".
         const english = this.render(messagesEn[key] ?? key, params, ENGLISH)
-        if (!this.translateHook) return english
-        try {
-            const translated = this.translateHook(key, params, english)
-            if (typeof translated === 'string') return translated
-        } catch (error) {
-            console.warn(`[pivotick] i18n.translate threw for "${key}"; showing English.`, error)
+        if (this.translateHook) {
+            try {
+                const translated = this.translateHook(key, params, english)
+                if (typeof translated === 'string') return translated
+            } catch (error) {
+                console.warn(`[pivotick] i18n.translate threw for "${key}"; using the built-in catalogue.`, error)
+            }
         }
+        const bundled = this.bundled[key]
+        if (bundled !== undefined) return this.render(bundled, params, this.locale)
         return english
     }
 
