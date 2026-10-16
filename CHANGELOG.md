@@ -1,188 +1,12 @@
 # Changelog
 
-## Unreleased
+## 2.1.0 — 2026-10-16
 
-### Negated filters
-
-- **`FilterFieldConfig.negate`** keeps what a filter would otherwise hide: a list reads *none
-  of*, a text field *doesn't contain*, a pattern *doesn't match*, a range *outside*. A node
-  with no value for the key is kept, so a filter and its negation split the graph exactly.
-  Works on node and edge filters, predicate facets and cluster contents. See
-  [Negation](./docs/ui-filter.md#negation).
-- The filter panel gives every field except true / false ones an **is / is not** switch on
-  its label row. A negated field is drawn red, its picks struck through.
-- A legend section that adopts a declared facet follows a negated filter, and keeps it
-  negated when clicked.
-
-### Translating the UI
-
-- The documentation site now offers English (default), Simplified Chinese, French,
-  German and Portuguese. Guides, gallery descriptions and the generated API reference
-  share a language selector, stable section anchors and localized navigation and search.
-  Editable prose catalogues generate the translated pages during the documentation build.
-- **Complete bundled translations** for Simplified Chinese (`zh`), French (`fr`), German
-  (`de`) and Portuguese (`pt`), selected by `i18n.locale`. Regional tags share the language
-  catalogue and keep their own formatting. Explicit messages and translation hooks still win.
-- **Gettext PO catalogues** and an English POT template ship in `locales/`, with extraction,
-  compilation and validation commands. The build checks all 758 messages in every language
-  for completeness, current source text, plural forms and preserved placeholders.
-
-- **`GraphOptions.i18n`** puts the text the library writes itself in the host's language:
-  753 messages covering the rail, menus, sidebar, table, pivot panel, history, toasts,
-  `title` tooltips and `aria-label`s. `messages` replaces text by key, and
-  `translate(key, params, fallback)` bridges an existing translation library; English fills
-  every gap. Per-feature options such as `UI.emptyState.render` still win. See
-  [Translating the UI](./docs/i18n.md).
-- Keys are dotted ids typed from the English catalogue, which is exported as `messagesEn`
-  (`Pivotick.messagesEn` in the browser builds) to start a translation from. A message is text
-  with `{name}` placeholders, an object of CLDR plural forms chosen with `Intl.PluralRules`, or
-  a function. New types: `I18nOptions`, `Messages`, `MessageKey`, `MessageValue`,
-  `MessageParams`, `PluralForms`.
-- **`locale`** also picks how counts are written, how lists are joined and how the table, the
-  neighbours list and the triage pane sort. When declared it is set as `lang` on the graph's
-  root and on the parts mounted outside it.
-- `graph.i18n` and a plugin's `ctx.i18n` expose `t`, `formatNumber`, `formatList`, `compare`
-  and `collator`. Each graph has its own language; cluster subgraphs and the neighbours graph
-  share their parent's. The language is fixed when the graph is built.
-
-Changes an English interface shows too:
-
-- **Plurals are right.** "1 result", "0 connections", "1 node hidden", "1 new candidate is
-  ready", and no more "1 nodes" in counts.
-- **Counts are written with `Intl.NumberFormat`**, so "1,234" in English everywhere, where some
-  counters printed "1234" and others the browser's own format.
-- `HistoryEntry.act` (`'hide' | 'show' | 'group' | 'ungroup' | 'rename'`) and
-  `SimplifyRuleSetting.id` (`'minSize' | 'threshold' | 'level'`) say what an entry or a setting
-  is without reading its label.
-- `Flyout.headerRow`, `sectionLabel` and `toggleRow` treat their label and description as
-  text: markup passed to them now shows as written. Rail and tool-panel labels are set as text
-  too.
-- The default `nodeHeaderMap.title(node)` returns `''` for a node with no label; the header
-  still reads "Could not resolve title", now in the graph's language.
-- `tableColumns` keeps English labels; a built-in column still carrying its default is shown
-  in the graph's language, and a label the host wrote is kept.
-
-### Host actions in the top bar
-
-- **`UI.topBar.actions`** declares pills beside the built-in ones, in their style:
-  `placement: 'start'` after Search / Filter / Notes, `'end'` (the default) just before
-  the undo-redo group. `text`, `title`, `visible` and `enabled` take a value or a function
-  of the graph, read again after every data change and on `graph.UIManager.refreshTopBar()`.
-- `onclick(event, ctx)` gets `ctx.promptData`, `ctx.confirm` and `ctx.refresh`. A returned
-  promise disables the pill until it settles, then refreshes every action.
-- A `menu` makes the pill a split button: the caret opens context-menu rows below it.
-- Plugins add one with `ctx.addTopBarAction(action)`, which returns a disposer, and remove
-  it with `ctx.removeTopBarAction(id)`.
-
-### A structured layout for small graphs
-
-- **`layout: { type: 'structured' }`** places every node itself and pins it, so the same
-  graph always gives the same picture. Each connected component is laid out on its own and
-  the components are packed to fit the canvas at the largest zoom; three or more leaves of
-  one type hanging off the same one or two nodes line up as a row or column beside them; the
-  rest is placed so its distances follow the edges, which draws a hub's neighbours round it
-  and a chain straight; nodes with no edge go in a tray below (or right of) the rest. Options
-  `groupMin`, `direction`, `gap`, `trayPosition` and `labelSides`. Also through
-  `simulation.changeLayout('structured')`.
-- **Floated labels move to the free side.** Under that layout a label shifted outside its
-  node is drawn on the side its edges leave free, as far out as the style put it; a fan's
-  labels all face away from the nodes it hangs from. `labelSides: false` keeps them where
-  the style says. `graph.simulation.getLabelSide(id)` reports the side.
-
-### Saving part of a run
-
-- `graph.pivots.save({ elements })` writes only the named nodes and edges: each run that
-  created one is asked once, with the pending children under a named node and the edges
-  that would not be left dangling. The rest stays pending, one toast covers the call, and a
-  run is marked persisted only once nothing of it is left.
-
-### A save can ask first
-
-- `PivotSaveContext.promptData` opens the library's modal from inside a pivot's `save`,
-  titled and submitted with *Save*, and resolves to the values or `null`.
-- A save returning `{ cancelled: true }` records nothing, shows no toast, does not count as
-  an attempt, and stops a save over several runs. `PivotSaveReport.cancelled` counts it.
-- `graph.pivots.save(target, { interactive: true })` marks a save someone clicked for; the
-  library's Save buttons and Retry pass it. Without it, `promptData` resolves `null` at once.
-
-### Waiting on a hook
-
-- **The canvas shows when it waits on an async hook.** After 200 ms without an answer from
-  `onBeforeEdgeCreate`, `onBeforeNodeCreate`, `onBeforeDelete`, an edit-commit hook or
-  `onBeforeIngest`, the cursor turns to progress and a spinner appears at the end of the
-  preview edge, at the drop point, or at the bottom of the canvas. It steps aside while a
-  prompt the hook opened is on screen. `UI.busyIndicator` sets `delay` and `label`, and
-  `false` turns it off.
-
-### Tooltips per kind
-
-- **`UI.tooltip.enabled` takes a map or a function** besides `true` / `false`.
-  `{ nodes: false, edges: false, groups: true }` keeps only the group tooltips; a missing key
-  is `true`. `(element, kind) => boolean` is asked on every hover, and one that throws shows
-  nothing. The neighbour graph in the sidebar follows the same choice.
-
-### Simplify groups
-
-- **`UI.simplify.typeOf`** sets the type every rule groups by and every group counts its
-  parts by, in place of `render.nodeTypeAccessor`. A rule's own `typeOf` still wins.
-- **`UI.simplify.colorOf`** sets the colour a node stands for in a group (disc, ring, open
-  wash, tooltip chips), for hosts that draw their nodes with no `color`.
-
-- **`render.groupStyle(group, base)`** also receives the default style, so a host can add a
-  tier with `tiers: [...(base.tiers ?? []), mine]` and keep the count on the disc.
-- **A landing group names its pivot**: `GroupInfo.landing` is `{ runId, pivotId, pivotLabel }`
-  on a group made by the Pivot landings rule.
-
-### Context menus
-
-- The node, selection and group menus now read in one order: **Pivot ▸** first, then the
-  group entries, then the rest with the app's own entries, and the delete last. An app's
-  `menuNode` / `menuSelection` entries now sit above **Delete Node** / **Delete Selected**
-  instead of below it.
-- **Release pinned nodes** in the canvas menu unpins every pinned node and group at once. It
-  shows only while something is pinned.
-
-### Fixes
-
-- `simulation.warmupTicks: 0` now runs no opening layout, so nodes given an `x`/`y` open
-  where they were. The worker read `0` as unset and ran the full warmup, and both threads
-  reheated afterwards whatever the count. Auto physics still re-tunes such a graph once its
-  nodes are measured, but no longer reheats it until something on the canvas changes.
-- `simulation.layout` is now honoured. It was overwritten by the top-level `layout` option
-  even when that was unset, so a layout named there was silently ignored. The top-level
-  option still wins when both are set.
-- `simulation.changeLayout()` no longer hangs with the simulation switched off; it lays the
-  graph out, redraws it and fits the view.
-- Hovering a history row now drains a group or closed cluster whose members it would
-  take out, and the lines to it, instead of leaving them at full strength. Edges of a
-  node about to be hidden drain with it.
-- With the simulation switched off, unpinned nodes no longer drift for a few seconds after
-  load without being redrawn, then jump on the next redraw.
-- A node's tooltip no longer closes when the pointer crosses a gap inside the node's own
-  drawing on the way in.
-- Pointing at an edge legend entry now lights edges folded into a closed cluster's line
-  instead of dimming them with everything else.
-- The opening layout now includes what the host does right after `new Graph()`, instead of
-  laying out the graph as it was one call earlier.
-- The sidebar's "Showing N nodes and M edges" now follows nodes and edges being added,
-  removed or filtered, instead of keeping the count from load until the selection cleared.
-- Tooltips, dropdowns and typeahead lists, which are mounted outside the graph, now take the
-  theme set by `UI.theme` instead of the operating system's.
-- A tooltip's header under `UI.theme: 'dark'` no longer takes the light background when the
-  operating system is set to light.
-- A pinned tooltip's link now ends on the node's centre, not on the middle of the node and
-  its label.
-- An ingest now warms up a running layout, as opening a group does, so what lands is laid out
-  even when the layout had settled.
-- A graph built while its container has no size, such as the neighbour graph of a node
-  selected with the sidebar collapsed, now fits and centres once the container gets one,
-  instead of staying stuck in the top-left corner.
-- Dragging a new edge off a node card no longer selects the card's text.
-- Undoing a pivot run that landed without review (a one-click pivot, or `autoIngest`) no
-  longer opens a Review pane holding its rows.
-- The minimap draws a node's stroke as a ring around its dot, so a node drawn as an outline
-  (pale fill, coloured stroke) shows its colour instead of a near-white dot that vanishes on
-  the light theme.
+Simplify folds the repetition out of a large graph without touching its data, and the
+interface now speaks the host's language, with Chinese, French, German and Portuguese bundled.
+Nodes pick their drawing from the zoom, edges into clusters are drawn at any depth, and a
+structured layout gives a small graph the same picture every time. The package is on npm since
+2.0.1, so the breaking changes at the end carry a migration table.
 
 ### Simplify: fold nodes that play the same role
 
@@ -251,18 +75,69 @@ touching the data.
   selection holding groups act on their members. Edit and connect-to are not offered on a group.
   `tooltip.renderGroupExtra(group)` adds to a group's tooltip, and the table gains a `Group`
   column while any group exists.
+- **An open group's chip handles the group.** Dragging it moves the members together, its ×
+  folds them back, and it names the rule that made the group. Opening a group spreads members
+  that would overlap, reheats the layout gently and honours `fitViewOnExpandCollapse`.
+- **View in table** lists a group's members in the data dock, where the column filters narrow
+  them.
+- **A group's line keeps the label and style its edges share**, and hovering a legend entry
+  lights the groups holding its nodes, with their share arced on the ring.
+- The tree layout gives a group one slot on its members' level.
+- **`UI.simplify.typeOf`** sets the type every rule groups by and every group counts its
+  parts by, in place of `render.nodeTypeAccessor`. A rule's own `typeOf` still wins.
+- **`UI.simplify.colorOf`** sets the colour a node stands for in a group (disc, ring, open
+  wash, tooltip chips), for hosts that draw their nodes with no `color`.
+- **`render.groupStyle(group, base)`** also receives the default style, so a host can add a
+  tier with `tiers: [...(base.tiers ?? []), mine]` and keep the count on the disc.
+- **A landing group names its pivot**: `GroupInfo.landing` is `{ runId, pivotId, pivotLabel }`
+  on a group made by the Pivot landings rule.
 
-### Acting on a selection
+### Translating the UI
 
-- **A right-click on a node of a multi-selection acts on the whole selection.** The new
-  `contextMenu.menuSelection` section is headed with the count and offers Pin, Unpin, Hide,
-  Pivot, Select Neighbors, Group, Ungroup, Pull out, Put back and Delete, each for every
-  selected node. A node outside the selection still opens its own menu, and the selection
-  stays as it is. A `visible` predicate now receives the selected nodes as a `Node[]` there.
-- **Table rows have the context menu** their element has on the canvas, so a member of a
-  closed group can be pulled out from its row. `graph.simplify.pullOut()` and `putBack()`
-  take a list.
-- **Del hides the selected nodes**, as one undo step.
+- The documentation site now offers English (default), Simplified Chinese, French,
+  German and Portuguese. Guides, gallery descriptions and the generated API reference
+  share a language selector, stable section anchors and localized navigation and search.
+  Editable prose catalogues generate the translated pages during the documentation build.
+- **Complete bundled translations** for Simplified Chinese (`zh`), French (`fr`), German
+  (`de`) and Portuguese (`pt`), selected by `i18n.locale`. Regional tags share the language
+  catalogue and keep their own formatting. Explicit messages and translation hooks still win.
+- **Gettext PO catalogues** and an English POT template ship in `locales/`, with extraction,
+  compilation and validation commands. The build checks all 758 messages in every language
+  for completeness, current source text, plural forms and preserved placeholders.
+- **`GraphOptions.i18n`** puts the text the library writes itself in the host's language:
+  753 messages covering the rail, menus, sidebar, table, pivot panel, history, toasts,
+  `title` tooltips and `aria-label`s. `messages` replaces text by key, and
+  `translate(key, params, fallback)` bridges an existing translation library; English fills
+  every gap. Per-feature options such as `UI.emptyState.render` still win. See
+  [Translating the UI](./docs/i18n.md).
+- Keys are dotted ids typed from the English catalogue, which is exported as `messagesEn`
+  (`Pivotick.messagesEn` in the browser builds) to start a translation from. A message is text
+  with `{name}` placeholders, an object of CLDR plural forms chosen with `Intl.PluralRules`, or
+  a function. New types: `I18nOptions`, `Messages`, `MessageKey`, `MessageValue`,
+  `MessageParams`, `PluralForms`.
+- **`locale`** also picks how counts are written, how lists are joined and how the table, the
+  neighbours list and the triage pane sort. When declared it is set as `lang` on the graph's
+  root and on the parts mounted outside it.
+- `graph.i18n` and a plugin's `ctx.i18n` expose `t`, `formatNumber`, `formatList`, `compare`
+  and `collator`. Each graph has its own language; cluster subgraphs and the neighbours graph
+  share their parent's. The language is fixed when the graph is built.
+
+Changes an English interface shows too:
+
+- **Plurals are right.** "1 result", "0 connections", "1 node hidden", "1 new candidate is
+  ready", and no more "1 nodes" in counts.
+- **Counts are written with `Intl.NumberFormat`**, so "1,234" in English everywhere, where some
+  counters printed "1234" and others the browser's own format.
+- `HistoryEntry.act` (`'hide' | 'show' | 'group' | 'ungroup' | 'rename'`) and
+  `SimplifyRuleSetting.id` (`'minSize' | 'threshold' | 'level'`) say what an entry or a setting
+  is without reading its label.
+- `Flyout.headerRow`, `sectionLabel` and `toggleRow` treat their label and description as
+  text: markup passed to them now shows as written. Rail and tool-panel labels are set as text
+  too.
+- The default `nodeHeaderMap.title(node)` returns `''` for a node with no label; the header
+  still reads "Could not resolve title", now in the graph's language.
+- `tableColumns` keeps English labels; a built-in column still carrying its default is shown
+  in the graph's language, and a label the host wrote is kept.
 
 ### Detail that follows the zoom
 
@@ -298,6 +173,11 @@ the drawing, so nothing moves when one gives way to the next.
   tier asked for, with nothing in the configuration to say why. Only the tier layer works this
   way; everywhere else in the style chain `null` still falls through, so a style callback
   handing back a null straight out of node data keeps getting the default.
+- **`NodeStyle.focusTierYieldsAt`** names the tier from which the focus drawing stops firing,
+  for a focus drawing that repeats a zoom tier: hovering no longer paints a second chip over the
+  one already on screen.
+- **The focus drawing wears the node's badges**, and a legend entry can show a badge in place of
+  its dot (`LegendEntry.badge`), for nodes told apart by a badge rather than by their fill.
 
 ### Labels the view has made too small to read
 
@@ -322,22 +202,12 @@ the drawing, so nothing moves when one gives way to the next.
   edge or node immediately and rides out the fade on a layer of its own, so the next tick has one
   fewer thing to reposition.
 
-### An empty canvas says so
+### Node labels
 
-- **`UI.emptyState` puts a card in the middle of a canvas with no node and no note**, reading
-  "Nothing on the canvas yet" by default, in every mode. A blank canvas otherwise reads as a
-  graph that failed to load. The card follows the data both ways, so an ingest takes it away and
-  undoing that ingest brings it back; nodes the filters hide still count. `render` replaces the
-  text, runs on each appearance, and is told through `initial` whether the graph has ever held a
-  node. The card lets the canvas's gestures through except over its interactive content.
-  `UI.emptyState: false` turns it off.
-
-### Pivot badges in Pivot mode
-
-- **Pivot rim badges show only while Pivot mode is open**, where they help pick an origin.
-  `pivotRimBadgeVisible` changes that: `'always'` brings back the old behaviour, where a badge
-  is also a way into the mode, and `'never'` hides them. `graph.pivots.rimBadgeVisible` changes
-  it later. `pivotRimBadge` still picks their shape.
+- **`NodeStyle.textMaxWidth`** caps a label at a width in graph units (CSS pixels at zoom 1),
+  instead of the room the node gives it. A longer label is shortened with a middle ellipsis.
+- **`NodeStyle.textFontSize`** sets a label's font size in place of the one derived from the
+  node's size. The label's offset, character budget, on-screen reach and zoom gate all follow it.
 
 ### Edges across clusters, at any depth
 
@@ -366,8 +236,203 @@ from a cluster into itself, which loops on the closed cluster.
   a read-only getter, and the internal `isCrossCluster`, `syntheticSourceNode`,
   `syntheticTerminalNode`, `get/setSubgraphFromNode` and `get/setSubgraphToNode` are gone.
 
+### A structured layout for small graphs
+
+- **`layout: { type: 'structured' }`** places every node itself and pins it, so the same
+  graph always gives the same picture. Each connected component is laid out on its own and
+  the components are packed to fit the canvas at the largest zoom; three or more leaves of
+  one type hanging off the same one or two nodes line up as a row or column beside them; the
+  rest is placed so its distances follow the edges, which draws a hub's neighbours round it
+  and a chain straight; nodes with no edge go in a tray below (or right of) the rest. Options
+  `groupMin`, `direction`, `gap`, `trayPosition` and `labelSides`. Also through
+  `simulation.changeLayout('structured')`.
+- **Floated labels move to the free side.** Under that layout a label shifted outside its
+  node is drawn on the side its edges leave free, as far out as the style put it; a fan's
+  labels all face away from the nodes it hangs from. `labelSides: false` keeps them where
+  the style says. `graph.simulation.getLabelSide(id)` reports the side.
+
+### Negated filters
+
+- **`FilterFieldConfig.negate`** keeps what a filter would otherwise hide: a list reads *none
+  of*, a text field *doesn't contain*, a pattern *doesn't match*, a range *outside*. A node
+  with no value for the key is kept, so a filter and its negation split the graph exactly.
+  Works on node and edge filters, predicate facets and cluster contents. See
+  [Negation](./docs/ui-filter.md#negation).
+- The filter panel gives every field except true / false ones an **is / is not** switch on
+  its label row. A negated field is drawn red, its picks struck through.
+- A legend section that adopts a declared facet follows a negated filter, and keeps it
+  negated when clicked.
+
+### Pivots
+
+- **Fetch & ingest** sits beside *Fetch* on a pivot's panel entry and lands the results without
+  triage.
+- **A narrowing facet can declare a `default`**: the values a `multiselect` starts with ticked.
+  While it holds, the facet is left out of the narrowing. Once the partitioning multiselect has a
+  pick, the breakdown lists only the picked options.
+- **`PivotDefinition.menuChoices(nodes)`** turns the pivot's row in the **Pivot ▸** submenu into
+  a submenu of its own, one row per choice, each running the pivot with its own narrowing. A last
+  row opens the panel on that pivot. A narrowing pick in the panel now redraws the form at once.
+- **A summary can leave its total unknown.** `{ total: null, facets }` draws no count and is not
+  judged against `maxCandidates`.
+- **`pivotSaveControls: false`** hides the panel's and the Review pane's *Save*;
+  `graph.pivots.saveControls` changes it at runtime. `graph.pivots.save()` and the ledger are
+  unaffected.
+
+### Saving part of a run
+
+- `graph.pivots.save({ elements })` writes only the named nodes and edges: each run that
+  created one is asked once, with the pending children under a named node and the edges
+  that would not be left dangling. The rest stays pending, one toast covers the call, and a
+  run is marked persisted only once nothing of it is left.
+
+### A save can ask first
+
+- `PivotSaveContext.promptData` opens the library's modal from inside a pivot's `save`,
+  titled and submitted with *Save*, and resolves to the values or `null`.
+- A save returning `{ cancelled: true }` records nothing, shows no toast, does not count as
+  an attempt, and stops a save over several runs. `PivotSaveReport.cancelled` counts it.
+- `graph.pivots.save(target, { interactive: true })` marks a save someone clicked for; the
+  library's Save buttons and Retry pass it. Without it, `promptData` resolves `null` at once.
+
+### Pivot badges in Pivot mode
+
+- **Pivot rim badges show only while Pivot mode is open**, where they help pick an origin.
+  `pivotRimBadgeVisible` changes that: `'always'` brings back the old behaviour, where a badge
+  is also a way into the mode, and `'never'` hides them. `graph.pivots.rimBadgeVisible` changes
+  it later. `pivotRimBadge` still picks their shape.
+
+### Host actions in the top bar
+
+- **`UI.topBar.actions`** declares pills beside the built-in ones, in their style:
+  `placement: 'start'` after Search / Filter / Notes, `'end'` (the default) just before
+  the undo-redo group. `text`, `title`, `visible` and `enabled` take a value or a function
+  of the graph, read again after every data change and on `graph.UIManager.refreshTopBar()`.
+- `onclick(event, ctx)` gets `ctx.promptData`, `ctx.confirm` and `ctx.refresh`. A returned
+  promise disables the pill until it settles, then refreshes every action.
+- A `menu` makes the pill a split button: the caret opens context-menu rows below it.
+- Plugins add one with `ctx.addTopBarAction(action)`, which returns a disposer, and remove
+  it with `ctx.removeTopBarAction(id)`.
+
+### Notes from the host
+
+- **`graph.addNote(options)`** takes plain `NoteOptions`, the shape of `data.notes`, as well as
+  a `Note`, and throws if the id is taken. **`note.toJSON()`** returns the note as plain options,
+  and **`graph.setNotes(notes)`** replaces the set, updating notes it keeps in place by id.
+- `Note` is exported (`Pivotick.Note` in the browser builds).
+
+### Acting on a selection
+
+- **A right-click on a node of a multi-selection acts on the whole selection.** The new
+  `contextMenu.menuSelection` section is headed with the count and offers Pin, Unpin, Hide,
+  Pivot, Select Neighbors, Group, Ungroup, Pull out, Put back and Delete, each for every
+  selected node. A node outside the selection still opens its own menu, and the selection
+  stays as it is. A `visible` predicate now receives the selected nodes as a `Node[]` there.
+- **Table rows have the context menu** their element has on the canvas, so a member of a
+  closed group can be pulled out from its row. `graph.simplify.pullOut()` and `putBack()`
+  take a list.
+- **Del hides the selected nodes**, as one undo step.
+
+### Context menus
+
+- The node, selection and group menus now read in one order: **Pivot ▸** first, then the
+  group entries, then the rest with the app's own entries, and the delete last. An app's
+  `menuNode` / `menuSelection` entries now sit above **Delete Node** / **Delete Selected**
+  instead of below it.
+- **Release pinned nodes** in the canvas menu unpins every pinned node and group at once. It
+  shows only while something is pinned.
+
+### Fitting the view
+
+- **`ready` waits for the opening fit**, so a host reading the view in its handler sees where the
+  graph opens.
+- **`render.minFitScale`** is the lowest zoom a fit goes to. A graph too big to fit at it opens at
+  that scale, centred on **`render.fitAnchor`** (a node id), and runs past the canvas edges.
+- A fit also stops at a `render.maxZoom` lower than its own 3× cap.
+
+### Sidebar
+
+- **`UI.neighborsPanel.graph`** overrides the neighbour graph's `render` and `layout` options, for
+  styles that suit a full canvas but crowd a panel this size.
+- **A `propertiesPanel.render` or `mainHeader.render` returning `undefined` draws the default**,
+  so a host can customise some nodes only. Under a custom single-node render, a multi-selection
+  keeps the aggregated table.
+- A content hook returning `null` renders nothing, in every hook, where it used to print the text
+  "null".
+
+### An empty canvas says so
+
+- **`UI.emptyState` puts a card in the middle of a canvas with no node and no note**, reading
+  "Nothing on the canvas yet" by default, in every mode. A blank canvas otherwise reads as a
+  graph that failed to load. The card follows the data both ways, so an ingest takes it away and
+  undoing that ingest brings it back; nodes the filters hide still count. `render` replaces the
+  text, runs on each appearance, and is told through `initial` whether the graph has ever held a
+  node. The card lets the canvas's gestures through except over its interactive content.
+  `UI.emptyState: false` turns it off.
+
+### Waiting on a hook
+
+- **The canvas shows when it waits on an async hook.** After 200 ms without an answer from
+  `onBeforeEdgeCreate`, `onBeforeNodeCreate`, `onBeforeDelete`, an edit-commit hook or
+  `onBeforeIngest`, the cursor turns to progress and a spinner appears at the end of the
+  preview edge, at the drop point, or at the bottom of the canvas. It steps aside while a
+  prompt the hook opened is on screen. `UI.busyIndicator` sets `delay` and `label`, and
+  `false` turns it off.
+
+### Tooltips per kind
+
+- **`UI.tooltip.enabled` takes a map or a function** besides `true` / `false`.
+  `{ nodes: false, edges: false, groups: true }` keeps only the group tooltips; a missing key
+  is `true`. `(element, kind) => boolean` is asked on every hover, and one that throws shows
+  nothing. The neighbour graph in the sidebar follows the same choice.
+
+### Documentation
+
+- A **Projects using Pivotick** page lists projects built on the library, and the README carries
+  the same list.
+- A **Simplify** page, with a gallery card that runs a custom rule before the neighbour rule.
+
 ### Fixes
 
+- `simulation.warmupTicks: 0` now runs no opening layout, so nodes given an `x`/`y` open
+  where they were. The worker read `0` as unset and ran the full warmup, and both threads
+  reheated afterwards whatever the count. Auto physics still re-tunes such a graph once its
+  nodes are measured, but no longer reheats it until something on the canvas changes.
+- `simulation.layout` is now honoured. It was overwritten by the top-level `layout` option
+  even when that was unset, so a layout named there was silently ignored. The top-level
+  option still wins when both are set.
+- `simulation.changeLayout()` no longer hangs with the simulation switched off; it lays the
+  graph out, redraws it and fits the view.
+- Hovering a history row now drains a group or closed cluster whose members it would
+  take out, and the lines to it, instead of leaving them at full strength. Edges of a
+  node about to be hidden drain with it.
+- With the simulation switched off, unpinned nodes no longer drift for a few seconds after
+  load without being redrawn, then jump on the next redraw.
+- A node's tooltip no longer closes when the pointer crosses a gap inside the node's own
+  drawing on the way in.
+- Pointing at an edge legend entry now lights edges folded into a closed cluster's line
+  instead of dimming them with everything else.
+- The opening layout now includes what the host does right after `new Graph()`, instead of
+  laying out the graph as it was one call earlier.
+- The sidebar's "Showing N nodes and M edges" now follows nodes and edges being added,
+  removed or filtered, instead of keeping the count from load until the selection cleared.
+- Tooltips, dropdowns and typeahead lists, which are mounted outside the graph, now take the
+  theme set by `UI.theme` instead of the operating system's.
+- A tooltip's header under `UI.theme: 'dark'` no longer takes the light background when the
+  operating system is set to light.
+- A pinned tooltip's link now ends on the node's centre, not on the middle of the node and
+  its label.
+- An ingest now warms up a running layout, as opening a group does, so what lands is laid out
+  even when the layout had settled.
+- A graph built while its container has no size, such as the neighbour graph of a node
+  selected with the sidebar collapsed, now fits and centres once the container gets one,
+  instead of staying stuck in the top-left corner.
+- Dragging a new edge off a node card no longer selects the card's text.
+- Undoing a pivot run that landed without review (a one-click pivot, or `autoIngest`) no
+  longer opens a Review pane holding its rows.
+- The minimap draws a node's stroke as a ring around its dot, so a node drawn as an outline
+  (pale fill, coloured stroke) shows its colour instead of a near-white dot that vanishes on
+  the light theme.
 - **An unlabelled edge no longer carries a label container.** One was appended before anything
   checked whether there was any text, so every edge in an unlabelled graph was walked and
   repositioned on every tick — 6.11ms of a 6.30ms pass on a 1000-node graph. With
@@ -391,6 +456,77 @@ from a cluster into itself, which loops on the closed cluster.
   `removal` entry, a new `HistoryKind`, named after the source. Undo puts back what left, children
   inside their container, and gives the source's vouching back to what stayed. Before, the removal
   could not be undone, and the next Undo was spent on a run whose elements were already gone.
+- A pivot's edges to a container's children now land with them, through staging, ingest and
+  redo, instead of being dropped.
+- `Edge.clone()` copies the provenance ledger, so `getEdges()` reports an edge's real sources.
+- A second graph on the same page draws its own arrowheads and cluster gradients: their ids are
+  now unique per graph.
+- `graph.updateData` adds its new elements in one batch, so a large update re-renders once
+  instead of once per element.
+- Selecting a node inside a closed cluster lights the cluster, and focusing the node or picking
+  it from search centres the cluster. The node stays the selection.
+- A `viewer` canvas takes the height its box gives it. The 300px floor now applies only in
+  `full` and `light` mode.
+- A badge is sized by its node's short side, so a wide card no longer dwarfs it.
+- The minimap draws a dot for a custom-drawn node, coloured by its smallest shape tier or the
+  minimap ink.
+- The dashed collapsed cue follows `enableNodeExpansion` and a node's children after its first
+  render.
+- An `svgIcon`'s text centres like the library's own glyphs: the sanitizer keeps
+  `dominant-baseline` and `alignment-baseline`.
+- Five built-in icons carried malformed SVG, which leaked stray text into labels and cost the
+  lasso its round caps.
+- A context-menu row with no `variant` highlights on hover.
+- A tooltip no longer scrolls the page by its hover pad, and takes the theme's text colour when
+  mounted outside the graph.
+- The aggregated properties table handles a property repeated once per value: keep and exclude
+  match any entry, counts are per node, and each value gets its own bar.
+- A note added without an id gets one on a plain-HTTP page, where `crypto.randomUUID` is
+  missing.
+- Flyouts no longer run under the dock.
+
+### Breaking
+
+Most apps need no change. The ones to read are the new defaults that change what an existing
+graph looks like on upgrade.
+
+- **Labels below 9 rendered pixels are not drawn.** `render.minLabelFontSize` defaults to `9`, so
+  a large graph opening zoomed out shows no labels until zoomed in. `0` restores the old drawing.
+- **An empty canvas shows a card**, "Nothing on the canvas yet". `UI.emptyState: false` removes it.
+- **Pivot rim badges show only while Pivot mode is open.** `pivotRimBadgeVisible: 'always'` brings
+  back the old behaviour.
+- **An app's `menuNode` / `menuSelection` entries sit above the delete entry**, not below it.
+- **A `viewer` canvas has no 300px minimum height.** Give its container a height.
+- **`ready` fires after the opening fit**, later than before.
+- **`simulation.warmupTicks: 0` runs no opening layout.** It used to run the full warmup.
+- **`Flyout.headerRow`, `sectionLabel` and `toggleRow` treat their label and description as
+  text.** Markup passed to them shows as written.
+- **Cluster stand-in edges are drawing only.** `Edge.isSynthetic` is a read-only getter, and
+  `isCrossCluster`, `syntheticSourceNode`, `syntheticTerminalNode`, `getSubgraphFromNode` /
+  `setSubgraphFromNode` and `getSubgraphToNode` / `setSubgraphToNode` are gone. A stand-in no
+  longer appears in `getEdges()` or counts in a node's degree.
+- **The table's Edges tab reads `nested`** for an edge drawn to a closed cluster, where it read
+  `endpoint`.
+- **`HistoryKind` gains `'group'` and `'removal'`.** A `switch` over it needs the two cases.
+- **A content hook returning `null` renders nothing**, where it printed "null". The default
+  `nodeHeaderMap.title(node)` returns `''` for a node with no label.
+
+### Migration
+
+| Before | After |
+|---|---|
+| Labels drawn at any zoom | `render: { minLabelFontSize: 0 }` |
+| A blank empty canvas | `UI: { emptyState: false }` |
+| Rim badges outside Pivot mode | `pivotRimBadgeVisible: 'always'` |
+| A `viewer` relying on the 300px floor | Set a height on its container |
+| `warmupTicks: 0` for a quick warmup | Leave it unset, or give a small count |
+| Markup in `Flyout.headerRow` / `sectionLabel` / `toggleRow` | Plain text |
+| `edge.isSynthetic = …`, `edge.isCrossCluster`, `get/setSubgraphFromNode`, `get/setSubgraphToNode` | Nothing; stand-ins are not edges any more. `getEdges()` returns real edges only |
+| `'endpoint'` in the Edges tab for an edge into a closed cluster | `'nested'` |
+| An exhaustive `switch` over `HistoryKind` | Add `'group'` and `'removal'` |
+
+See [Simplify](./docs/simplify.md), [Translating the UI](./docs/i18n.md) and
+[Render](./docs/render.md).
 
 ## 2.0.1 — 2026-09-17
 
