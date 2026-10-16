@@ -13,7 +13,11 @@ const markdown = new MarkdownIt({ html: true })
 export const headingId = text => text.normalize('NFKD').replace(/[\u0300-\u036f\u0000-\u001f]/g, '')
     .replace(/[\s~`!@#$%^&*()\-_+=[\]{}|\\;:"'“”‘’<>,.?/]+/g, '-')
     .replace(/-{2,}/g, '-').replace(/^-+|-+$/g, '').replace(/^(\d)/, '_$1').toLowerCase()
-const stableSource = text => text.replace(/\[[^\]]+\]\(https:\/\/github\.com\/Pivotick\/Pivotick\/blob\/[^)]+\)/g, '[source]')
+// TypeDoc's source links and version breadcrumb change with every commit and release, not the prose.
+const version = /\bpivotick v\d+\.\d+\.\d+(?:[-+][\w.-]+)?/g
+const stableSource = text => text
+    .replace(/\[[^\]]+\]\(https:\/\/github\.com\/Pivotick\/Pivotick\/blob\/[^)]+\)/g, '[source]')
+    .replace(version, 'pivotick v')
 export const keyFor = text => createHash('sha256').update(stableSource(text)).digest('hex').slice(0, 24)
 
 export function protect(text) {
@@ -21,7 +25,7 @@ export function protect(text) {
     const add = value => `⟦${values.push(value) - 1}⟧`
     // Code, URLs, HTML and Vue expressions are never sent for translation.
     const api = text.replace(/<code\b[^>]*>[\s\S]*?<\/code>|\[(?:Node|Edge|Graph|Note|Pivotick|I18n|Notifier|Simulation|Flyout|UIComponent)\]\([^)]*\.md(?:#[^)]*)?\)/g, add)
-    const template = api.replace(/\[[^\]]+\]\(https:\/\/github\.com\/Pivotick\/Pivotick\/blob\/[^)]+\)|(`+)[\s\S]*?\1|<[^>]+>|\{\{[\s\S]*?\}\}|\]\([^\n]*?\)|\{#[^}]+\}|\\[<>|*_[\]`]|https?:\/\/[^\s)]+|\b(?:Pivotick|TypeScript|JavaScript|VitePress|TypeDoc|D3\.js|HTML|CSS|SVG|JSON|CSV|ESM|UMD|CLDR|BCP 47|Node\.js)\b|\b\w*[a-z][A-Z]\w*\b|\*\*|__|(?<!\w)[*_]|[*_](?!\w)|\[|\]/g, add)
+    const template = api.replace(/\[[^\]]+\]\(https:\/\/github\.com\/Pivotick\/Pivotick\/blob\/[^)]+\)|\bpivotick v\d+\.\d+\.\d+(?:[-+][\w.-]+)?|(`+)[\s\S]*?\1|<[^>]+>|\{\{[\s\S]*?\}\}|\]\([^\n]*?\)|\{#[^}]+\}|\\[<>|*_[\]`]|https?:\/\/[^\s)]+|\b(?:Pivotick|TypeScript|JavaScript|VitePress|TypeDoc|D3\.js|HTML|CSS|SVG|JSON|CSV|ESM|UMD|CLDR|BCP 47|Node\.js)\b|\b\w*[a-z][A-Z]\w*\b|\*\*|__|(?<!\w)[*_]|[*_](?!\w)|\[|\]/g, add)
     return { template, values }
 }
 

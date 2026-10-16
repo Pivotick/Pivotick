@@ -57,6 +57,11 @@ test('source URLs may change commit and line without invalidating prose translat
     assert.equal(headingId('1. A & B: `get_nodes()`'), '_1-a-b-get-nodes')
 })
 
+test('a release bump keeps the version breadcrumb out of the prose catalogues', () => {
+    assert.equal(keyFor('[**pivotick v2.0.1**](../README.md)'), keyFor('[**pivotick v2.1.0**](../README.md)'))
+    assert.doesNotMatch(protect('[**pivotick v2.1.0**](../README.md)').template, /[a-z]/i)
+})
+
 test('locale routes stay on the same documentation page without changing asset URLs', () => {
     assert.equal(localizedLink('/ui-table#columns', 'fr'), '/fr/ui-table#columns')
     assert.equal(localizedLink('/api/html/classes/Pivotick.html', 'de'), '/de/reference/classes/Pivotick')
