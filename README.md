@@ -25,6 +25,30 @@ It also does the thing it is named for: a **pivot** fetches more graph from wher
 - Extensible plugin API for adding custom UI, including your own mode on the left rail
 
 
+## Projects using Pivotick
+
+Pivotick helps the community explore connected data across threat intelligence,
+vulnerability research and security investigations. Discover the projects listed in
+[our community showcase](https://github.com/Pivotick/Pivotick/issues/34):
+
+| Project | What it does |
+| --- | --- |
+| [Rulezet](https://rulezet.org/) | Explore, share and manage cybersecurity detection rules. |
+| [CTI Transmute](https://cti-transmute.org/) | Convert cyber threat intelligence between MISP and STIX formats. |
+| [CPE Editor](https://cpe.gcve.eu/) · [Source code](https://github.com/gcve-eu/cpe-editor) | Search and edit Common Platform Enumeration (CPE) entries. |
+| [Vulnerability-Lookup](https://www.vulnerability-lookup.org/) · [CIRCL instance](https://vulnerability.circl.lu/) | Collect, correlate and share vulnerability information. |
+| [AIL Project](https://www.ail-project.org/) | Collect, crawl and analyse unstructured data for threat intelligence. |
+| [Threat Actor Explorer](https://github.com/adulau/threat-actor-explorer) | Explore threat actors from the MISP galaxy dataset in your browser. |
+| [FlowIntel](https://flowintel.org/) | Organize security investigations, cases and analyst tasks. |
+| [CIRCL](https://www.circl.lu/projects/) | Discover open-source cybersecurity projects maintained by CIRCL. |
+| [MISP](https://www.misp-project.org/) | Share, store and correlate threat intelligence using open standards. |
+
+**Building something with Pivotick?** We'd love to feature it here! Share your project's
+name, a link and a short description of how you use Pivotick in
+[issue #34](https://github.com/Pivotick/Pivotick/issues/34). Projects of all sizes are welcome.
+
+Browse the [project showcase in the documentation](https://pivotick.github.io/Pivotick/projects-using-pivotick).
+
 ## Getting Started
 
 ### Basic Usage

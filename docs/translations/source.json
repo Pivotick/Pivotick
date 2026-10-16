@@ -1693,6 +1693,7 @@
       "edge-layers.md",
       "i18n.md",
       "plugins.md",
+      "reference/README.md",
       "simplify.md",
       "ui-legend.md",
       "ui-table.md"
@@ -5475,6 +5476,14 @@
       "index.md"
     ]
   },
+  "5cfa5a9a1dbc200f555af5a9": {
+    "source": "Projects using Pivotick",
+    "pages": [
+      "index.md",
+      "projects-using-pivotick.md",
+      "reference/README.md"
+    ]
+  },
   "435c3be27b28f013462daf82": {
     "source": "Graph Layout",
     "pages": [
@@ -7687,6 +7696,12 @@
       "plugins.md"
     ]
   },
+  "07e04dd80b936e3fd02d1424": {
+    "source": "Discover community projects using Pivotick and share your own.",
+    "pages": [
+      "projects-using-pivotick.md"
+    ]
+  },
   "124637be7c1e59aca3f34d8f": {
     "source": "[**pivotick v2.0.1**](../README.md)",
     "pages": [
@@ -7759,7 +7774,7 @@
     ]
   },
   "daae2f446ae522a9ef31778f": {
-    "source": "Defined in: [Edge.ts:48](https://github.com/Pivotick/Pivotick/blob/fa1b34e92c6e8bbe0d5e18b2cd5a3f4e49ba45ca/src/Edge.ts#L48)",
+    "source": "Defined in: [Edge.ts:48](https://github.com/Pivotick/Pivotick/blob/9b2501bacddca9c2235b52fad076c14d5fc8d340/src/Edge.ts#L48)",
     "pages": [
       "reference/classes/Edge.md",
       "reference/classes/Flyout.md",
@@ -18588,6 +18603,24 @@
       "reference/README.md"
     ]
   },
+  "b71e671a6416b0104c80de89": {
+    "source": "Pivotick helps the community explore connected data across threat intelligence,\nvulnerability research and security investigations. Discover the projects listed in\n[our community showcase](https://github.com/Pivotick/Pivotick/issues/34):",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "aea10948c1f01c56a5d1628f": {
+    "source": "**Building something with Pivotick?** We'd love to feature it here! Share your project's\nname, a link and a short description of how you use Pivotick in\n[issue #34](https://github.com/Pivotick/Pivotick/issues/34). Projects of all sizes are welcome.",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "b61252daa39728ada3b7844a": {
+    "source": "Browse the [project showcase in the documentation](https://pivotick.github.io/Pivotick/projects-using-pivotick).",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
   "013c113f0537dbdd2cbcc073": {
     "source": "**ES Module (recommended)**",
     "pages": [
@@ -18662,6 +18695,114 @@
   },
   "ae88323ba69f6948a7cc6859": {
     "source": "Keep PRs focused and small",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "985959785319747668373cc6": {
+    "source": "Project",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "c69eefea93f0d5c05d8de717": {
+    "source": "[Rulezet](https://rulezet.org/)",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "fc5779eee4d036eba8ae4952": {
+    "source": "Explore, share and manage cybersecurity detection rules.",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "db6a2393ee59ea540969337c": {
+    "source": "[CTI Transmute](https://cti-transmute.org/)",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "351f8c9696aab5711114c55a": {
+    "source": "Convert cyber threat intelligence between MISP and STIX formats.",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "f1ace66f61e8259bb68d9e33": {
+    "source": "[CPE Editor](https://cpe.gcve.eu/) · [Source code](https://github.com/gcve-eu/cpe-editor)",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "6bfdf5908685c6edbfdd59b5": {
+    "source": "Search and edit Common Platform Enumeration (CPE) entries.",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "718e8c2888fd229b2942a16f": {
+    "source": "[Vulnerability-Lookup](https://www.vulnerability-lookup.org/) · [CIRCL instance](https://vulnerability.circl.lu/)",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "de50a7d52859a7601ceecc19": {
+    "source": "Collect, correlate and share vulnerability information.",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "3d6e53cad3b8f39edca7c271": {
+    "source": "[AIL Project](https://www.ail-project.org/)",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "60d3693b3df9c7beda03fea0": {
+    "source": "Collect, crawl and analyse unstructured data for threat intelligence.",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "90181154d25cddb43e2da092": {
+    "source": "[Threat Actor Explorer](https://github.com/adulau/threat-actor-explorer)",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "3f1c9229d13534b1ad2a5ad3": {
+    "source": "Explore threat actors from the MISP galaxy dataset in your browser.",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "04fdccdf875809168a17e5f7": {
+    "source": "Organize security investigations, cases and analyst tasks.",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "880d08167b388c8a0eaafc44": {
+    "source": "[CIRCL](https://www.circl.lu/projects/)",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "2775f827470d99a781e75a4c": {
+    "source": "Discover open-source cybersecurity projects maintained by CIRCL.",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "27c906e353829f01ccb92b52": {
+    "source": "[MISP](https://www.misp-project.org/)",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "0b5a687a2471745cd6e877a8": {
+    "source": "Share, store and correlate threat intelligence using open standards.",
     "pages": [
       "reference/README.md"
     ]

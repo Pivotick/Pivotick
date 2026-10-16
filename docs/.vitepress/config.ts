@@ -12,15 +12,22 @@ const sharedTheme: DefaultTheme.Config = {
     logo: '/pivotick.svg',
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Getting Started', link: '/getting-started' },
-      { text: 'Configuration', link: '/configuration' },
+      {
+        text: 'Documentation',
+        items: [
+          { text: 'Getting Started', link: '/getting-started' },
+          { text: 'Configuration', link: '/configuration' },
+          { text: 'Generated API docs', link: '/reference/classes/Pivotick' },
+        ],
+      },
       { text: 'Gallery', link: '/gallery' },
+      { text: 'Projects', link: '/projects-using-pivotick' },
       { text: 'Try it out!', link: '/tool' },
-      { text: 'Generated API docs', link: '/reference/classes/Pivotick', },
     ],
 
     sidebar: [
       { text: 'Getting Started', link: '/getting-started' },
+      { text: 'Projects using Pivotick', link: '/projects-using-pivotick' },
       {
         text: 'Configuration',
         link: '/configuration',

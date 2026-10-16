@@ -45,3 +45,37 @@ features:
     :data="data_e"
     :options="options_e"
 ></Pivotick>
+
+<section class="pvt-home-projects" aria-labelledby="projects-using-pivotick">
+    <h2 id="projects-using-pivotick">Projects using Pivotick</h2>
+    <ProjectsUsingPivotick />
+</section>
+
+<style scoped>
+.pvt-home-projects {
+    max-width: 1152px;
+    padding: 0 24px;
+    margin: 64px auto;
+}
+
+.pvt-home-projects h2 {
+    margin-bottom: 16px;
+    color: var(--vp-c-text-1);
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+@media (min-width: 640px) {
+    .pvt-home-projects {
+        padding: 0 48px;
+    }
+}
+
+@media (min-width: 960px) {
+    .pvt-home-projects {
+        max-width: 1280px;
+        padding: 0 64px;
+    }
+}
+</style>
