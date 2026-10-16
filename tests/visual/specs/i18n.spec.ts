@@ -65,13 +65,13 @@ test.describe('i18n: messages', () => {
         })
         await expect(page.locator('#pvt-searchbox-button .action-text')).toHaveText('Rechercher')
         await expect(page.locator('#pvt-graphnavigation-zoom-in')).toHaveAttribute('title', 'Zoom avant')
-        // Untranslated keys beside them stay English.
-        await expect(page.locator('#pvt-filter-button .action-text')).toHaveText('Filter Graph')
+        // Other keys use the bundled French catalogue.
+        await expect(page.locator('#pvt-filter-button .action-text')).toHaveText('Filtrer le graphe')
     })
 
-    test('a key the messages leave out stays English', async ({ page }) => {
+    test('a key the messages leave out uses the bundled language', async ({ page }) => {
         await loadFixture(page, 'empty', { i18n: { locale: 'fr', messages: { 'busy.label': 'Patientez…' } } })
-        await expect(emptyCard(page)).toHaveText(EMPTY_MESSAGE)
+        await expect(emptyCard(page)).toHaveText('Le canevas est encore vide')
     })
 
     test("the feature's own option wins over the messages", async ({ page }) => {
@@ -104,8 +104,8 @@ test.describe('i18n: messages', () => {
     })
 
     test('a built-in English message keeps English plurals under a locale that has no translation for it', async ({ page }) => {
-        await loadFixture(page, 'empty', { i18n: { locale: 'fr' } })
-        // French counts zero as one; the English left in its place must not say "0 node".
+        await loadFixture(page, 'empty', { i18n: { locale: 'hi' } })
+        // Hindi counts zero as one; fallback English must keep English plural rules.
         expect(await message(page, 'count.nodes', { count: 0 })).toBe('0 nodes')
         expect(await message(page, 'count.nodes', { count: 1 })).toBe('1 node')
     })

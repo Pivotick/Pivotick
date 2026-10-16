@@ -103,7 +103,7 @@ The interface for action items are defined [here](/api/html/types/GraphUI.MenuAc
 | Option        | Type                                                                                            | Default      | Description                                           |
 | ------------- | ----------------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------- |
 | `iconClass`   | `IconClass`                                                                                     | `undefined`  | CSS class used as an icon. Typically used in icon libraries such as fontawesome. Example: `fa-solid fa-edit` |
-| `iconUnicode` | `IconUnicode`                                                                                   | `undefined`  | Unicode character used as an icon. Raw unicode to be used in icon libraries such as fontawesome. Example: ``\uf007` |
+| `iconUnicode` | `IconUnicode`                                                                                   | `undefined`  | Unicode character used as an icon. Raw unicode to be used in icon libraries such as fontawesome. Example: `\uf007` |
 | `imagePath`   | `ImagePath`                                                                                     | `undefined`  | Path to an image used as an icon.                     |
 | `svgIcon`     | `SVGIcon`                                                                                       | `undefined`  | Inline SVG object used as an icon. Example: `<svg>...</svg>` |
 | `text`        | `string`                                                                                        | **required**  | The action’s label shown in menus and toolbars.       |

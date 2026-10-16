@@ -15,6 +15,7 @@ dist-ssr
 # Docs
 docs/.vitepress/dist
 docs/.vitepress/cache
+docs/.vitepress/.temp/
 
 # Visual tests — generated artefacts (baselines under __screenshots__ ARE committed)
 tests/visual/.results
@@ -37,3 +38,11 @@ blob-report
 
 # Planning docs — local scratch, not part of the library
 prd/
+
+# Generated localized docs and VitePress API reference (from translation catalogues)
+docs/zh/
+docs/fr/
+docs/de/
+docs/pt/
+docs/reference/
+work/

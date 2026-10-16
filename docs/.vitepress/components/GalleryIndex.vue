@@ -10,7 +10,7 @@
                 <a
                     class="header-anchor"
                     :href="`#${category.anchor}`"
-                    :aria-label="`Permalink to “${category.title}”`"
+                    :aria-label="`${siteText('Permalink to', lang)} “${category.title}”`"
                 >&ZeroWidthSpace;</a>
             </h2>
 
@@ -28,19 +28,26 @@
                             :alt="card.title"
                             loading="lazy"
                         />
-                        <span v-else class="pvt-gallery__thumb--empty">No preview yet</span>
+                        <span v-else class="pvt-gallery__thumb--empty">{{ siteText('No preview yet', lang) }}</span>
                     </span>
                     <span class="pvt-gallery__title">{{ card.title }}</span>
                 </a>
             </div>
-            <p v-else class="pvt-gallery__soon">Coming soon.</p>
+            <p v-else class="pvt-gallery__soon">{{ siteText('Coming soon.', lang) }}</p>
         </section>
     </div>
 </template>
 
 <script setup>
-import { withBase } from 'vitepress'
-import { data as categories } from '../../gallery.data.js'
+import { withBase, useData } from 'vitepress'
+import { computed } from 'vue'
+import { siteText, siteLanguage } from '../site-i18n'
+import { data } from '../../gallery.data.js'
+
+const { lang } = useData()
+const categories = computed(() => (data[siteLanguage(lang.value)] ?? []).map(category => ({
+    ...category, title: siteText(category.title, lang.value),
+})))
 
 defineOptions({ name: 'GalleryIndex' })
 

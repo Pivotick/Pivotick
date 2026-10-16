@@ -1,6 +1,6 @@
 <template>
     <div class="evt-log">
-        <div v-if="!entries.length" class="evt-log__hint">{{ hint }}</div>
+        <div v-if="!entries.length" class="evt-log__hint">{{ hint || siteText('Interact with the graph…', lang) }}</div>
         <div v-for="e in entries" :key="e.id" class="evt-log__line">
             <span class="evt-log__type" :style="{ color: accent }">{{ e.type }}</span>
             <span class="evt-log__detail">{{ e.detail }}<span v-if="e.count > 1" class="evt-log__count"> ×{{ e.count }}</span></span>
@@ -10,6 +10,9 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useData } from 'vitepress'
+import { siteText } from '../site-i18n'
+const { lang } = useData()
 
 // A small, self-contained event log for the interactive gallery cards. It owns
 // its own state so a card's page component never re-renders when events arrive —
@@ -18,7 +21,7 @@ defineOptions({ name: 'EventLog' })
 
 const props = defineProps({
     accent: { type: String, default: '#6366f1' },
-    hint: { type: String, default: 'Interact with the graph…' },
+    hint: { type: String, default: '' },
     coalesce: { type: Boolean, default: false },
     max: { type: Number, default: 40 }
 })

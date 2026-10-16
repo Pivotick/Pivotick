@@ -8,6 +8,7 @@ import { Flyout } from './ui/elements/Flyout/Flyout'
 import { minimap } from './plugins/minimap'
 import { tableColumns } from './ui/elements/Table/TableColumns'
 import { messagesEn } from './i18n/en'
+import { bundledMessages, messagesDe, messagesFr, messagesPt, messagesZh } from './i18n/locales'
 import './styles/style.scss'
 
 // @ts-expect-error Make usage of browser build easier
@@ -28,11 +29,22 @@ Graph.minimap = minimap
 Graph.tableColumns = tableColumns
 // @ts-expect-error Make usage of browser build easier
 Graph.messagesEn = messagesEn
+// @ts-expect-error Make bundled catalogues available in browser builds
+Graph.bundledMessages = bundledMessages
+// @ts-expect-error Make bundled catalogues available in browser builds
+Graph.messagesDe = messagesDe
+// @ts-expect-error Make bundled catalogues available in browser builds
+Graph.messagesFr = messagesFr
+// @ts-expect-error Make bundled catalogues available in browser builds
+Graph.messagesPt = messagesPt
+// @ts-expect-error Make bundled catalogues available in browser builds
+Graph.messagesZh = messagesZh
 
 // export default Graph
 
 // Named exports (still available for modular imports)
 export { Graph as Pivotick, Node, Edge, Note, ColorPaletteMapper, UIComponent, Flyout, minimap, tableColumns, messagesEn }
+export { bundledMessages, messagesDe, messagesFr, messagesPt, messagesZh }
 export type { UIPhase } from './ui/UIComponent'
 export type { PivotickPlugin, PluginContext } from './interfaces/Plugin'
 export type { MinimapOptions, MinimapPosition } from './plugins/minimap'

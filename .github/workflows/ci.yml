@@ -3,6 +3,8 @@ name: CI Build
 on:
   push:
     branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
 
 permissions:
   contents: read
@@ -26,6 +28,21 @@ jobs:
 
       - name: Build library
         run: npm run build
+
+      - name: Test translation catalogues and lookup
+        run: npm run test:i18n
+
+      - name: Build multilingual documentation
+        run: npm run docs:build
+
+      - name: Test documentation localization
+        run: npm run test:docs
+
+      - name: Install Chromium for documentation checks
+        run: npx playwright install --with-deps chromium
+
+      - name: Test documentation in the browser
+        run: npm run test:docs:browser
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

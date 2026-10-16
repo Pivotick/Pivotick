@@ -16,6 +16,17 @@
 
 ### Translating the UI
 
+- The documentation site now offers English (default), Simplified Chinese, French,
+  German and Portuguese. Guides, gallery descriptions and the generated API reference
+  share a language selector, stable section anchors and localized navigation and search.
+  Editable prose catalogues generate the translated pages during the documentation build.
+- **Complete bundled translations** for Simplified Chinese (`zh`), French (`fr`), German
+  (`de`) and Portuguese (`pt`), selected by `i18n.locale`. Regional tags share the language
+  catalogue and keep their own formatting. Explicit messages and translation hooks still win.
+- **Gettext PO catalogues** and an English POT template ship in `locales/`, with extraction,
+  compilation and validation commands. The build checks all 758 messages in every language
+  for completeness, current source text, plural forms and preserved placeholders.
+
 - **`GraphOptions.i18n`** puts the text the library writes itself in the host's language:
   753 messages covering the rail, menus, sidebar, table, pivot panel, history, toasts,
   `title` tooltips and `aria-label`s. `messages` replaces text by key, and

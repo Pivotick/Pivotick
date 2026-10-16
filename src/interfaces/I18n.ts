@@ -59,7 +59,8 @@ export type Messages = Record<MessageKey, MessageValue>
  * facets, pivots, menu rows) is drawn as given and never looked up.
  *
  * A string is looked up in this order: the feature's own option when it has one (such
- * as `UI.emptyState.render`), then `messages`, then `translate`, then English.
+ * as `UI.emptyState.render`), then `messages`, then `translate`, then the bundled
+ * language catalogue, then English.
  *
  * @category I18n
  */
@@ -68,18 +69,21 @@ export interface I18nOptions {
      * A BCP 47 tag such as `'fr'` or `'de-CH'`. It picks the plural rules, how numbers
      * are written and how lists sort. When given, it is also set as the `lang` of the
      * graph's root element.
+     * English, Simplified Chinese (`zh`), French (`fr`), German (`de`) and
+     * Portuguese (`pt`) are bundled. Regional tags such as `de-CH` use their
+     * language's catalogue and retain their own formatting and plural rules.
      * @default 'en'
      */
     locale?: string
     /**
-     * Messages that replace the built-in English, by key. A key left out stays English,
-     * so a partial catalogue is fine.
+     * Messages that override the bundled catalogue, by key. Missing keys use the
+     * selected language, or English when no catalogue is bundled.
      */
     messages?: Partial<Messages>
     /**
      * A bridge to the host's own translation library, asked for every key `messages`
      * does not have. It gets the raw params, so the host's plural rules apply, and the
-     * English text. Returning `undefined` keeps the English.
+     * English text. Returning `undefined` uses the bundled language, then English.
      *
      * @example
      * translate: (key, params, fallback) => i18next.t(`pivotick.${key}`, { ...params, defaultValue: fallback })

@@ -1,5 +1,5 @@
 ---
-layout: false
+layout: page
 ---
 
 
@@ -10,6 +10,6 @@ layout: false
 <Pivotick
     :data="data_e"
     :options="options_e"
-    :style="'margin: 0; height: 100vh; border: none'"
+    :style="'margin: 0; height: calc(100vh - var(--vp-nav-height)); border: none'"
     :onLoadedCallback="loadedCb"
 ></Pivotick>
