@@ -316,17 +316,17 @@ export class GraphSvgRenderer extends GraphRenderer {
 
         this.fitObserver = new ResizeObserver(() => {
             if (!this.deferredFit) return this.cancelDeferredFit()
-            if (!this.hasSize()) return
-            const pending = this.deferredFit
-            this.fitAndCenter(pending.forceScale)
-            // fitAndCenter cleared it; keep it alive until the size stops changing.
-            this.deferredFit = pending
-            if (this.fitSettleFrame !== null) cancelAnimationFrame(this.fitSettleFrame)
-            this.fitSettleFrame = requestAnimationFrame(() => {
-                this.fitSettleFrame = requestAnimationFrame(() => this.cancelDeferredFit())
-            })
+            if (this.hasSize()) this.fitAndCenter(this.deferredFit.forceScale)
         })
         this.fitObserver.observe(this.svgCanvas)
+    }
+
+    /** End the deferred fit once the size holds for a frame; each resize re-arms it. */
+    private settleDeferredFit(): void {
+        if (this.fitSettleFrame !== null) cancelAnimationFrame(this.fitSettleFrame)
+        this.fitSettleFrame = requestAnimationFrame(() => {
+            this.fitSettleFrame = requestAnimationFrame(() => this.cancelDeferredFit())
+        })
     }
 
     private cancelDeferredFit(): void {
@@ -889,8 +889,12 @@ export class GraphSvgRenderer extends GraphRenderer {
             this.deferFit(forceScale)
             return
         }
-        // A fit that runs supersedes one still waiting for a size.
-        this.deferredFit = null
+        // A fit that runs while a deferred one waits takes its place, so the canvas
+        // keeps re-fitting until it stops resizing.
+        if (this.deferredFit) {
+            this.deferredFit = { forceScale }
+            this.settleDeferredFit()
+        }
 
         const bounds = this.measureZoomLayer(zoomLayerEl)
         if (bounds.width == 0 || bounds.height == 0) return
