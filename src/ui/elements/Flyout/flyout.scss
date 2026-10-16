@@ -5,10 +5,10 @@
 .pvt-flyout {
     position: absolute;
     top: calc(var(--pvt-mainheader-height) + 14px);
-    left: 84px;
+    left: var(--pvt-rail-gutter, 84px);
     z-index: 7;
     width: 252px;
-    max-width: calc(100% - 98px);
+    max-width: calc(100% - var(--pvt-rail-gutter, 84px) - 14px);
     // Offset by the header like the tool panel, so subtract it too: without it a tall
     // flyout ran under the dock, its last rows cut off instead of scrolled to.
     max-height: calc(100% - var(--pvt-mainheader-height) - 28px);

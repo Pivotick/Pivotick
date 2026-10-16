@@ -85,8 +85,8 @@
     }
 
     &[data-position='top-left'] {
-        // Clear of the 54px mode rail, lined up with the tool panel and flyout.
-        left: 84px;
+        // Clear of the mode rail, lined up with the tool panel and flyout.
+        left: var(--pvt-rail-gutter, 84px);
         top: calc(var(--pvt-mainheader-height) + 14px);
         --pvt-minimap-corner-angle: 180deg;
 

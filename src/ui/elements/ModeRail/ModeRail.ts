@@ -45,9 +45,9 @@ export class ModeRail extends UIComponent {
         // the guaranteed fallback and always here; the other three answer to their
         // options — Create to whether any of its four tools survived, the two flyouts
         // to their own switches.
-        this.rail.appendChild(this.makeButton('select', this.i18n.t('rail.select'), cursor, 'V'))
+        this.rail.appendChild(this.makeButton('select', this.i18n.t('rail.select'), cursor, 'V', [this.i18n.t('rail.lasso')]))
         if (this.uiManager.hasCreateTools()) {
-            this.rail.appendChild(this.makeButton('create', this.i18n.t('rail.create'), addCircle, 'C'))
+            this.rail.appendChild(this.makeButton('create', this.i18n.t('rail.create'), addCircle, 'C', [this.i18n.t('rail.edge')]))
         }
         if (this.uiManager.isFeatureEnabled('viewFlyout')) {
             this.rail.appendChild(this.makeButton('view', this.i18n.t('rail.view'), show))
@@ -97,12 +97,13 @@ export class ModeRail extends UIComponent {
         this.render(this.uiManager.modeStore.getState())
         this.track(this.uiManager.modeStore.subscribe((state) => this.render(state)))
 
-        this.publishHeight()
+        this.publishSize()
     }
 
     protected onDestroy() {
         for (const dispose of this.pluginDisposers.splice(0)) dispose()
         this.layoutRoot()?.style.removeProperty('--pvt-moderail-height')
+        this.layoutRoot()?.style.removeProperty('--pvt-moderail-width')
         this.rail?.remove()
         this.rail = undefined
         this.pluginZone = undefined
@@ -128,7 +129,7 @@ export class ModeRail extends UIComponent {
         if (modes.length) zone.appendChild(this.makeDivider())
 
         for (const mode of modes) {
-            const button = this.makeButton(mode.id, mode.label, mode.icon, mode.shortcut)
+            const button = this.makeButton(mode.id, mode.label, mode.icon, mode.shortcut, resolveRailTools(mode).map(tool => tool.label))
             this.pluginButtonIds.add(mode.id)
             zone.appendChild(button)
 
@@ -148,19 +149,23 @@ export class ModeRail extends UIComponent {
     }
 
     /**
-     * Publish the rail's height as `--pvt-moderail-height`. The rail grows down the
-     * canvas's left column, so anything else docked there (the legend) can size
-     * itself against it instead of guessing — see `legend.scss`. Observed rather
-     * than computed: the height moves with whatever modes are registered, and with
+     * Publish the rail's size as `--pvt-moderail-height` and `--pvt-moderail-width`.
+     * The rail grows down the canvas's left column, so anything else docked there (the
+     * legend) can size itself against it instead of guessing — see `legend.scss` — and
+     * a long translated label widens it, which moves what sits beside it. Observed
+     * rather than computed: the size moves with whatever modes are registered, and with
      * whatever the label font resolves to.
      */
-    private publishHeight(): void {
+    private publishSize(): void {
         const rail = this.rail
         if (!rail) return
 
         const write = (): void => {
-            const height = rail.getBoundingClientRect().height
-            this.layoutRoot()?.style.setProperty('--pvt-moderail-height', `${height}px`)
+            const { width, height } = rail.getBoundingClientRect()
+            const style = this.layoutRoot()?.style
+            style?.setProperty('--pvt-moderail-height', `${height}px`)
+            // Whole pixels, so what sits beside the rail stays on the pixel grid.
+            style?.setProperty('--pvt-moderail-width', `${Math.ceil(width)}px`)
         }
         write()
 
@@ -261,7 +266,8 @@ export class ModeRail extends UIComponent {
         return divider
     }
 
-    private makeButton(key: string, label: string, icon: string, shortcut?: string): HTMLButtonElement {
+    /** `faces` are the other labels the button can show, for an armed tool: it is sized to the widest. */
+    private makeButton(key: string, label: string, icon: string, shortcut?: string, faces: string[] = []): HTMLButtonElement {
         const button = document.createElement('button')
         button.type = 'button'
         button.className = 'pvt-moderail-button'
@@ -270,10 +276,21 @@ export class ModeRail extends UIComponent {
         const iconEl = document.createElement('span')
         iconEl.className = 'pvt-moderail-icon'
         iconEl.innerHTML = icon
+        const labels = document.createElement('span')
+        labels.className = 'pvt-moderail-labels'
         const labelEl = document.createElement('span')
         labelEl.className = 'pvt-moderail-label'
         labelEl.textContent = label
-        button.append(iconEl, labelEl)
+        labels.append(labelEl)
+        for (const face of new Set(faces)) {
+            if (!face || face === label) continue
+            const sizer = document.createElement('span')
+            sizer.className = 'pvt-moderail-label-sizer'
+            sizer.setAttribute('aria-hidden', 'true')
+            sizer.textContent = face
+            labels.append(sizer)
+        }
+        button.append(iconEl, labels)
         this.buttons.set(key, button)
         return button
     }

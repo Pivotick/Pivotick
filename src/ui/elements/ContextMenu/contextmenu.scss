@@ -128,6 +128,11 @@
                     margin-left: 1em;
                     text-align: end;
                 }
+                // The chip's auto margin is zero once a long label fills the row; this
+                // keeps a gap and widens the menu instead.
+                &:has(> .pvt-keyboard-shortcut) .pvt-action-text {
+                    margin-right: 1em;
+                }
                 .pvt-shortcut {
                     margin-left: 1em;
                     text-align: end;

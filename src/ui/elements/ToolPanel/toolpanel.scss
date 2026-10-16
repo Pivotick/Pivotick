@@ -7,7 +7,7 @@
 // overflow the canvas; it scrolls as one, as before.
 
 // Left of the panel: the rail, and the gap between the two.
-$rail-gutter: 84px;
+$rail-gutter: var(--pvt-rail-gutter, 84px);
 
 .pvt-toolpanel {
     position: absolute;

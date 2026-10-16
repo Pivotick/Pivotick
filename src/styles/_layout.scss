@@ -16,6 +16,9 @@
     // The bottom dock's height. 0 while it is closed, so the second grid row
     // collapses away and nothing shifts.
     --pvt-dock-height: 0px;
+    // Left of what docks beside the mode rail: the rail, at its 14px inset, and a 6px
+    // gap. The rail publishes its width, which grows with a long translated label.
+    --pvt-rail-gutter: calc(var(--pvt-moderail-width, 64px) + 20px);
 
     position: relative;
     width: 100%;

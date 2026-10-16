@@ -139,6 +139,10 @@ Changes an English interface shows too:
   still reads "Could not resolve title", now in the graph's language.
 - `tableColumns` keeps English labels; a built-in column still carrying its default is shown
   in the graph's language, and a label the host wrote is kept.
+- **The mode rail widens for a word too long for its 54px**, such as "Vereinfachen" or
+  "Sélectionner", and the tool panel, flyouts, legend and minimap beside it move over. Each
+  button is sized for every label it can show, so arming a tool never resizes the rail. A
+  context-menu label keeps a gap before its shortcut chip, widening the menu if it must.
 
 ### Detail that follows the zoom
 

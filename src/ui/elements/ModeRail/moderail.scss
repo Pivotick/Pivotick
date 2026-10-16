@@ -23,7 +23,10 @@
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    width: 54px;
+    // A floor, not a width: a word too long for it (a translated label) widens the
+    // button, and the rail's column stretches every other button to match.
+    min-width: 54px;
+    box-sizing: border-box;
     padding: 10px 0;
     border: none;
     border-radius: 10px;
@@ -46,10 +49,33 @@
         }
     }
 
-    .pvt-moderail-label {
+    // Every label the button can show shares one cell, so arming a tool never resizes
+    // the rail. The cell wraps at the button's 54px like a plain label would, and only a
+    // single word longer than that widens it.
+    .pvt-moderail-labels {
+        display: grid;
+        justify-items: center;
+        box-sizing: border-box;
+        width: max-content;
+        max-width: 54px;
+        min-width: min-content;
+        padding: 0 4px;
+
+        > * { grid-area: 1 / 1; }
+    }
+
+    .pvt-moderail-label,
+    .pvt-moderail-label-sizer {
         font-size: 10px;
         font-weight: 600;
         letter-spacing: 0.01em;
+    }
+
+    // Width only: a face that wraps to two lines must not make the resting button taller.
+    .pvt-moderail-label-sizer {
+        visibility: hidden;
+        height: 0;
+        overflow: hidden;
     }
 
     &:hover:not(:disabled) {

@@ -65,11 +65,11 @@
         ));
     }
 
-    // Clear of the mode rail (54px at left:14px), lining up with the tool panel and
-    // the settings flyouts instead — those overlay the legend when open, being transient.
+    // Clear of the mode rail, lining up with the tool panel and the settings flyouts
+    // instead — those overlay the legend when open, being transient.
     &[data-position='top-left'] {
         top: calc(var(--pvt-mainheader-height) + 14px);
-        left: 84px;
+        left: var(--pvt-rail-gutter, 84px);
     }
 
     &[data-position='top-right'] {
