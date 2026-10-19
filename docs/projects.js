@@ -26,7 +26,7 @@ export const projects = [
     {
         name: 'Vulnerability-Lookup',
         initials: 'VL',
-        logo: '/projects/vulnerability-lookup.jpg',
+        logo: '/projects/vulnerability-lookup.png',
         url: 'https://www.vulnerability-lookup.org/',
         instance: 'https://vulnerability.circl.lu/',
         description: 'Collect, correlate and share vulnerability information.',
