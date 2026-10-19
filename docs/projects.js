@@ -26,7 +26,7 @@ export const projects = [
     {
         name: 'Vulnerability-Lookup',
         initials: 'VL',
-        logo: '/projects/vulnerability-lookup.svg',
+        logo: '/projects/vulnerability-lookup.jpg',
         url: 'https://www.vulnerability-lookup.org/',
         instance: 'https://vulnerability.circl.lu/',
         description: 'Collect, correlate and share vulnerability information.',
@@ -41,6 +41,7 @@ export const projects = [
     {
         name: 'Threat Actor Explorer',
         initials: 'TA',
+        logo: '/projects/misp-galaxy.png',
         url: 'https://github.com/adulau/threat-actor-explorer',
         description: 'Explore threat actors from the MISP galaxy dataset in your browser.',
     },
