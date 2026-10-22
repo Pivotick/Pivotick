@@ -1,4 +1,5 @@
 <script setup>
+import { withBase } from 'vitepress'
 import { projects, projectsIssueUrl } from '../../projects.js'
 
 defineOptions({ name: 'ProjectsUsingPivotick' })
@@ -15,7 +16,10 @@ defineOptions({ name: 'ProjectsUsingPivotick' })
         <ul class="pvt-projects__grid">
             <li v-for="project in projects" :key="project.name" class="pvt-projects__card">
                 <a :href="project.url" class="pvt-projects__link">
-                    <span class="pvt-projects__badge" aria-hidden="true">{{ project.initials }}</span>
+                    <span v-if="project.logo" class="pvt-projects__logo">
+                        <img :src="withBase(project.logo)" :alt="`${project.name} logo`" loading="lazy">
+                    </span>
+                    <span v-else class="pvt-projects__badge" aria-hidden="true">{{ project.initials }}</span>
                     <strong class="pvt-projects__name">{{ project.name }}</strong>
                     <span class="pvt-projects__description">{{ project.description }}</span>
                     <span class="pvt-projects__visit">Explore project <span aria-hidden="true">→</span></span>
@@ -95,6 +99,19 @@ defineOptions({ name: 'ProjectsUsingPivotick' })
     color: var(--vp-c-brand-1);
     font-size: 14px;
     font-weight: 700;
+}
+
+.pvt-projects__logo {
+    display: flex;
+    align-items: center;
+    height: 48px;
+    margin-bottom: 16px;
+}
+
+.pvt-projects__logo img {
+    max-width: 160px;
+    max-height: 48px;
+    object-fit: contain;
 }
 
 .pvt-projects__name {
