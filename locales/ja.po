@@ -1,0 +1,4072 @@
+msgid ""
+msgstr "Project-Id-Version: Pivotick\nReport-Msgid-Bugs-To: https://github.com/Pivotick/Pivotick/issues\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nLanguage: ja\nPlural-Forms: nplurals=1; plural=0;\n"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/common.ts:5
+msgctxt "count.nodes"
+msgid "{count} node"
+msgid_plural "{count} nodes"
+msgstr[0] "{count} 個のノード"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/common.ts:6
+msgctxt "count.edges"
+msgid "{count} edge"
+msgid_plural "{count} edges"
+msgstr[0] "{count} 本のエッジ"
+
+#: src/i18n/en/common.ts:9
+msgctxt "note.defaultContent"
+msgid "This is not a note."
+msgstr "これはメモではありません。"
+
+#. Preserve placeholders: {key}
+#: src/i18n/en/common.ts:12
+msgctxt "keys.ctrlCombo"
+msgid "Ctrl+{key}"
+msgstr "Ctrl+{key}"
+
+#: src/i18n/en/common.ts:13
+msgctxt "keys.escape"
+msgid "esc"
+msgstr "Esc"
+
+#: src/i18n/en/shell.ts:9
+msgctxt "asyncContent.error"
+msgid "Content could not be loaded"
+msgstr "コンテンツを読み込めませんでした"
+
+#: src/i18n/en/shell.ts:12
+msgctxt "busy.label"
+msgid "Waiting…"
+msgstr "待機中…"
+
+#: src/i18n/en/shell.ts:15
+msgctxt "confirm.title"
+msgid "Confirm"
+msgstr "確認"
+
+#: src/i18n/en/shell.ts:16
+msgctxt "confirm.submit"
+msgid "Confirm"
+msgstr "確認"
+
+#: src/i18n/en/shell.ts:19
+msgctxt "emptyState.message"
+msgid "Nothing on the canvas yet"
+msgstr "キャンバスにはまだ何もありません"
+
+#: src/i18n/en/shell.ts:22
+msgctxt "prompt.title"
+msgid "Details"
+msgstr "詳細"
+
+#: src/i18n/en/shell.ts:23
+msgctxt "prompt.submit"
+msgid "Add"
+msgstr "追加"
+
+#: src/i18n/en/shell.ts:24
+msgctxt "prompt.cancel"
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: src/i18n/en/shell.ts:25
+msgctxt "prompt.nodeTitle"
+msgid "Node details"
+msgstr "ノードの詳細"
+
+#: src/i18n/en/shell.ts:26
+msgctxt "prompt.edgeTitle"
+msgid "Edge details"
+msgstr "エッジの詳細"
+
+#: src/i18n/en/shell.ts:27
+msgctxt "prompt.edgeLabelTitle"
+msgid "Edge label"
+msgstr "エッジのラベル"
+
+#: src/i18n/en/shell.ts:28
+msgctxt "prompt.edgeLabelPlaceholder"
+msgid "Label…"
+msgstr "ラベル…"
+
+#: src/i18n/en/shell.ts:31
+msgctxt "history.menu.aria"
+msgid "Graph history"
+msgstr "グラフの履歴"
+
+#: src/i18n/en/shell.ts:32
+msgctxt "history.menu.title"
+msgid "History"
+msgstr "履歴"
+
+#: src/i18n/en/shell.ts:33
+msgctxt "history.menu.undoSide"
+msgid "Undo side"
+msgstr "元に戻す側"
+
+#: src/i18n/en/shell.ts:34
+msgctxt "history.menu.redoSide"
+msgid "Redo side"
+msgstr "やり直す側"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/shell.ts:35
+msgctxt "history.menu.count"
+msgid "{count} of {limit}"
+msgstr "{limit} 件中 {count} 件"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/shell.ts:36
+msgctxt "history.menu.countFull"
+msgid "{count} of {limit} · oldest evicted"
+msgstr "{limit} 件中 {count} 件 · 最古の履歴を削除済み"
+
+#: src/i18n/en/shell.ts:37
+msgctxt "history.menu.empty"
+msgid "Nothing has happened yet"
+msgstr "まだ履歴がありません"
+
+#: src/i18n/en/shell.ts:38
+msgctxt "history.menu.nothingAhead"
+msgid "Nothing ahead — nothing has been undone"
+msgstr "先の履歴はありません — 元に戻した操作はありません"
+
+#: src/i18n/en/shell.ts:39
+msgctxt "history.menu.start"
+msgid "The start of the session"
+msgstr "セッションの開始"
+
+#: src/i18n/en/shell.ts:40
+msgctxt "history.menu.now"
+msgid "NOW"
+msgstr "現在"
+
+#. Preserve placeholders: {done}, {undone}
+#: src/i18n/en/shell.ts:41
+msgctxt "history.menu.nowMeta"
+msgid "{undone} undone · {done} done"
+msgstr "{undone} 件取り消し · {done} 件実行済み"
+
+#: src/i18n/en/shell.ts:42
+msgctxt "history.menu.jump.title"
+msgid "Scroll back to now"
+msgstr "現在の位置にスクロール"
+
+#. Preserve placeholders: {label}, {ordinal}
+#: src/i18n/en/shell.ts:43
+msgctxt "history.row.pivotRun"
+msgid "{label} #{ordinal}"
+msgstr "{label} #{ordinal}"
+
+#: src/i18n/en/shell.ts:44
+msgctxt "history.row.kept"
+msgid "kept"
+msgstr "保持済み"
+
+#: src/i18n/en/shell.ts:45
+msgctxt "history.row.locked"
+msgid "locked"
+msgstr "ロック済み"
+
+#: src/i18n/en/shell.ts:46
+msgctxt "history.row.saved"
+msgid "saved"
+msgstr "保存済み"
+
+#: src/i18n/en/shell.ts:47
+msgctxt "history.row.nothingLeft"
+msgid "Nothing left the canvas"
+msgstr "キャンバスから何も取り除かれていません"
+
+#: src/i18n/en/shell.ts:48
+msgctxt "history.foot.idle"
+msgid "Point at a row to travel there."
+msgstr "行をポイントすると、その時点に移動します。"
+
+#. Preserve placeholders: {ahead}, {behind}
+#: src/i18n/en/shell.ts:49
+msgctxt "history.foot.position"
+msgid "{ahead} ahead · {behind} behind"
+msgstr "{ahead} 件先 · {behind} 件前"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:50
+msgctxt "history.foot.undoesSteps"
+msgid "Undoes {count} step"
+msgid_plural "Undoes {count} steps"
+msgstr[0] "{count} ステップを元に戻す"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:51
+msgctxt "history.foot.redoesSteps"
+msgid "Redoes {count} step"
+msgid_plural "Redoes {count} steps"
+msgstr[0] "{count} ステップをやり直す"
+
+#. Preserve placeholders: {acting}, {total}
+#: src/i18n/en/shell.ts:52
+msgctxt "history.foot.undoesSome"
+msgid "Undoes {acting} of {total}"
+msgstr "{total} 件中 {acting} 件を元に戻す"
+
+#. Preserve placeholders: {acting}, {total}
+#: src/i18n/en/shell.ts:53
+msgctxt "history.foot.redoesSome"
+msgid "Redoes {acting} of {total}"
+msgstr "{total} 件中 {acting} 件をやり直す"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:54
+msgctxt "history.foot.keptSaved"
+msgid "{count} saved item kept"
+msgid_plural "{count} saved items kept"
+msgstr[0] "保存済みの {count} 件を保持"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:55
+msgctxt "history.foot.alreadyApplied"
+msgid "{count} already applied"
+msgstr "{count} 件適用済み"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:56
+msgctxt "history.foot.savedUpstream"
+msgid "{count} item saved upstream"
+msgid_plural "{count} items saved upstream"
+msgstr[0] "{count} 件をソースに保存済み"
+
+#: src/i18n/en/shell.ts:57
+msgctxt "history.foot.nothingToReverse"
+msgid "Nothing to reverse"
+msgstr "元に戻す操作はありません"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:58
+msgctxt "history.delta.nodesAdded"
+msgid "+{count} node"
+msgid_plural "+{count} nodes"
+msgstr[0] "+{count} 個のノード"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:59
+msgctxt "history.delta.nodesRemoved"
+msgid "−{count} node"
+msgid_plural "−{count} nodes"
+msgstr[0] "−{count} 個のノード"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:60
+msgctxt "history.delta.edgesAdded"
+msgid "+{count} edge"
+msgid_plural "+{count} edges"
+msgstr[0] "+{count} 本のエッジ"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:61
+msgctxt "history.delta.edgesRemoved"
+msgid "−{count} edge"
+msgid_plural "−{count} edges"
+msgstr[0] "−{count} 本のエッジ"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:62
+msgctxt "history.delta.shownNodes"
+msgid "{count} node back in view"
+msgid_plural "{count} nodes back in view"
+msgstr[0] "{count} 個のノードを再表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:63
+msgctxt "history.delta.shown"
+msgid "{count} back in view"
+msgstr "{count} 件を再表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:64
+msgctxt "history.delta.hiddenNodes"
+msgid "{count} node hidden"
+msgid_plural "{count} nodes hidden"
+msgstr[0] "{count} 個のノードを非表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:65
+msgctxt "history.delta.hidden"
+msgid "{count} hidden"
+msgstr "{count} 件非表示"
+
+#: src/i18n/en/shell.ts:66
+msgctxt "history.delta.groups"
+msgid "groups change"
+msgstr "グループを変更"
+
+#: src/i18n/en/shell.ts:67
+msgctxt "history.delta.none"
+msgid "nothing changes"
+msgstr "変更なし"
+
+#: src/i18n/en/shell.ts:68
+msgctxt "history.time.now"
+msgid "now"
+msgstr "今"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:69
+msgctxt "history.time.minutes"
+msgid "{count}m"
+msgstr "{count} 分"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:70
+msgctxt "history.time.hours"
+msgid "{count}h"
+msgstr "{count} 時間"
+
+#. Preserve placeholders: {hours}, {minutes}
+#: src/i18n/en/shell.ts:71
+msgctxt "history.time.hoursMinutes"
+msgid "{hours}h {minutes}m"
+msgstr "{hours} 時間 {minutes} 分"
+
+#: src/i18n/en/shell.ts:74
+msgctxt "jsonViewer.copy"
+msgid "Copy JSON"
+msgstr "JSON をコピー"
+
+#: src/i18n/en/shell.ts:75
+msgctxt "jsonViewer.copied"
+msgid "Copied!"
+msgstr "コピーしました！"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:76
+msgctxt "jsonViewer.items"
+msgid "{count} item"
+msgid_plural "{count} items"
+msgstr[0] "{count} 件の項目"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:77
+msgctxt "jsonViewer.properties"
+msgid "{count} property"
+msgid_plural "{count} properties"
+msgstr[0] "{count} 件のプロパティ"
+
+#: src/i18n/en/shell.ts:80
+msgctxt "modal.ok"
+msgid "Ok"
+msgstr "OK"
+
+#: src/i18n/en/shell.ts:81
+msgctxt "modal.close.aria"
+msgid "Close"
+msgstr "閉じる"
+
+#: src/i18n/en/shell.ts:82
+msgctxt "modal.editNode.heading"
+msgid "Editing node:"
+msgstr "編集中のノード:"
+
+#: src/i18n/en/shell.ts:83
+msgctxt "modal.editNode.submit"
+msgid "Edit Node"
+msgstr "ノードを編集"
+
+#: src/i18n/en/shell.ts:84
+msgctxt "modal.editEdge.heading"
+msgid "Editing edge:"
+msgstr "編集中のエッジ:"
+
+#: src/i18n/en/shell.ts:85
+msgctxt "modal.editEdge.submit"
+msgid "Edit Edge"
+msgstr "エッジを編集"
+
+#. Preserve placeholders: {from}, {to}
+#: src/i18n/en/shell.ts:86
+msgctxt "modal.editEdge.endpoints"
+msgid "{from} → {to}"
+msgstr "{from} → {to}"
+
+#: src/i18n/en/shell.ts:87
+msgctxt "modal.editEdge.labelField"
+msgid "Label"
+msgstr "ラベル"
+
+#: src/i18n/en/shell.ts:88
+msgctxt "modal.inspect.properties"
+msgid "Properties"
+msgstr "プロパティ"
+
+#: src/i18n/en/shell.ts:89
+msgctxt "modal.inspect.json"
+msgid "JSON"
+msgstr "JSON"
+
+#: src/i18n/en/shell.ts:92
+msgctxt "navigation.fit"
+msgid "Fit and center"
+msgstr "全体を中央に表示"
+
+#: src/i18n/en/shell.ts:93
+msgctxt "navigation.zoomIn"
+msgid "Zoom In"
+msgstr "拡大"
+
+#: src/i18n/en/shell.ts:94
+msgctxt "navigation.zoomOut"
+msgid "Zoom Out"
+msgstr "縮小"
+
+#: src/i18n/en/shell.ts:95
+msgctxt "navigation.fullscreen"
+msgid "Toggle Fullscreen"
+msgstr "全画面表示を切り替え"
+
+#: src/i18n/en/shell.ts:98
+msgctxt "notification.dismiss.aria"
+msgid "Dismiss"
+msgstr "閉じる"
+
+#: src/i18n/en/shell.ts:101
+msgctxt "rail.select"
+msgid "Select"
+msgstr "選択"
+
+#: src/i18n/en/shell.ts:102
+msgctxt "rail.create"
+msgid "Create"
+msgstr "作成"
+
+#: src/i18n/en/shell.ts:103
+msgctxt "rail.view"
+msgid "View"
+msgstr "表示"
+
+#: src/i18n/en/shell.ts:104
+msgctxt "rail.physics"
+msgid "Physics"
+msgstr "物理"
+
+#: src/i18n/en/shell.ts:105
+msgctxt "rail.simplify"
+msgid "Simplify"
+msgstr "簡略化"
+
+#: src/i18n/en/shell.ts:106
+msgctxt "rail.lasso"
+msgid "Lasso"
+msgstr "投げ縄"
+
+#: src/i18n/en/shell.ts:107
+msgctxt "rail.edge"
+msgid "Edge"
+msgstr "エッジ"
+
+#. Preserve placeholders: {label}, {shortcut}
+#: src/i18n/en/shell.ts:108
+msgctxt "rail.button.title"
+msgid "{label} ({shortcut})"
+msgstr "{label} ({shortcut})"
+
+#. Preserve placeholders: {folded}, {groups}
+#: src/i18n/en/shell.ts:109
+msgctxt "rail.simplify.summary"
+msgid "Simplify: {groups}, {folded}"
+msgstr "簡略化: {groups}、{folded}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:110
+msgctxt "rail.simplify.groups"
+msgid "{count} group"
+msgid_plural "{count} groups"
+msgstr[0] "{count} 個のグループ"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:111
+msgctxt "rail.simplify.folded"
+msgid "{count} node folded"
+msgid_plural "{count} nodes folded"
+msgstr[0] "{count} 個のノードを折りたたみ"
+
+#: src/i18n/en/shell.ts:114
+msgctxt "slidePanel.empty"
+msgid "- empty panel -"
+msgstr "- 空のパネル -"
+
+#: src/i18n/en/shell.ts:117
+msgctxt "search.placeholder"
+msgid "Search"
+msgstr "検索"
+
+#: src/i18n/en/shell.ts:118
+msgctxt "search.hint.navigate"
+msgid "to navigate"
+msgstr "で移動"
+
+#: src/i18n/en/shell.ts:119
+msgctxt "search.hint.select"
+msgid "to select"
+msgstr "で選択"
+
+#: src/i18n/en/shell.ts:120
+msgctxt "search.hint.showAll"
+msgid "to show all"
+msgstr "ですべて表示"
+
+#: src/i18n/en/shell.ts:121
+msgctxt "search.hint.close"
+msgid "to close"
+msgstr "で閉じる"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/shell.ts:122
+msgctxt "search.result.inGroup"
+msgid "in {group}"
+msgstr "{group} 内"
+
+#: src/i18n/en/shell.ts:123
+msgctxt "search.summary.none"
+msgid "No results found"
+msgstr "結果が見つかりません"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/shell.ts:124
+msgctxt "search.summary.top"
+msgid "Showing top {shown} of {count} results"
+msgstr "{count} 件中上位 {shown} 件を表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:125
+msgctxt "search.summary.all"
+msgid "{count} result"
+msgid_plural "{count} results"
+msgstr[0] "{count} 件の結果"
+
+#: src/i18n/en/shell.ts:126
+msgctxt "search.showAll"
+msgid "Show all on the canvas"
+msgstr "すべてキャンバスに表示"
+
+#: src/i18n/en/shell.ts:129
+msgctxt "toolPanel.select"
+msgid "Select"
+msgstr "選択"
+
+#: src/i18n/en/shell.ts:130
+msgctxt "toolPanel.create"
+msgid "Create"
+msgstr "作成"
+
+#: src/i18n/en/shell.ts:131
+msgctxt "toolPanel.pointer"
+msgid "Pointer"
+msgstr "ポインター"
+
+#: src/i18n/en/shell.ts:132
+msgctxt "toolPanel.lasso"
+msgid "Lasso"
+msgstr "投げ縄"
+
+#: src/i18n/en/shell.ts:133
+msgctxt "toolPanel.pathSelect"
+msgid "Path select"
+msgstr "パス選択"
+
+#: src/i18n/en/shell.ts:134
+msgctxt "toolPanel.invertSelection"
+msgid "Invert selection"
+msgstr "選択を反転"
+
+#: src/i18n/en/shell.ts:135
+msgctxt "toolPanel.addNode"
+msgid "Add node"
+msgstr "ノードを追加"
+
+#: src/i18n/en/shell.ts:136
+msgctxt "toolPanel.addEdge"
+msgid "Add edge"
+msgstr "エッジを追加"
+
+#: src/i18n/en/shell.ts:137
+msgctxt "toolPanel.addNote"
+msgid "Add note"
+msgstr "メモを追加"
+
+#: src/i18n/en/shell.ts:138
+msgctxt "toolPanel.editNode"
+msgid "Edit node"
+msgstr "ノードを編集"
+
+#: src/i18n/en/shell.ts:139
+msgctxt "toolPanel.soon"
+msgid "SOON"
+msgstr "近日公開"
+
+#. Preserve placeholders: {tool}
+#: src/i18n/en/shell.ts:140
+msgctxt "toolPanel.soon.title"
+msgid "{tool} — coming soon"
+msgstr "{tool} — 近日公開"
+
+#: src/i18n/en/shell.ts:141
+msgctxt "toolPanel.resize.aria"
+msgid "Resize the tool panel"
+msgstr "ツールパネルのサイズを変更"
+
+#: src/i18n/en/shell.ts:144
+msgctxt "topBar.search"
+msgid "Search"
+msgstr "検索"
+
+#: src/i18n/en/shell.ts:145
+msgctxt "topBar.search.aria"
+msgid "Search for a node"
+msgstr "ノードを検索"
+
+#: src/i18n/en/shell.ts:146
+msgctxt "topBar.filter"
+msgid "Filter Graph"
+msgstr "グラフをフィルター"
+
+#: src/i18n/en/shell.ts:147
+msgctxt "topBar.filter.aria"
+msgid "Filter the graph"
+msgstr "グラフをフィルター"
+
+#: src/i18n/en/shell.ts:148
+msgctxt "topBar.filter.panelTitle"
+msgid "Graph Filters"
+msgstr "グラフのフィルター"
+
+#: src/i18n/en/shell.ts:149
+msgctxt "topBar.notes"
+msgid "Notes"
+msgstr "メモ"
+
+#: src/i18n/en/shell.ts:150
+msgctxt "topBar.undo"
+msgid "Undo"
+msgstr "元に戻す"
+
+#. Preserve placeholders: {shortcut}
+#: src/i18n/en/shell.ts:151
+msgctxt "topBar.undo.title"
+msgid "Undo ({shortcut})"
+msgstr "元に戻す ({shortcut})"
+
+#. Preserve placeholders: {entry}, {shortcut}
+#: src/i18n/en/shell.ts:152
+msgctxt "topBar.undo.titleNamed"
+msgid "Undo — {entry} ({shortcut})"
+msgstr "元に戻す — {entry} ({shortcut})"
+
+#. Preserve placeholders: {entry}
+#: src/i18n/en/shell.ts:153
+msgctxt "topBar.undo.ariaNamed"
+msgid "Undo {entry}"
+msgstr "{entry} を元に戻す"
+
+#: src/i18n/en/shell.ts:154
+msgctxt "topBar.redo"
+msgid "Redo"
+msgstr "やり直す"
+
+#. Preserve placeholders: {shortcut}
+#: src/i18n/en/shell.ts:155
+msgctxt "topBar.redo.title"
+msgid "Redo ({shortcut})"
+msgstr "やり直す ({shortcut})"
+
+#. Preserve placeholders: {entry}, {shortcut}
+#: src/i18n/en/shell.ts:156
+msgctxt "topBar.redo.titleNamed"
+msgid "Redo — {entry} ({shortcut})"
+msgstr "やり直す — {entry} ({shortcut})"
+
+#. Preserve placeholders: {entry}
+#: src/i18n/en/shell.ts:157
+msgctxt "topBar.redo.ariaNamed"
+msgid "Redo {entry}"
+msgstr "{entry} をやり直す"
+
+#: src/i18n/en/shell.ts:158
+msgctxt "topBar.undoHistory.aria"
+msgid "Undo history"
+msgstr "元に戻す履歴"
+
+#: src/i18n/en/shell.ts:159
+msgctxt "topBar.redoHistory.aria"
+msgid "Redo history"
+msgstr "やり直す履歴"
+
+#. Preserve placeholders: {action}
+#: src/i18n/en/shell.ts:160
+msgctxt "topBar.action.more.aria"
+msgid "More: {action}"
+msgstr "その他: {action}"
+
+#: src/i18n/en/shell.ts:161
+msgctxt "topBar.promptSubmit"
+msgid "OK"
+msgstr "OK"
+
+#: src/i18n/en/contextMenu.ts:6
+msgctxt "contextMenu.selectNeighbors"
+msgid "Select Neighbors"
+msgstr "隣接ノードを選択"
+
+#: src/i18n/en/contextMenu.ts:7
+msgctxt "contextMenu.ungroup"
+msgid "Ungroup"
+msgstr "グループ解除"
+
+#: src/i18n/en/contextMenu.ts:10
+msgctxt "contextMenu.node.pin"
+msgid "Pin Node"
+msgstr "ノードを固定"
+
+#: src/i18n/en/contextMenu.ts:11
+msgctxt "contextMenu.node.unpin"
+msgid "Unpin Node"
+msgstr "ノードの固定を解除"
+
+#: src/i18n/en/contextMenu.ts:12
+msgctxt "contextMenu.node.focus"
+msgid "Focus Node"
+msgstr "ノードにフォーカス"
+
+#: src/i18n/en/contextMenu.ts:13
+msgctxt "contextMenu.node.hide"
+msgid "Hide Node"
+msgstr "ノードを非表示"
+
+#: src/i18n/en/contextMenu.ts:14
+msgctxt "contextMenu.node.viewImage"
+msgid "View Image"
+msgstr "画像を表示"
+
+#: src/i18n/en/contextMenu.ts:15
+msgctxt "contextMenu.node.hideChildren"
+msgid "Hide Children"
+msgstr "子ノードを非表示"
+
+#: src/i18n/en/contextMenu.ts:16
+msgctxt "contextMenu.node.connect"
+msgid "Connect to..."
+msgstr "接続先…"
+
+#: src/i18n/en/contextMenu.ts:17
+msgctxt "contextMenu.node.connect.picker"
+msgid "Select the target node to link with"
+msgstr "接続先のノードを選択"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/contextMenu.ts:18
+msgctxt "contextMenu.node.connect.pickerNode"
+msgid "\"{node}\""
+msgstr "「{node}」"
+
+#: src/i18n/en/contextMenu.ts:19
+msgctxt "contextMenu.node.expand"
+msgid "Expand Node"
+msgstr "ノードを展開"
+
+#: src/i18n/en/contextMenu.ts:20
+msgctxt "contextMenu.node.inspect"
+msgid "Inspect Properties"
+msgstr "プロパティを調べる"
+
+#: src/i18n/en/contextMenu.ts:21
+msgctxt "contextMenu.node.delete"
+msgid "Delete Node"
+msgstr "ノードを削除"
+
+#: src/i18n/en/contextMenu.ts:24
+msgctxt "contextMenu.group.pin"
+msgid "Pin Group"
+msgstr "グループを固定"
+
+#: src/i18n/en/contextMenu.ts:25
+msgctxt "contextMenu.group.unpin"
+msgid "Unpin Group"
+msgstr "グループの固定を解除"
+
+#: src/i18n/en/contextMenu.ts:26
+msgctxt "contextMenu.group.focus"
+msgid "Focus Group"
+msgstr "グループにフォーカス"
+
+#: src/i18n/en/contextMenu.ts:27
+msgctxt "contextMenu.group.selectNeighbors.title"
+msgid "Select the nodes this group links to"
+msgstr "このグループの接続先ノードを選択"
+
+#: src/i18n/en/contextMenu.ts:28
+msgctxt "contextMenu.group.open"
+msgid "Open group"
+msgstr "グループを開く"
+
+#: src/i18n/en/contextMenu.ts:29
+msgctxt "contextMenu.group.open.title"
+msgid "Put the members back on the canvas"
+msgstr "メンバーをキャンバスに戻す"
+
+#: src/i18n/en/contextMenu.ts:30
+msgctxt "contextMenu.group.selectMembers"
+msgid "Select members"
+msgstr "メンバーを選択"
+
+#: src/i18n/en/contextMenu.ts:31
+msgctxt "contextMenu.group.selectMembers.title"
+msgid "Select the nodes in this group"
+msgstr "このグループのノードを選択"
+
+#: src/i18n/en/contextMenu.ts:32
+msgctxt "contextMenu.group.viewInTable"
+msgid "View members in table"
+msgstr "メンバーを表で表示"
+
+#: src/i18n/en/contextMenu.ts:33
+msgctxt "contextMenu.group.viewInTable.title"
+msgid "List the members in the data dock, to filter and search them"
+msgstr "メンバーをデータドックに一覧表示してフィルターや検索を行う"
+
+#: src/i18n/en/contextMenu.ts:34
+msgctxt "contextMenu.group.rename"
+msgid "Rename group"
+msgstr "グループ名を変更"
+
+#: src/i18n/en/contextMenu.ts:35
+msgctxt "contextMenu.group.rename.title"
+msgid "Give this group a title"
+msgstr "このグループにタイトルを付ける"
+
+#: src/i18n/en/contextMenu.ts:36
+msgctxt "contextMenu.group.ungroup.title"
+msgid "Draw the members as they were before this group"
+msgstr "グループ化前の状態でメンバーを表示"
+
+#: src/i18n/en/contextMenu.ts:37
+msgctxt "contextMenu.group.deleteMembers"
+msgid "Delete members"
+msgstr "メンバーを削除"
+
+#: src/i18n/en/contextMenu.ts:38
+msgctxt "contextMenu.group.deleteMembers.title"
+msgid "Delete every node in this group"
+msgstr "このグループのすべてのノードを削除"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:41
+msgctxt "contextMenu.selection.count"
+msgid "{count} selected"
+msgstr "{count} 件選択済み"
+
+#: src/i18n/en/contextMenu.ts:42
+msgctxt "contextMenu.selection.pin"
+msgid "Pin Selected"
+msgstr "選択項目を固定"
+
+#: src/i18n/en/contextMenu.ts:43
+msgctxt "contextMenu.selection.unpin"
+msgid "Unpin Selected"
+msgstr "選択項目の固定を解除"
+
+#: src/i18n/en/contextMenu.ts:44
+msgctxt "contextMenu.selection.hide"
+msgid "Hide Selected"
+msgstr "選択項目を非表示"
+
+#: src/i18n/en/contextMenu.ts:45
+msgctxt "contextMenu.selection.selectNeighbors.title"
+msgid "Select the nodes linked to the selection"
+msgstr "選択項目に接続されたノードを選択"
+
+#: src/i18n/en/contextMenu.ts:46
+msgctxt "contextMenu.selection.group"
+msgid "Group selected nodes"
+msgstr "選択したノードをグループ化"
+
+#: src/i18n/en/contextMenu.ts:47
+msgctxt "contextMenu.selection.group.title"
+msgid "Fold the selection into one group with a title"
+msgstr "選択項目をタイトル付きのグループにまとめる"
+
+#: src/i18n/en/contextMenu.ts:48
+msgctxt "contextMenu.selection.ungroup.title"
+msgid "Draw the members of these hand-made groups as they were"
+msgstr "手動グループのメンバーを元の状態で表示"
+
+#: src/i18n/en/contextMenu.ts:49
+msgctxt "contextMenu.selection.delete"
+msgid "Delete Selected"
+msgstr "選択項目を削除"
+
+#: src/i18n/en/contextMenu.ts:50
+msgctxt "contextMenu.selection.delete.title"
+msgid "Delete every selected node"
+msgstr "選択したすべてのノードを削除"
+
+#: src/i18n/en/contextMenu.ts:53
+msgctxt "contextMenu.membership.pullOut"
+msgid "Pull out of group"
+msgstr "グループから取り出す"
+
+#: src/i18n/en/contextMenu.ts:54
+msgctxt "contextMenu.membership.pullOut.title"
+msgid "Keep these nodes out of their groups"
+msgstr "これらのノードをグループの外に保持"
+
+#: src/i18n/en/contextMenu.ts:55
+msgctxt "contextMenu.membership.putBack"
+msgid "Put back in group"
+msgstr "グループに戻す"
+
+#: src/i18n/en/contextMenu.ts:56
+msgctxt "contextMenu.membership.putBack.title"
+msgid "Let these nodes be grouped again"
+msgstr "これらのノードのグループ化を再び許可"
+
+#: src/i18n/en/contextMenu.ts:59
+msgctxt "contextMenu.edge.edit"
+msgid "Edit Edge"
+msgstr "エッジを編集"
+
+#: src/i18n/en/contextMenu.ts:60
+msgctxt "contextMenu.edge.delete"
+msgid "Delete Edge"
+msgstr "エッジを削除"
+
+#: src/i18n/en/contextMenu.ts:63
+msgctxt "contextMenu.note.hide"
+msgid "Hide Note"
+msgstr "メモを非表示"
+
+#: src/i18n/en/contextMenu.ts:64
+msgctxt "contextMenu.note.remove"
+msgid "Remove Note"
+msgstr "メモを削除"
+
+#: src/i18n/en/contextMenu.ts:67
+msgctxt "contextMenu.canvas.pinAll"
+msgid "Pin All"
+msgstr "すべて固定"
+
+#: src/i18n/en/contextMenu.ts:68
+msgctxt "contextMenu.canvas.unpinAll"
+msgid "Unpin All"
+msgstr "すべての固定を解除"
+
+#: src/i18n/en/contextMenu.ts:69
+msgctxt "contextMenu.canvas.addNode"
+msgid "Add Node Here"
+msgstr "ここにノードを追加"
+
+#: src/i18n/en/contextMenu.ts:70
+msgctxt "contextMenu.canvas.addNote"
+msgid "Add Note"
+msgstr "メモを追加"
+
+#: src/i18n/en/contextMenu.ts:71
+msgctxt "contextMenu.canvas.releasePinned"
+msgid "Release pinned nodes"
+msgstr "固定したノードを解放"
+
+#: src/i18n/en/contextMenu.ts:72
+msgctxt "contextMenu.canvas.releasePinned.title"
+msgid "Unpin every pinned node so the layout can move them again"
+msgstr "すべてのノードの固定を解除し、レイアウトで再び移動できるようにする"
+
+#: src/i18n/en/contextMenu.ts:75
+msgctxt "contextMenu.pivot"
+msgid "Pivot"
+msgstr "ピボット"
+
+#: src/i18n/en/contextMenu.ts:76
+msgctxt "contextMenu.pivot.openPanel"
+msgid "Open pivot panel…"
+msgstr "ピボットパネルを開く…"
+
+#: src/i18n/en/contextMenu.ts:77
+msgctxt "contextMenu.pivot.openPanel.title"
+msgid "Read the counts, narrow, then run"
+msgstr "件数を確認し、絞り込んでから実行"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:78
+msgctxt "contextMenu.pivot.peek"
+msgid "~{count}"
+msgstr "約 {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:79
+msgctxt "contextMenu.pivot.peek.title"
+msgid "About {count} out there"
+msgstr "約 {count} 件が取得可能"
+
+#. Preserve placeholders: {count}, {nodes}
+#: src/i18n/en/contextMenu.ts:80
+msgctxt "contextMenu.pivot.peek.titleAcross"
+msgid "About {count} across {nodes}"
+msgstr "{nodes} 全体で約 {count} 件"
+
+#: src/i18n/en/contextMenu.ts:81
+msgctxt "contextMenu.pivot.peek.failed.title"
+msgid "This pivot could not say what is out there"
+msgstr "このピボットでは取得可能な件数を確認できませんでした"
+
+#: src/i18n/en/sidebar.ts:6
+msgctxt "sidebar.collapse.aria"
+msgid "Collapse sidebar"
+msgstr "サイドバーを折りたたむ"
+
+#: src/i18n/en/sidebar.ts:7
+msgctxt "sidebar.expand.aria"
+msgid "Expand sidebar"
+msgstr "サイドバーを展開"
+
+#: src/i18n/en/sidebar.ts:8
+msgctxt "sidebar.clearSelection"
+msgid "Clear selection"
+msgstr "選択を解除"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:11
+msgctxt "sidebar.header.representedEdges"
+msgid "Stands for {count} edge"
+msgid_plural "Stands for {count} edges"
+msgstr[0] "{count} 本のエッジを表す"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:12
+msgctxt "sidebar.header.nodesSelected"
+msgid "{count} node selected"
+msgid_plural "{count} nodes selected"
+msgstr[0] "{count} 個のノードを選択済み"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:13
+msgctxt "sidebar.header.edgesSelected"
+msgid "{count} edge selected"
+msgid_plural "{count} edges selected"
+msgstr[0] "{count} 本のエッジを選択済み"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:14
+msgctxt "sidebar.header.nodesTotal"
+msgid "Out of {count} total"
+msgstr "全 {count} 件のうち"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:15
+msgctxt "sidebar.header.edgesTotal"
+msgid "Out of {count} total"
+msgstr "全 {count} 件のうち"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/sidebar.ts:16
+msgctxt "sidebar.header.showing"
+msgid "Showing {nodes} and {edges}"
+msgstr "{nodes} と {edges} を表示"
+
+#: src/i18n/en/sidebar.ts:19
+msgctxt "headerMap.untitled"
+msgid "Could not resolve title"
+msgstr "タイトルを取得できませんでした"
+
+#: src/i18n/en/sidebar.ts:20
+msgctxt "headerMap.nameFallback"
+msgid "Optional name or label"
+msgstr "名前またはラベル（任意）"
+
+#: src/i18n/en/sidebar.ts:21
+msgctxt "headerMap.descriptionFallback"
+msgid "Optional subtitle or description"
+msgstr "サブタイトルまたは説明（任意）"
+
+#: src/i18n/en/sidebar.ts:24
+msgctxt "sidebar.bulk.pin"
+msgid "Pin"
+msgstr "固定"
+
+#: src/i18n/en/sidebar.ts:25
+msgctxt "sidebar.bulk.unpin"
+msgid "Unpin"
+msgstr "固定解除"
+
+#: src/i18n/en/sidebar.ts:26
+msgctxt "sidebar.bulk.hide"
+msgid "Hide"
+msgstr "非表示"
+
+#: src/i18n/en/sidebar.ts:27
+msgctxt "sidebar.bulk.isolate"
+msgid "Isolate"
+msgstr "単独表示"
+
+#: src/i18n/en/sidebar.ts:28
+msgctxt "sidebar.bulk.group"
+msgid "Group"
+msgstr "グループ化"
+
+#: src/i18n/en/sidebar.ts:29
+msgctxt "sidebar.bulk.ungroup"
+msgid "Ungroup"
+msgstr "グループ解除"
+
+#: src/i18n/en/sidebar.ts:30
+msgctxt "sidebar.bulk.bulkEdit"
+msgid "Bulk edit"
+msgstr "一括編集"
+
+#: src/i18n/en/sidebar.ts:31
+msgctxt "sidebar.bulk.delete"
+msgid "Delete"
+msgstr "削除"
+
+#. Preserve placeholders: {action}
+#: src/i18n/en/sidebar.ts:32
+msgctxt "sidebar.bulk.soon.title"
+msgid "{action} — coming soon"
+msgstr "{action} — 近日公開"
+
+#: src/i18n/en/sidebar.ts:35
+msgctxt "sidebar.properties.nodeHeading"
+msgid "Basic Node Properties"
+msgstr "ノードの基本プロパティ"
+
+#: src/i18n/en/sidebar.ts:36
+msgctxt "sidebar.properties.edgeHeading"
+msgid "Basic Edge Properties"
+msgstr "エッジの基本プロパティ"
+
+#: src/i18n/en/sidebar.ts:37
+msgctxt "sidebar.properties.nodesHeading"
+msgid "Aggregated Node Properties"
+msgstr "ノードの集計プロパティ"
+
+#: src/i18n/en/sidebar.ts:38
+msgctxt "sidebar.properties.edgesHeading"
+msgid "Aggregated Edge Properties"
+msgstr "エッジの集計プロパティ"
+
+#: src/i18n/en/sidebar.ts:39
+msgctxt "sidebar.properties.keep.title"
+msgid "Keep only nodes with this value"
+msgstr "この値を持つノードのみ保持"
+
+#: src/i18n/en/sidebar.ts:40
+msgctxt "sidebar.properties.exclude.title"
+msgid "Exclude nodes with this value"
+msgstr "この値を持つノードを除外"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:43
+msgctxt "sidebar.facets.unique"
+msgid "{count} unique"
+msgstr "{count} 種類"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:44
+msgctxt "sidebar.facets.values"
+msgid "{count} value"
+msgid_plural "{count} values"
+msgstr[0] "{count} 個の値"
+
+#: src/i18n/en/sidebar.ts:45
+msgctxt "sidebar.facets.shared"
+msgid "shared"
+msgstr "共通"
+
+#: src/i18n/en/sidebar.ts:46
+msgctxt "sidebar.facets.empty"
+msgid "— empty —"
+msgstr "— 空 —"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:47
+msgctxt "sidebar.facets.allNodes"
+msgid "all {count} node"
+msgid_plural "all {count} nodes"
+msgstr[0] "全 {count} 個のノード"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/sidebar.ts:48
+msgctxt "sidebar.facets.someNodes"
+msgid "{count} of {total}"
+msgstr "{total} 件中 {count} 件"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:49
+msgctxt "sidebar.facets.percent"
+msgid "{count}%"
+msgstr "{count}%"
+
+#. Preserve placeholders: {count}, {percent}, {value}
+#: src/i18n/en/sidebar.ts:50
+msgctxt "sidebar.facets.segment.title"
+msgid "{value} — {count} ({percent}%)"
+msgstr "{value} — {count} ({percent}%)"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:51
+msgctxt "sidebar.facets.otherValues"
+msgid "{count} other value"
+msgid_plural "{count} other values"
+msgstr[0] "ほか {count} 個の値"
+
+#. Preserve placeholders: {count}, {percent}, {values}
+#: src/i18n/en/sidebar.ts:52
+msgctxt "sidebar.facets.other.title"
+msgid "{values} — {count} ({percent}%)"
+msgstr "{values} — {count} ({percent}%)"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:53
+msgctxt "sidebar.facets.moreValues"
+msgid "+{count} more value"
+msgid_plural "+{count} more values"
+msgstr[0] "さらに {count} 個の値"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:54
+msgctxt "sidebar.facets.moreChips"
+msgid "+{count} more"
+msgstr "さらに {count} 件"
+
+#: src/i18n/en/sidebar.ts:55
+msgctxt "sidebar.facets.noRepeats"
+msgid "no repeated values"
+msgstr "重複する値はありません"
+
+#: src/i18n/en/sidebar.ts:56
+msgctxt "sidebar.facets.filterHint"
+msgid "Click to keep only · Alt-click to exclude"
+msgstr "クリックで絞り込み · Alt キーを押しながらクリックで除外"
+
+#: src/i18n/en/sidebar.ts:59
+msgctxt "propertyList.label"
+msgid "PROPERTIES"
+msgstr "プロパティ"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:60
+msgctxt "propertyList.fields"
+msgid "{count} field"
+msgid_plural "{count} fields"
+msgstr[0] "{count} 個のフィールド"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:61
+msgctxt "propertyList.items"
+msgid "{count} item"
+msgid_plural "{count} items"
+msgstr[0] "{count} 件の項目"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:62
+msgctxt "propertyList.keys"
+msgid "{count} key"
+msgid_plural "{count} keys"
+msgstr[0] "{count} 個のキー"
+
+#: src/i18n/en/sidebar.ts:63
+msgctxt "propertyList.copy.title"
+msgid "Copy"
+msgstr "コピー"
+
+#: src/i18n/en/sidebar.ts:66
+msgctxt "sidebar.neighbors.tab.graph"
+msgid "Neighbor Graph"
+msgstr "隣接ノードのグラフ"
+
+#: src/i18n/en/sidebar.ts:67
+msgctxt "sidebar.neighbors.tab.stats"
+msgid "Stats"
+msgstr "統計"
+
+#: src/i18n/en/sidebar.ts:68
+msgctxt "sidebar.neighbors.tab.list"
+msgid "List"
+msgstr "一覧"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:69
+msgctxt "sidebar.neighbors.connections"
+msgid "{count} connection"
+msgid_plural "{count} connections"
+msgstr[0] "{count} 件の接続"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:70
+msgctxt "sidebar.neighbors.moreNode"
+msgid "{count} more"
+msgstr "ほか {count} 件"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:71
+msgctxt "sidebar.neighbors.aggregate.count"
+msgid "+{count}"
+msgstr "+{count}"
+
+#: src/i18n/en/sidebar.ts:72
+msgctxt "sidebar.neighbors.aggregate.group"
+msgid "Group"
+msgstr "グループ化"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:73
+msgctxt "sidebar.neighbors.row.outgoing"
+msgid "Outgoing connection — {node}"
+msgstr "出力接続 — {node}"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:74
+msgctxt "sidebar.neighbors.row.incoming"
+msgid "Incoming connection — {node}"
+msgstr "入力接続 — {node}"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:75
+msgctxt "sidebar.neighbors.row.undirected"
+msgid "Connection — {node}"
+msgstr "接続 — {node}"
+
+#: src/i18n/en/sidebar.ts:76
+msgctxt "sidebar.neighbors.stats.degree"
+msgid "Degree"
+msgstr "次数"
+
+#: src/i18n/en/sidebar.ts:77
+msgctxt "sidebar.neighbors.stats.degree.title"
+msgid "Total connections"
+msgstr "接続の合計"
+
+#: src/i18n/en/sidebar.ts:78
+msgctxt "sidebar.neighbors.stats.outgoing.title"
+msgid "Outgoing edges"
+msgstr "出力エッジ"
+
+#: src/i18n/en/sidebar.ts:79
+msgctxt "sidebar.neighbors.stats.incoming.title"
+msgid "Incoming edges"
+msgstr "入力エッジ"
+
+#: src/i18n/en/sidebar.ts:80
+msgctxt "sidebar.neighbors.stats.label"
+msgid "Label"
+msgstr "ラベル"
+
+#: src/i18n/en/sidebar.ts:81
+msgctxt "sidebar.neighbors.stats.select.title"
+msgid "Select nodes linked with this label"
+msgstr "このラベルで接続されたノードを選択"
+
+#: src/i18n/en/sidebar.ts:82
+msgctxt "sidebar.neighbors.stats.exclude.title"
+msgid "Exclude nodes linked with this label"
+msgstr "このラベルで接続されたノードを除外"
+
+#: src/i18n/en/sidebar.ts:85
+msgctxt "sidebar.group.open"
+msgid "Open"
+msgstr "開く"
+
+#: src/i18n/en/sidebar.ts:86
+msgctxt "sidebar.group.cancel"
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: src/i18n/en/sidebar.ts:87
+msgctxt "sidebar.group.close"
+msgid "Close"
+msgstr "閉じる"
+
+#: src/i18n/en/sidebar.ts:88
+msgctxt "sidebar.group.selectMembers"
+msgid "Select members"
+msgstr "メンバーを選択"
+
+#: src/i18n/en/sidebar.ts:89
+msgctxt "sidebar.group.rename"
+msgid "Rename"
+msgstr "名前を変更"
+
+#: src/i18n/en/sidebar.ts:90
+msgctxt "sidebar.group.ungroup"
+msgid "Ungroup"
+msgstr "グループ解除"
+
+#: src/i18n/en/sidebar.ts:91
+msgctxt "sidebar.group.ungroup.title"
+msgid "Draw the members as they were before this group"
+msgstr "グループ化前の状態でメンバーを表示"
+
+#: src/i18n/en/sidebar.ts:92
+msgctxt "sidebar.group.viewInTable"
+msgid "View in table"
+msgstr "表で表示"
+
+#: src/i18n/en/sidebar.ts:93
+msgctxt "sidebar.group.viewInTable.title"
+msgid "List the members in the data dock, to filter and search them"
+msgstr "メンバーをデータドックに一覧表示してフィルターや検索を行う"
+
+#: src/i18n/en/sidebar.ts:94
+msgctxt "sidebar.group.pivot"
+msgid "Pivot ▸"
+msgstr "ピボット ▸"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:95
+msgctxt "sidebar.group.delete"
+msgid "Delete {count}"
+msgstr "{count} 件を削除"
+
+#: src/i18n/en/sidebar.ts:96
+msgctxt "sidebar.group.edit"
+msgid "Edit"
+msgstr "編集"
+
+#: src/i18n/en/sidebar.ts:97
+msgctxt "sidebar.group.edit.title"
+msgid "A group has no data of its own to edit"
+msgstr "グループ自体には編集するデータがありません"
+
+#: src/i18n/en/sidebar.ts:98
+msgctxt "sidebar.group.members"
+msgid "Members"
+msgstr "メンバー"
+
+#: src/i18n/en/sidebar.ts:99
+msgctxt "sidebar.group.pullOut"
+msgid "Pull out"
+msgstr "取り出す"
+
+#: src/i18n/en/sidebar.ts:100
+msgctxt "sidebar.group.pullOut.title"
+msgid "Keep this node out of the group"
+msgstr "このノードをグループの外に保持"
+
+#. Preserve placeholders: {rule}
+#: src/i18n/en/sidebar.ts:103
+msgctxt "groupSummary.subtitle"
+msgid "Group · {rule}"
+msgstr "グループ · {rule}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/sidebar.ts:104
+msgctxt "groupSummary.match"
+msgid "{count} of {total} match"
+msgstr "{total} 件中 {count} 件が一致"
+
+#. Preserve placeholders: {count}, {query}, {total}
+#: src/i18n/en/sidebar.ts:105
+msgctxt "groupSummary.matchQuery"
+msgid "{count} of {total} match \"{query}\""
+msgstr "{total} 件中 {count} 件が「{query}」に一致"
+
+#: src/i18n/en/sidebar.ts:106
+msgctxt "groupSummary.members"
+msgid "Members"
+msgstr "メンバー"
+
+#: src/i18n/en/sidebar.ts:107
+msgctxt "groupSummary.linkedTo"
+msgid "Linked to"
+msgstr "接続先"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:108
+msgctxt "groupSummary.more"
+msgid "{count} more"
+msgstr "ほか {count} 件"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/sidebar.ts:111
+msgctxt "groupActions.openAsk"
+msgid "Put {group} on the canvas?"
+msgstr "{group} をキャンバスに表示しますか？"
+
+#: src/i18n/en/sidebar.ts:112
+msgctxt "groupActions.open"
+msgid "Open"
+msgstr "開く"
+
+#: src/i18n/en/sidebar.ts:113
+msgctxt "groupActions.titleField.aria"
+msgid "Group title"
+msgstr "グループのタイトル"
+
+#: src/i18n/en/sidebar.ts:114
+msgctxt "groupActions.group.heading"
+msgid "Group nodes"
+msgstr "ノードをグループ化"
+
+#: src/i18n/en/sidebar.ts:115
+msgctxt "groupActions.group.submit"
+msgid "Group"
+msgstr "グループ化"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:116
+msgctxt "groupActions.group.left"
+msgid "{count} of the selected node stays out: annotated, or an open cluster."
+msgid_plural "{count} of the selected nodes stay out: annotated, or an open cluster."
+msgstr[0] "選択したノードのうち {count} 個は、注釈付きまたは展開済みクラスターのため除外されます。"
+
+#: src/i18n/en/sidebar.ts:120
+msgctxt "groupActions.rename.heading"
+msgid "Rename group"
+msgstr "グループ名を変更"
+
+#: src/i18n/en/sidebar.ts:121
+msgctxt "groupActions.rename.submit"
+msgid "Rename"
+msgstr "名前を変更"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/sidebar.ts:122
+msgctxt "groupActions.tableScope"
+msgid "Members of {group}"
+msgstr "{group} のメンバー"
+
+#: src/i18n/en/sidebar.ts:125
+msgctxt "tooltip.pin"
+msgid "Pin Tooltip"
+msgstr "ツールチップを固定"
+
+#: src/i18n/en/sidebar.ts:126
+msgctxt "tooltip.close"
+msgid "Close Tooltip"
+msgstr "ツールチップを閉じる"
+
+#: src/i18n/en/sidebar.ts:127
+msgctxt "tooltip.focus"
+msgid "Focus Element in Graph"
+msgstr "グラフ内の要素にフォーカス"
+
+#: src/i18n/en/sidebar.ts:128
+msgctxt "tooltip.select"
+msgid "Select Element in Graph"
+msgstr "グラフ内の要素を選択"
+
+#: src/i18n/en/sidebar.ts:129
+msgctxt "tooltip.image.title"
+msgid "Click to view full size"
+msgstr "クリックして原寸表示"
+
+#: src/i18n/en/sidebar.ts:130
+msgctxt "tooltip.groupHint"
+msgid "Double-click to open · Select for the member list"
+msgstr "ダブルクリックで開く · 選択してメンバー一覧を表示"
+
+#: src/i18n/en/sidebar.ts:133
+msgctxt "noteSidebar.empty"
+msgid "No notes yet"
+msgstr "メモはまだありません"
+
+#: src/i18n/en/sidebar.ts:134
+msgctxt "noteSidebar.untitled"
+msgid "Untitled note"
+msgstr "無題のメモ"
+
+#: src/i18n/en/sidebar.ts:135
+msgctxt "noteSidebar.hide.title"
+msgid "Hide note"
+msgstr "メモを非表示"
+
+#: src/i18n/en/sidebar.ts:136
+msgctxt "noteSidebar.restore.title"
+msgid "Restore hidden note"
+msgstr "非表示のメモを復元"
+
+#: src/i18n/en/sidebar.ts:137
+msgctxt "noteSidebar.remove.title"
+msgid "Remove note"
+msgstr "メモを削除"
+
+#: src/i18n/en/sidebar.ts:138
+msgctxt "noteSidebar.add"
+msgid "Add Note"
+msgstr "メモを追加"
+
+#: src/i18n/en/sidebar.ts:139
+msgctxt "noteSidebar.hideAll"
+msgid "Hide all"
+msgstr "すべて非表示"
+
+#: src/i18n/en/sidebar.ts:140
+msgctxt "noteSidebar.hideAll.title"
+msgid "Hide all notes"
+msgstr "すべてのメモを非表示"
+
+#: src/i18n/en/sidebar.ts:141
+msgctxt "noteSidebar.hidden.heading"
+msgid "Hidden notes"
+msgstr "非表示のメモ"
+
+#: src/i18n/en/sidebar.ts:142
+msgctxt "noteSidebar.showAll"
+msgid "Show all notes"
+msgstr "すべてのメモを表示"
+
+#: src/i18n/en/sidebar.ts:143
+msgctxt "noteSidebar.showAll.title"
+msgid "Restore hidden notes"
+msgstr "非表示のメモを復元"
+
+#: src/i18n/en/sidebar.ts:146
+msgctxt "nodePreview.imageUnavailable"
+msgid "Image unavailable"
+msgstr "画像を表示できません"
+
+#: src/i18n/en/table.ts:6
+msgctxt "table.tab"
+msgid "Table"
+msgstr "表"
+
+#: src/i18n/en/table.ts:7
+msgctxt "table.view.nodes"
+msgid "Nodes"
+msgstr "ノード"
+
+#: src/i18n/en/table.ts:8
+msgctxt "table.view.edges"
+msgid "Edges"
+msgstr "エッジ"
+
+#: src/i18n/en/table.ts:11
+msgctxt "table.column.label"
+msgid "Label"
+msgstr "ラベル"
+
+#: src/i18n/en/table.ts:12
+msgctxt "table.column.degree"
+msgid "Degree"
+msgstr "次数"
+
+#: src/i18n/en/table.ts:13
+msgctxt "table.column.degreeIn"
+msgid "In"
+msgstr "入力"
+
+#: src/i18n/en/table.ts:14
+msgctxt "table.column.degreeOut"
+msgid "Out"
+msgstr "出力"
+
+#: src/i18n/en/table.ts:15
+msgctxt "table.column.visibility"
+msgid "Visibility"
+msgstr "表示状態"
+
+#: src/i18n/en/table.ts:16
+msgctxt "table.column.pinned"
+msgid "Pinned"
+msgstr "固定済み"
+
+#: src/i18n/en/table.ts:17
+msgctxt "table.column.children"
+msgid "Children"
+msgstr "子ノード"
+
+#: src/i18n/en/table.ts:18
+msgctxt "table.column.cluster"
+msgid "Cluster"
+msgstr "クラスター"
+
+#: src/i18n/en/table.ts:19
+msgctxt "table.column.group"
+msgid "Group"
+msgstr "グループ化"
+
+#: src/i18n/en/table.ts:20
+msgctxt "table.column.source"
+msgid "Source"
+msgstr "ソース"
+
+#: src/i18n/en/table.ts:21
+msgctxt "table.column.target"
+msgid "Target"
+msgstr "ターゲット"
+
+#. Preserve placeholders: {column}
+#: src/i18n/en/table.ts:22
+msgctxt "table.column.sort.title"
+msgid "Sort by {column}"
+msgstr "{column} で並べ替え"
+
+#: src/i18n/en/table.ts:25
+msgctxt "table.visibility.visible"
+msgid "visible"
+msgstr "表示"
+
+#: src/i18n/en/table.ts:26
+msgctxt "table.visibility.filtered"
+msgid "filtered"
+msgstr "フィルター済み"
+
+#: src/i18n/en/table.ts:27
+msgctxt "table.visibility.excluded"
+msgid "excluded"
+msgstr "除外"
+
+#: src/i18n/en/table.ts:28
+msgctxt "table.visibility.endpoint"
+msgid "endpoint"
+msgstr "端点"
+
+#: src/i18n/en/table.ts:29
+msgctxt "table.visibility.nested"
+msgid "nested"
+msgstr "入れ子"
+
+#: src/i18n/en/table.ts:30
+msgctxt "table.visibility.grouped"
+msgid "grouped"
+msgstr "グループ化済み"
+
+#: src/i18n/en/table.ts:33
+msgctxt "table.value.true"
+msgid "true"
+msgstr "真"
+
+#: src/i18n/en/table.ts:34
+msgctxt "table.value.false"
+msgid "false"
+msgstr "偽"
+
+#. Preserve placeholders: {column}
+#: src/i18n/en/table.ts:37
+msgctxt "table.filter.title"
+msgid "Narrow the rows by {column}"
+msgstr "{column} で行を絞り込む"
+
+#: src/i18n/en/table.ts:38
+msgctxt "table.filter.placeholder"
+msgid "Filter rows…"
+msgstr "行をフィルター…"
+
+#: src/i18n/en/table.ts:39
+msgctxt "table.filter.all"
+msgid "All"
+msgstr "すべて"
+
+#: src/i18n/en/table.ts:40
+msgctxt "table.filter.min.placeholder"
+msgid "Min"
+msgstr "最小"
+
+#: src/i18n/en/table.ts:41
+msgctxt "table.filter.max.placeholder"
+msgid "Max"
+msgstr "最大"
+
+#: src/i18n/en/table.ts:44
+msgctxt "table.empty.filtered"
+msgid "No rows match the column filters."
+msgstr "列フィルターに一致する行はありません。"
+
+#. Preserve placeholders: {scope}
+#: src/i18n/en/table.ts:45
+msgctxt "table.empty.scope"
+msgid "{scope}: none left."
+msgstr "{scope}: 残りはありません。"
+
+#: src/i18n/en/table.ts:46
+msgctxt "table.empty.nodes"
+msgid "This graph has no nodes."
+msgstr "このグラフにはノードがありません。"
+
+#: src/i18n/en/table.ts:47
+msgctxt "table.empty.edges"
+msgid "This graph has no edges."
+msgstr "このグラフにはエッジがありません。"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/table.ts:50
+msgctxt "table.summary.someNodes"
+msgid "{shown} of {count} node"
+msgid_plural "{shown} of {count} nodes"
+msgstr[0] "{count} 個中 {shown} 個のノード"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/table.ts:51
+msgctxt "table.summary.someEdges"
+msgid "{shown} of {count} edge"
+msgid_plural "{shown} of {count} edges"
+msgstr[0] "{count} 本中 {shown} 本のエッジ"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:52
+msgctxt "table.summary.hidden"
+msgid "{count} hidden"
+msgstr "{count} 件非表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:53
+msgctxt "table.summary.hiddenNodes.title"
+msgid "{count} node hidden on the canvas by this table's column filters"
+msgid_plural "{count} nodes hidden on the canvas by this table's column filters"
+msgstr[0] "この表の列フィルターで {count} 個のノードをキャンバス上で非表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:57
+msgctxt "table.summary.hiddenEdges.title"
+msgid "{count} relation hidden on the canvas by this table's column filters"
+msgid_plural "{count} relations hidden on the canvas by this table's column filters"
+msgstr[0] "この表の列フィルターで {count} 本の関係をキャンバス上で非表示"
+
+#: src/i18n/en/table.ts:63
+msgctxt "table.selectAll"
+msgid "Select all"
+msgstr "すべて選択"
+
+#: src/i18n/en/table.ts:64
+msgctxt "table.selectAll.title"
+msgid "Select every row currently listed"
+msgstr "現在の一覧のすべての行を選択"
+
+#. Preserve placeholders: {format}
+#: src/i18n/en/table.ts:65
+msgctxt "table.export.title"
+msgid "Export the rows and columns currently shown as {format}"
+msgstr "現在表示中の行と列を {format} 形式でエクスポート"
+
+#: src/i18n/en/table.ts:66
+msgctxt "table.export.blocked"
+msgid "Export blocked"
+msgstr "エクスポートがブロックされました"
+
+#: src/i18n/en/table.ts:67
+msgctxt "table.export.blocked.message"
+msgid "This page will not let the file download. Try the example outside its frame."
+msgstr "このページではファイルをダウンロードできません。フレームの外でサンプルを開いてください。"
+
+#: src/i18n/en/table.ts:68
+msgctxt "table.columns"
+msgid "Columns"
+msgstr "列"
+
+#: src/i18n/en/table.ts:69
+msgctxt "table.columns.title"
+msgid "Choose which columns to show"
+msgstr "表示する列を選択"
+
+#: src/i18n/en/table.ts:70
+msgctxt "table.scope.clear.title"
+msgid "List every node again"
+msgstr "すべてのノードを再び一覧表示"
+
+#: src/i18n/en/table.ts:71
+msgctxt "table.nested"
+msgid "Nested nodes"
+msgstr "入れ子のノード"
+
+#: src/i18n/en/table.ts:72
+msgctxt "table.nested.title"
+msgid "List the nodes inside clusters alongside the graph's own"
+msgstr "クラスター内のノードもグラフのノードとともに一覧表示"
+
+#: src/i18n/en/table.ts:75
+msgctxt "table.apply"
+msgid "Apply to graph"
+msgstr "グラフに適用"
+
+#: src/i18n/en/table.ts:76
+msgctxt "table.apply.clear"
+msgid "Clear"
+msgstr "クリア"
+
+#: src/i18n/en/table.ts:77
+msgctxt "table.apply.disabled.title"
+msgid "Narrow a column first, then apply it to the graph"
+msgstr "まず列を絞り込んでからグラフに適用"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:78
+msgctxt "table.apply.nodes.title"
+msgid "Hide the {count} node the column filters leave out"
+msgid_plural "Hide the {count} nodes the column filters leave out"
+msgstr[0] "列フィルターから外れた {count} 個のノードを非表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:82
+msgctxt "table.apply.edges.title"
+msgid "Hide the {count} relation the column filters leave out"
+msgid_plural "Hide the {count} relations the column filters leave out"
+msgstr[0] "列フィルターから外れた {count} 本の関係を非表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:86
+msgctxt "table.apply.clearNodes.title"
+msgid "Stop filtering the graph from this table — {count} node hidden"
+msgid_plural "Stop filtering the graph from this table — {count} nodes hidden"
+msgstr[0] "この表からのグラフの絞り込みを解除 — {count} 個のノードが非表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:90
+msgctxt "table.apply.clearEdges.title"
+msgid "Stop filtering the graph from this table — {count} relation hidden"
+msgid_plural "Stop filtering the graph from this table — {count} relations hidden"
+msgstr[0] "この表からのグラフの絞り込みを解除 — {count} 本の関係が非表示"
+
+#: src/i18n/en/table.ts:94
+msgctxt "table.graphFilter.label"
+msgid "From the table"
+msgstr "表から"
+
+#: src/i18n/en/table.ts:97
+msgctxt "dock.resize.aria"
+msgid "Resize the dock"
+msgstr "ドックのサイズを変更"
+
+#: src/i18n/en/table.ts:98
+msgctxt "dock.expand.title"
+msgid "Expand the dock"
+msgstr "ドックを展開"
+
+#: src/i18n/en/table.ts:99
+msgctxt "dock.collapse.title"
+msgid "Collapse the dock"
+msgstr "ドックを折りたたむ"
+
+#: src/i18n/en/panels.ts:6
+msgctxt "filter.attributes"
+msgid "Attributes"
+msgstr "属性"
+
+#: src/i18n/en/panels.ts:7
+msgctxt "filter.reset"
+msgid "Reset"
+msgstr "リセット"
+
+#: src/i18n/en/panels.ts:8
+msgctxt "filter.reset.title"
+msgid "Clear all attribute filters"
+msgstr "すべての属性フィルターを解除"
+
+#: src/i18n/en/panels.ts:9
+msgctxt "filter.value.true"
+msgid "true"
+msgstr "真"
+
+#: src/i18n/en/panels.ts:10
+msgctxt "filter.value.false"
+msgid "false"
+msgstr "偽"
+
+#: src/i18n/en/panels.ts:11
+msgctxt "filter.invalidPattern"
+msgid "Invalid pattern"
+msgstr "無効なパターン"
+
+#: src/i18n/en/panels.ts:12
+msgctxt "filter.layers"
+msgid "Relationships"
+msgstr "関係"
+
+#: src/i18n/en/panels.ts:13
+msgctxt "filter.layers.showAll"
+msgid "Show all"
+msgstr "すべて表示"
+
+#: src/i18n/en/panels.ts:14
+msgctxt "filter.layers.showAll.title"
+msgid "Show every relationship layer"
+msgstr "すべての関係レイヤーを表示"
+
+#. Preserve placeholders: {layer}
+#: src/i18n/en/panels.ts:15
+msgctxt "filter.layer.hide.title"
+msgid "Hide {layer}"
+msgstr "{layer} を非表示"
+
+#. Preserve placeholders: {layer}
+#: src/i18n/en/panels.ts:16
+msgctxt "filter.layer.show.title"
+msgid "Show {layer}"
+msgstr "{layer} を表示"
+
+#: src/i18n/en/panels.ts:17
+msgctxt "filter.fromTable"
+msgid "From the table"
+msgstr "表から"
+
+#: src/i18n/en/panels.ts:18
+msgctxt "filter.fromTable.clear"
+msgid "Clear"
+msgstr "クリア"
+
+#: src/i18n/en/panels.ts:19
+msgctxt "filter.fromTable.clearNodes.title"
+msgid "Stop hiding the nodes the table's column filters leave out"
+msgstr "表の列フィルターから外れたノードの非表示を解除"
+
+#: src/i18n/en/panels.ts:20
+msgctxt "filter.fromTable.clearEdges.title"
+msgid "Stop hiding the relations the table's column filters leave out"
+msgstr "表の列フィルターから外れた関係の非表示を解除"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:21
+msgctxt "filter.fromTable.nodesHidden"
+msgid "{count} node hidden"
+msgid_plural "{count} nodes hidden"
+msgstr[0] "{count} 個のノードを非表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:22
+msgctxt "filter.fromTable.edgesHidden"
+msgid "{count} relation hidden"
+msgid_plural "{count} relations hidden"
+msgstr[0] "{count} 本の関係を非表示"
+
+#: src/i18n/en/panels.ts:23
+msgctxt "filter.hiddenNodes"
+msgid "Hidden nodes"
+msgstr "非表示のノード"
+
+#: src/i18n/en/panels.ts:24
+msgctxt "filter.hiddenNodes.showAll"
+msgid "Show all"
+msgstr "すべて表示"
+
+#: src/i18n/en/panels.ts:25
+msgctxt "filter.hiddenNodes.showAll.title"
+msgid "Restore manually hidden nodes"
+msgstr "手動で非表示にしたノードを復元"
+
+#: src/i18n/en/panels.ts:26
+msgctxt "filter.hiddenNode.show"
+msgid "Show node"
+msgstr "ノードを表示"
+
+#: src/i18n/en/panels.ts:27
+msgctxt "filter.hiddenNode.show.title"
+msgid "Restore manually hidden node"
+msgstr "手動で非表示にしたノードを復元"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/panels.ts:28
+msgctxt "filter.hiddenNode.inspect.aria"
+msgid "Inspect {node}"
+msgstr "{node} を調べる"
+
+#: src/i18n/en/panels.ts:32
+msgctxt "filter.button.active"
+msgid "active filter"
+msgid_plural "active filters"
+msgstr[0] "有効なフィルター"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:33
+msgctxt "filter.button.hidden"
+msgid "{count} hidden"
+msgstr "{count} 件非表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:34
+msgctxt "filter.button.hiddenEdges"
+msgid "{count} edge hidden"
+msgid_plural "{count} edges hidden"
+msgstr[0] "{count} 本のエッジを非表示"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/panels.ts:35
+msgctxt "filter.button.hiddenNodesAndEdges"
+msgid "{nodes}, {edges} hidden"
+msgstr "{nodes}、{edges} を非表示"
+
+#: src/i18n/en/panels.ts:38
+msgctxt "form.pattern.placeholder"
+msgid "pattern…"
+msgstr "パターン…"
+
+#: src/i18n/en/panels.ts:39
+msgctxt "form.min.placeholder"
+msgid "Min"
+msgstr "最小"
+
+#: src/i18n/en/panels.ts:40
+msgctxt "form.max.placeholder"
+msgid "Max"
+msgstr "最大"
+
+#. Preserve placeholders: {field}
+#: src/i18n/en/panels.ts:41
+msgctxt "form.negate.aria"
+msgid "How {field} filters"
+msgstr "{field} の絞り込み方法"
+
+#: src/i18n/en/panels.ts:42
+msgctxt "form.negate.is"
+msgid "is"
+msgstr "一致"
+
+#: src/i18n/en/panels.ts:43
+msgctxt "form.negate.is.title"
+msgid "Keep what matches"
+msgstr "一致する項目を保持"
+
+#: src/i18n/en/panels.ts:44
+msgctxt "form.negate.not"
+msgid "is not"
+msgstr "不一致"
+
+#: src/i18n/en/panels.ts:45
+msgctxt "form.negate.not.title"
+msgid "Keep what does not match, and what has no value"
+msgstr "一致しない項目と値がない項目を保持"
+
+#: src/i18n/en/panels.ts:46
+msgctxt "picker.placeholder"
+msgid "Select..."
+msgstr "選択…"
+
+#: src/i18n/en/panels.ts:47
+msgctxt "picker.search.placeholder"
+msgid "Search..."
+msgstr "検索…"
+
+#: src/i18n/en/panels.ts:48
+msgctxt "picker.empty"
+msgid "No options available"
+msgstr "選択肢がありません"
+
+#. Preserve placeholders: {option}
+#: src/i18n/en/panels.ts:49
+msgctxt "picker.remove.aria"
+msgid "Remove {option}"
+msgstr "{option} を削除"
+
+#: src/i18n/en/panels.ts:52
+msgctxt "legend.title"
+msgid "Legend"
+msgstr "凡例"
+
+#: src/i18n/en/panels.ts:53
+msgctxt "legend.title.type"
+msgid "Type"
+msgstr "種類"
+
+#: src/i18n/en/panels.ts:54
+msgctxt "legend.showAll.title"
+msgid "Show every category"
+msgstr "すべてのカテゴリを表示"
+
+#: src/i18n/en/panels.ts:55
+msgctxt "legend.invert.title"
+msgid "Invert which categories are shown"
+msgstr "カテゴリの表示を反転"
+
+#: src/i18n/en/panels.ts:56
+msgctxt "legend.expand.title"
+msgid "Expand this section"
+msgstr "このセクションを展開"
+
+#: src/i18n/en/panels.ts:57
+msgctxt "legend.collapse.title"
+msgid "Collapse this section"
+msgstr "このセクションを折りたたむ"
+
+#: src/i18n/en/panels.ts:58
+msgctxt "legend.expandAll.title"
+msgid "Expand this section (alt-click for every section)"
+msgstr "このセクションを展開（Alt キーを押しながらクリックですべて展開）"
+
+#: src/i18n/en/panels.ts:59
+msgctxt "legend.collapseAll.title"
+msgid "Collapse this section (alt-click for every section)"
+msgstr "このセクションを折りたたむ（Alt キーを押しながらクリックですべて折りたたむ）"
+
+#. Preserve placeholders: {category}
+#: src/i18n/en/panels.ts:60
+msgctxt "legend.entry.show.title"
+msgid "Show {category}"
+msgstr "{category} を表示"
+
+#. Preserve placeholders: {category}
+#: src/i18n/en/panels.ts:61
+msgctxt "legend.entry.hide.title"
+msgid "Hide {category} (alt-click to show only this one)"
+msgstr "{category} を非表示（Alt キーを押しながらクリックでこれのみ表示）"
+
+#: src/i18n/en/panels.ts:62
+msgctxt "legend.entry.lastShown.title"
+msgid "The last shown category can't be hidden while the legend drives the filter panel's facet."
+msgstr "凡例がフィルターパネルのファセットを制御している間は、最後の表示カテゴリを非表示にできません。"
+
+#: src/i18n/en/panels.ts:65
+msgctxt "physicsFlyout.title"
+msgid "Physics"
+msgstr "物理"
+
+#: src/i18n/en/panels.ts:66
+msgctxt "physicsFlyout.section"
+msgid "LAYOUT & SIMULATION"
+msgstr "レイアウトとシミュレーション"
+
+#: src/i18n/en/panels.ts:67
+msgctxt "physicsFlyout.layout.force"
+msgid "Force"
+msgstr "力学"
+
+#: src/i18n/en/panels.ts:68
+msgctxt "physicsFlyout.layout.force.title"
+msgid "Force — positions nodes freely using the physics simulation."
+msgstr "力学 — 物理シミュレーションでノードを自由に配置します。"
+
+#: src/i18n/en/panels.ts:69
+msgctxt "physicsFlyout.layout.treeV"
+msgid "Vertical"
+msgstr "縦方向"
+
+#: src/i18n/en/panels.ts:70
+msgctxt "physicsFlyout.layout.treeV.title"
+msgid "Tree — hierarchical layout flowing from top to bottom."
+msgstr "ツリー — 上から下に流れる階層レイアウト。"
+
+#: src/i18n/en/panels.ts:71
+msgctxt "physicsFlyout.layout.treeH"
+msgid "Horizontal"
+msgstr "横方向"
+
+#: src/i18n/en/panels.ts:72
+msgctxt "physicsFlyout.layout.treeH.title"
+msgid "Tree — hierarchical layout flowing from left to right."
+msgstr "ツリー — 左から右に流れる階層レイアウト。"
+
+#: src/i18n/en/panels.ts:73
+msgctxt "physicsFlyout.layout.treeR"
+msgid "Radial"
+msgstr "放射状"
+
+#: src/i18n/en/panels.ts:74
+msgctxt "physicsFlyout.layout.treeR.title"
+msgid "Tree — hierarchical layout radiating out from a central root."
+msgstr "ツリー — 中央のルートから放射状に広がる階層レイアウト。"
+
+#: src/i18n/en/panels.ts:75
+msgctxt "physicsFlyout.root"
+msgid "Root"
+msgstr "ルート"
+
+#: src/i18n/en/panels.ts:76
+msgctxt "physicsFlyout.root.selected"
+msgid "Selected node"
+msgstr "選択したノード"
+
+#: src/i18n/en/panels.ts:77
+msgctxt "physicsFlyout.root.selected.description"
+msgid "Hangs the tree from the node you have selected, following edges either way round."
+msgstr "選択したノードをルートとして、エッジを両方向にたどります。"
+
+#: src/i18n/en/panels.ts:78
+msgctxt "physicsFlyout.root.firstSource"
+msgid "First source"
+msgstr "最初のソース"
+
+#: src/i18n/en/panels.ts:79
+msgctxt "physicsFlyout.root.firstSource.description"
+msgid "The first node nothing points at."
+msgstr "どこからも参照されていない最初のノード。"
+
+#: src/i18n/en/panels.ts:80
+msgctxt "physicsFlyout.root.widestReach"
+msgid "Widest reach"
+msgstr "最大の到達範囲"
+
+#: src/i18n/en/panels.ts:81
+msgctxt "physicsFlyout.root.widestReach.description"
+msgid "Reaches the most other nodes."
+msgstr "ほかのノードに最も多く到達します。"
+
+#: src/i18n/en/panels.ts:82
+msgctxt "physicsFlyout.root.shallowest"
+msgid "Shallowest"
+msgstr "最小の深さ"
+
+#: src/i18n/en/panels.ts:83
+msgctxt "physicsFlyout.root.shallowest.description"
+msgid "Makes the tree as shallow as it can be."
+msgstr "ツリーの深さを最小にします。"
+
+#: src/i18n/en/panels.ts:84
+msgctxt "physicsFlyout.root.selectFirst"
+msgid "Select a node first."
+msgstr "まずノードを選択してください。"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/panels.ts:85
+msgctxt "physicsFlyout.root.pinned.title"
+msgid "The tree is hung from \"{node}\". Pick again to change it."
+msgstr "「{node}」がルートです。変更するには選び直してください。"
+
+#. Preserve placeholders: {description}, {label}
+#: src/i18n/en/panels.ts:86
+msgctxt "physicsFlyout.root.finder.title"
+msgid "{label}: {description}"
+msgstr "{label}: {description}"
+
+#: src/i18n/en/panels.ts:87
+msgctxt "physicsFlyout.spacing"
+msgid "Spacing"
+msgstr "間隔"
+
+#: src/i18n/en/panels.ts:88
+msgctxt "physicsFlyout.spacing.auto"
+msgid "Auto"
+msgstr "自動"
+
+#: src/i18n/en/panels.ts:89
+msgctxt "physicsFlyout.spacing.auto.title"
+msgid "Let the tree work out its own distances from the size of the nodes and the shape of the tree — and keep working them out as the graph changes."
+msgstr "ノードの大きさとツリーの形から間隔を自動計算し、グラフの変化に合わせて調整します。"
+
+#: src/i18n/en/panels.ts:90
+msgctxt "physicsFlyout.spacing.level"
+msgid "Level distance"
+msgstr "階層間の距離"
+
+#: src/i18n/en/panels.ts:91
+msgctxt "physicsFlyout.spacing.level.title"
+msgid "How far apart consecutive levels of the tree sit — the gap between rings, in the radial layout."
+msgstr "ツリーの階層間の距離です。放射状レイアウトではリング間の距離です。"
+
+#: src/i18n/en/panels.ts:92
+msgctxt "physicsFlyout.spacing.sibling"
+msgid "Sibling distance"
+msgstr "同階層ノード間の距離"
+
+#: src/i18n/en/panels.ts:93
+msgctxt "physicsFlyout.spacing.sibling.title"
+msgid "How far apart nodes on the same level sit. The radial layout spreads a level over the whole circle, so it ignores this one."
+msgstr "同じ階層のノード間の距離です。放射状レイアウトでは階層を円全体に配置するため、この値は使いません。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:94
+msgctxt "physicsFlyout.spacing.value"
+msgid "{count}×"
+msgstr "{count} 倍"
+
+#: src/i18n/en/panels.ts:95
+msgctxt "physicsFlyout.simulation"
+msgid "Simulation"
+msgstr "シミュレーション"
+
+#: src/i18n/en/panels.ts:96
+msgctxt "physicsFlyout.pause.title"
+msgid "Pause physics"
+msgstr "物理を一時停止"
+
+#: src/i18n/en/panels.ts:97
+msgctxt "physicsFlyout.resume.title"
+msgid "Resume physics"
+msgstr "物理を再開"
+
+#: src/i18n/en/panels.ts:98
+msgctxt "physicsFlyout.preset.auto"
+msgid "Auto"
+msgstr "自動"
+
+#: src/i18n/en/panels.ts:99
+msgctxt "physicsFlyout.preset.auto.title"
+msgid "Let the layout tune itself from the number of nodes, their size and the canvas — and keep tuning as the graph changes."
+msgstr "ノード数、大きさ、キャンバスに合わせてレイアウトを自動調整し、グラフの変化にも追従します。"
+
+#: src/i18n/en/panels.ts:100
+msgctxt "physicsFlyout.preset.tight"
+msgid "Tight"
+msgstr "密集"
+
+#: src/i18n/en/panels.ts:101
+msgctxt "physicsFlyout.preset.tight.title"
+msgid "Compact layout with nodes packed closely together."
+msgstr "ノードを密に配置するコンパクトなレイアウト。"
+
+#: src/i18n/en/panels.ts:102
+msgctxt "physicsFlyout.preset.loose"
+msgid "Loose"
+msgstr "広め"
+
+#: src/i18n/en/panels.ts:103
+msgctxt "physicsFlyout.preset.loose.title"
+msgid "Spacious layout with nodes spread further apart."
+msgstr "ノードの間隔を広く取るレイアウト。"
+
+#: src/i18n/en/panels.ts:104
+msgctxt "physicsFlyout.knob.repulsion"
+msgid "Repulsion"
+msgstr "反発力"
+
+#: src/i18n/en/panels.ts:105
+msgctxt "physicsFlyout.knob.repulsion.title"
+msgid "How strongly nodes push each other apart. Higher values spread the graph out."
+msgstr "ノード同士の反発力です。値を大きくするとグラフが広がります。"
+
+#: src/i18n/en/panels.ts:106
+msgctxt "physicsFlyout.knob.linkDistance"
+msgid "Link distance"
+msgstr "接続距離"
+
+#: src/i18n/en/panels.ts:107
+msgctxt "physicsFlyout.knob.linkDistance.title"
+msgid "The resting length of edges, in pixels. Higher values place connected nodes further apart."
+msgstr "エッジの自然長（ピクセル）です。値を大きくすると接続されたノード間の距離が広がります。"
+
+#: src/i18n/en/panels.ts:108
+msgctxt "physicsFlyout.knob.collisionRadius"
+msgid "Collision radius"
+msgstr "衝突半径"
+
+#: src/i18n/en/panels.ts:109
+msgctxt "physicsFlyout.knob.collisionRadius.title"
+msgid "The clear space kept around each node to prevent overlap. Higher values keep nodes further apart."
+msgstr "重なりを防ぐために各ノードの周囲に確保する空間です。値を大きくするとノード間の距離が広がります。"
+
+#: src/i18n/en/panels.ts:110
+msgctxt "physicsFlyout.knob.friction"
+msgid "Friction"
+msgstr "摩擦"
+
+#: src/i18n/en/panels.ts:111
+msgctxt "physicsFlyout.knob.friction.title"
+msgid "How quickly node motion is damped. Higher values calm the layout and settle it faster."
+msgstr "ノードの動きの減衰速度です。値を大きくするとレイアウトが早く落ち着きます。"
+
+#: src/i18n/en/panels.ts:112
+msgctxt "physicsFlyout.knob.centering"
+msgid "Centering"
+msgstr "中央への引力"
+
+#: src/i18n/en/panels.ts:113
+msgctxt "physicsFlyout.knob.centering.title"
+msgid "How strongly the graph is pulled toward the middle of the canvas. Higher values keep disconnected parts in frame."
+msgstr "グラフをキャンバス中央に引く強さです。値を大きくすると未接続の部分も画面内に収まります。"
+
+#: src/i18n/en/panels.ts:114
+msgctxt "physicsFlyout.knob.settleTime"
+msgid "Settle time"
+msgstr "安定までの時間"
+
+#: src/i18n/en/panels.ts:115
+msgctxt "physicsFlyout.knob.settleTime.title"
+msgid "How long the layout is given to settle, in seconds. Higher values let large graphs unfold further before they stop."
+msgstr "レイアウトが安定するまでの時間（秒）です。値を大きくすると、大きなグラフが停止前に十分に展開できます。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:116
+msgctxt "physicsFlyout.knob.seconds"
+msgid "{count}s"
+msgstr "{count} 秒"
+
+#: src/i18n/en/panels.ts:119
+msgctxt "viewFlyout.title"
+msgid "View"
+msgstr "表示"
+
+#: src/i18n/en/panels.ts:120
+msgctxt "viewFlyout.section"
+msgid "GRID & CANVAS"
+msgstr "グリッドとキャンバス"
+
+#: src/i18n/en/panels.ts:121
+msgctxt "viewFlyout.background"
+msgid "Background"
+msgstr "背景"
+
+#: src/i18n/en/panels.ts:122
+msgctxt "viewFlyout.background.grid"
+msgid "Grid"
+msgstr "グリッド"
+
+#: src/i18n/en/panels.ts:123
+msgctxt "viewFlyout.background.grid.title"
+msgid "Rule the canvas with grid lines."
+msgstr "キャンバスにグリッド線を表示します。"
+
+#: src/i18n/en/panels.ts:124
+msgctxt "viewFlyout.background.dots"
+msgid "Dots"
+msgstr "点"
+
+#: src/i18n/en/panels.ts:125
+msgctxt "viewFlyout.background.dots.title"
+msgid "Mark the grid with dots instead of lines."
+msgstr "線の代わりに点でグリッドを表示します。"
+
+#: src/i18n/en/panels.ts:126
+msgctxt "viewFlyout.background.none"
+msgid "None"
+msgstr "なし"
+
+#: src/i18n/en/panels.ts:127
+msgctxt "viewFlyout.background.none.title"
+msgid "Leave the canvas plain."
+msgstr "キャンバスを無地にします。"
+
+#: src/i18n/en/panels.ts:128
+msgctxt "viewFlyout.background.image"
+msgid "Image"
+msgstr "画像"
+
+#: src/i18n/en/panels.ts:129
+msgctxt "viewFlyout.background.image.title"
+msgid "Paint an image behind the graph."
+msgstr "グラフの背面に画像を表示します。"
+
+#: src/i18n/en/panels.ts:130
+msgctxt "viewFlyout.canvasColour"
+msgid "Canvas colour"
+msgstr "キャンバスの色"
+
+#: src/i18n/en/panels.ts:131
+msgctxt "viewFlyout.canvasColour.custom.title"
+msgid "Custom canvas colour"
+msgstr "キャンバスの色を指定"
+
+#: src/i18n/en/panels.ts:132
+msgctxt "viewFlyout.gridColour"
+msgid "Grid colour"
+msgstr "グリッドの色"
+
+#: src/i18n/en/panels.ts:133
+msgctxt "viewFlyout.gridColour.custom.title"
+msgid "Custom grid colour"
+msgstr "グリッドの色を指定"
+
+#: src/i18n/en/panels.ts:134
+msgctxt "viewFlyout.colour.default"
+msgid "Theme default"
+msgstr "テーマの既定値"
+
+#: src/i18n/en/panels.ts:135
+msgctxt "viewFlyout.colour.white"
+msgid "White"
+msgstr "白"
+
+#: src/i18n/en/panels.ts:136
+msgctxt "viewFlyout.colour.lightGrey"
+msgid "Light grey"
+msgstr "明るいグレー"
+
+#: src/i18n/en/panels.ts:137
+msgctxt "viewFlyout.colour.darkGrey"
+msgid "Dark grey"
+msgstr "暗いグレー"
+
+#: src/i18n/en/panels.ts:138
+msgctxt "viewFlyout.colour.black"
+msgid "Black"
+msgstr "黒"
+
+#: src/i18n/en/panels.ts:139
+msgctxt "viewFlyout.highlightGrid"
+msgid "Highlight grid"
+msgstr "グリッドを強調"
+
+#: src/i18n/en/panels.ts:140
+msgctxt "viewFlyout.highlightGrid.title"
+msgid "Make the background grid lines more visible."
+msgstr "背景のグリッド線を見やすくします。"
+
+#: src/i18n/en/panels.ts:141
+msgctxt "viewFlyout.image.url.placeholder"
+msgid "Image URL..."
+msgstr "画像の URL…"
+
+#: src/i18n/en/panels.ts:142
+msgctxt "viewFlyout.image.browse"
+msgid "Browse"
+msgstr "参照"
+
+#: src/i18n/en/panels.ts:143
+msgctxt "viewFlyout.image.browse.title"
+msgid "Pick an image file from this device."
+msgstr "このデバイスから画像ファイルを選択します。"
+
+#: src/i18n/en/panels.ts:144
+msgctxt "viewFlyout.image.fit.cover"
+msgid "Cover"
+msgstr "全体を覆う"
+
+#: src/i18n/en/panels.ts:145
+msgctxt "viewFlyout.image.fit.cover.title"
+msgid "Scale the image to fill the canvas, cropping whatever overflows."
+msgstr "キャンバス全体を覆うように拡大縮小し、はみ出す部分を切り取ります。"
+
+#: src/i18n/en/panels.ts:146
+msgctxt "viewFlyout.image.fit.contain"
+msgid "Contain"
+msgstr "全体を収める"
+
+#: src/i18n/en/panels.ts:147
+msgctxt "viewFlyout.image.fit.contain.title"
+msgid "Scale the image until all of it fits on the canvas."
+msgstr "画像全体がキャンバスに収まるように拡大縮小します。"
+
+#: src/i18n/en/panels.ts:148
+msgctxt "viewFlyout.image.fit.tile"
+msgid "Tile"
+msgstr "タイル"
+
+#: src/i18n/en/panels.ts:149
+msgctxt "viewFlyout.image.fit.tile.title"
+msgid "Keep the image at its own size and repeat it across the canvas."
+msgstr "画像を元のサイズのままキャンバス全体に繰り返し表示します。"
+
+#: src/i18n/en/panels.ts:150
+msgctxt "viewFlyout.image.remove"
+msgid "Remove image"
+msgstr "画像を削除"
+
+#: src/i18n/en/panels.ts:151
+msgctxt "viewFlyout.snap"
+msgid "Snap to grid"
+msgstr "グリッドにスナップ"
+
+#: src/i18n/en/panels.ts:152
+msgctxt "viewFlyout.snap.title"
+msgid "Align nodes to the grid while you drag them."
+msgstr "ドラッグ中にノードをグリッドに揃えます。"
+
+#: src/i18n/en/panels.ts:153
+msgctxt "viewFlyout.freeze"
+msgid "Freeze on drag"
+msgstr "ドラッグ後に固定"
+
+#: src/i18n/en/panels.ts:154
+msgctxt "viewFlyout.freeze.title"
+msgid "Keep nodes pinned where you drop them instead of letting physics move them again."
+msgstr "ドロップした場所でノードを固定し、物理による再移動を防ぎます。"
+
+#: src/i18n/en/panels.ts:155
+msgctxt "viewFlyout.fit"
+msgid "Fit on expand/collapse"
+msgstr "展開・折りたたみ時に全体表示"
+
+#: src/i18n/en/panels.ts:156
+msgctxt "viewFlyout.fit.title"
+msgid "Zoom and re-center to fit the graph when clusters or groups are expanded or collapsed."
+msgstr "クラスターやグループの展開・折りたたみ時に、グラフ全体が収まるようにズームと中央位置を調整します。"
+
+#: src/i18n/en/panels.ts:157
+msgctxt "viewFlyout.orphans"
+msgid "Hide unconnected"
+msgstr "未接続ノードを非表示"
+
+#: src/i18n/en/panels.ts:158
+msgctxt "viewFlyout.orphans.title"
+msgid "Hide nodes that have no visible relation left. Unlike hiding a relationship layer, this moves the graph."
+msgstr "表示中の関係がないノードを非表示にします。関係レイヤーの非表示とは異なり、グラフの配置が変わります。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:159
+msgctxt "viewFlyout.orphans.note.title"
+msgid "{count} unconnected node hidden"
+msgid_plural "{count} unconnected nodes hidden"
+msgstr[0] "未接続の {count} 個のノードを非表示"
+
+#: src/i18n/en/panels.ts:162
+msgctxt "simplifyFlyout.title"
+msgid "Simplify"
+msgstr "簡略化"
+
+#: src/i18n/en/panels.ts:163
+msgctxt "simplifyFlyout.onCanvas"
+msgid "On the canvas"
+msgstr "キャンバス上"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/panels.ts:164
+msgctxt "simplifyFlyout.shown"
+msgid "{shown} of {count} node"
+msgid_plural "{shown} of {count} nodes"
+msgstr[0] "{count} 個中 {shown} 個のノード"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:165
+msgctxt "simplifyFlyout.groups"
+msgid "{count} group"
+msgid_plural "{count} groups"
+msgstr[0] "{count} 個のグループ"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:166
+msgctxt "simplifyFlyout.folded"
+msgid "{count} folded"
+msgstr "{count} 件折りたたみ済み"
+
+#: src/i18n/en/panels.ts:167
+msgctxt "simplifyFlyout.rule.app"
+msgid "app"
+msgstr "アプリ"
+
+#: src/i18n/en/panels.ts:168
+msgctxt "simplifyFlyout.smaller.aria"
+msgid "Smaller"
+msgstr "小さく"
+
+#: src/i18n/en/panels.ts:169
+msgctxt "simplifyFlyout.larger.aria"
+msgid "Larger"
+msgstr "大きく"
+
+#: src/i18n/en/panels.ts:170
+msgctxt "simplifyFlyout.slider.fine"
+msgid "Fine"
+msgstr "細かい"
+
+#: src/i18n/en/panels.ts:171
+msgctxt "simplifyFlyout.slider.coarse"
+msgid "Coarse"
+msgstr "粗い"
+
+#: src/i18n/en/panels.ts:172
+msgctxt "simplifyFlyout.result.failed"
+msgid "This rule failed"
+msgstr "このルールは失敗しました"
+
+#: src/i18n/en/panels.ts:173
+msgctxt "simplifyFlyout.result.grouping"
+msgid "Grouping…"
+msgstr "グループ化中…"
+
+#: src/i18n/en/panels.ts:174
+msgctxt "simplifyFlyout.result.nothing"
+msgid "Nothing to fold"
+msgstr "折りたたむ項目がありません"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:175
+msgctxt "simplifyFlyout.result.nothingAt"
+msgid "Nothing to fold at {count} or more"
+msgstr "{count} 以上で折りたたむ項目はありません"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:176
+msgctxt "simplifyFlyout.result.nothingByDegree"
+msgid "Every node has {count} link or more"
+msgid_plural "Every node has {count} links or more"
+msgstr[0] "すべてのノードに {count} 本以上の接続があります"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:177
+msgctxt "simplifyFlyout.result.nothingByCore"
+msgid "Every node is in the {count}-core"
+msgstr "すべてのノードが {count}-コアに含まれます"
+
+#: src/i18n/en/pivot.ts:6
+msgctxt "pivot.retry"
+msgid "Retry"
+msgstr "再試行"
+
+#: src/i18n/en/pivot.ts:7
+msgctxt "pivot.cancel"
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: src/i18n/en/pivot.ts:8
+msgctxt "pivot.close"
+msgid "Close"
+msgstr "閉じる"
+
+#: src/i18n/en/pivot.ts:9
+msgctxt "pivot.dismiss"
+msgid "Dismiss"
+msgstr "閉じる"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:10
+msgctxt "pivot.more"
+msgid "…and {count} more"
+msgstr "…ほか {count} 件"
+
+#: src/i18n/en/pivot.ts:13
+msgctxt "pivot.mode.label"
+msgid "Pivot"
+msgstr "ピボット"
+
+#: src/i18n/en/pivot.ts:14
+msgctxt "pivot.mode.pickOrigin"
+msgid "Pick origin"
+msgstr "起点を選択"
+
+#: src/i18n/en/pivot.ts:15
+msgctxt "pivot.mode.lassoOrigin"
+msgid "Lasso origin"
+msgstr "投げ縄で起点を選択"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:18
+msgctxt "pivot.toast.fetchFailed"
+msgid "Couldn't fetch {pivot}"
+msgstr "{pivot} を取得できませんでした"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:19
+msgctxt "pivot.toast.refused.title"
+msgid "{pivot} returned too much"
+msgstr "{pivot} の結果が多すぎます"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:20
+msgctxt "pivot.toast.refused.message"
+msgid "{count} candidate, over the {limit} limit. Nothing was ingested — narrow and run again."
+msgid_plural "{count} candidates, over the {limit} limit. Nothing was ingested — narrow and run again."
+msgstr[0] "候補は {count} 件で上限の {limit} 件を超えています。取り込みは行われませんでした。絞り込んで再実行してください。"
+
+#: src/i18n/en/pivot.ts:26
+msgctxt "pivot.save.promptTitle"
+msgid "Save"
+msgstr "保存"
+
+#: src/i18n/en/pivot.ts:27
+msgctxt "pivot.save.promptSubmit"
+msgid "Save"
+msgstr "保存"
+
+#: src/i18n/en/pivot.ts:28
+msgctxt "pivot.save.saving"
+msgid "Saving…"
+msgstr "保存中…"
+
+#. Preserve placeholders: {elements}
+#: src/i18n/en/pivot.ts:29
+msgctxt "pivot.save.saved"
+msgid "Saved {elements}"
+msgstr "{elements} を保存しました"
+
+#. Preserve placeholders: {elements}
+#: src/i18n/en/pivot.ts:30
+msgctxt "pivot.save.failed"
+msgid "Couldn't save {elements}"
+msgstr "{elements} を保存できませんでした"
+
+#: src/i18n/en/pivot.ts:31
+msgctxt "pivot.save.failedDetail"
+msgid "Nothing was written, and nothing left the canvas."
+msgstr "書き込みは行われず、キャンバスから何も取り除かれていません。"
+
+#. Preserve placeholders: {saved}, {total}
+#: src/i18n/en/pivot.ts:32
+msgctxt "pivot.save.partial"
+msgid "Saved {saved} of {total}"
+msgstr "{total} 件中 {saved} 件を保存しました"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:33
+msgctxt "pivot.save.partialDetail"
+msgid "{count} still unsaved."
+msgstr "{count} 件が未保存です。"
+
+#: src/i18n/en/pivot.ts:34
+msgctxt "pivot.save.nothing"
+msgid "nothing"
+msgstr "なし"
+
+#: src/i18n/en/pivot.ts:37
+msgctxt "pivot.ingest.failed"
+msgid "Ingest failed"
+msgstr "取り込みに失敗しました"
+
+#: src/i18n/en/pivot.ts:38
+msgctxt "pivot.ingest.cancelled"
+msgid "Ingest cancelled"
+msgstr "取り込みをキャンセルしました"
+
+#: src/i18n/en/pivot.ts:39
+msgctxt "pivot.ingest.nothing"
+msgid "Nothing was ingested"
+msgstr "何も取り込まれませんでした"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:40
+msgctxt "pivot.ingest.nodes"
+msgid "Ingested {count} node"
+msgid_plural "Ingested {count} nodes"
+msgstr[0] "{count} 個のノードを取り込みました"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:41
+msgctxt "pivot.ingest.edges"
+msgid "Ingested {count} edge"
+msgid_plural "Ingested {count} edges"
+msgstr[0] "{count} 本のエッジを取り込みました"
+
+#. Preserve placeholders: {count}, {landed}
+#: src/i18n/en/pivot.ts:42
+msgctxt "pivot.ingest.someNodes"
+msgid "Ingested {landed} of {count} node"
+msgid_plural "Ingested {landed} of {count} nodes"
+msgstr[0] "{count} 個中 {landed} 個のノードを取り込みました"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/pivot.ts:44
+msgctxt "pivot.ingest.nodesAndEdges"
+msgid "Ingested {nodes}, {edges}"
+msgstr "{nodes}、{edges} を取り込みました"
+
+#. Preserve placeholders: {count}, {landed}
+#: src/i18n/en/pivot.ts:45
+msgctxt "pivot.ingest.nodesOfAsked"
+msgid "{landed} of {count} node"
+msgid_plural "{landed} of {count} nodes"
+msgstr[0] "{count} 個中 {landed} 個のノード"
+
+#: src/i18n/en/pivot.ts:48
+msgctxt "pivot.panel.filter.placeholder"
+msgid "Filter pivots"
+msgstr "ピボットをフィルター"
+
+#: src/i18n/en/pivot.ts:49
+msgctxt "pivot.panel.filter.aria"
+msgid "Filter pivots"
+msgstr "ピボットをフィルター"
+
+#: src/i18n/en/pivot.ts:50
+msgctxt "pivot.panel.filter.clear.title"
+msgid "Clear the filter"
+msgstr "フィルターを解除"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:51
+msgctxt "pivot.panel.hits.selected"
+msgid "Showing your {count} selected"
+msgstr "選択した {count} 件を表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:52
+msgctxt "pivot.panel.hits.matching"
+msgid "{count} match"
+msgstr "{count} 件一致"
+
+#: src/i18n/en/pivot.ts:53
+msgctxt "pivot.panel.selectNone"
+msgid "Select none"
+msgstr "すべての選択を解除"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:54
+msgctxt "pivot.panel.deselect"
+msgid "Deselect {count}"
+msgstr "{count} 件の選択を解除"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:55
+msgctxt "pivot.panel.selectMatching"
+msgid "Select {count} matching"
+msgstr "一致する {count} 件を選択"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:56
+msgctxt "pivot.panel.selectAll"
+msgid "Select all {count}"
+msgstr "全 {count} 件を選択"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:57
+msgctxt "pivot.panel.tray.selected"
+msgid "{count} selected"
+msgstr "{count} 件選択済み"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:58
+msgctxt "pivot.panel.tray.hidden"
+msgid "{count} hidden"
+msgstr "{count} 件非表示"
+
+#: src/i18n/en/pivot.ts:59
+msgctxt "pivot.panel.tray.none"
+msgid "Nothing selected"
+msgstr "未選択"
+
+#: src/i18n/en/pivot.ts:60
+msgctxt "pivot.panel.tray.reveal.title"
+msgid "Show only what is selected"
+msgstr "選択した項目のみ表示"
+
+#: src/i18n/en/pivot.ts:61
+msgctxt "pivot.panel.tray.unreveal.title"
+msgid "Back to the filtered list"
+msgstr "絞り込んだ一覧に戻る"
+
+#: src/i18n/en/pivot.ts:62
+msgctxt "pivot.panel.tray.clear"
+msgid "Clear"
+msgstr "クリア"
+
+#: src/i18n/en/pivot.ts:63
+msgctxt "pivot.panel.tray.clear.title"
+msgid "Clear the selection"
+msgstr "選択を解除"
+
+#: src/i18n/en/pivot.ts:64
+msgctxt "pivot.panel.tray.run"
+msgid "Run"
+msgstr "実行"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:65
+msgctxt "pivot.panel.tray.runCount"
+msgid "Run {count}"
+msgstr "{count} 件を実行"
+
+#: src/i18n/en/pivot.ts:66
+msgctxt "pivot.panel.tray.run.title"
+msgid "Run every selected pivot"
+msgstr "選択したすべてのピボットを実行"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:67
+msgctxt "pivot.panel.tray.caution"
+msgid "{count} pivot is over {limit} — this asks every one of them at once."
+msgid_plural "{count} pivots is over {limit} — this asks every one of them at once."
+msgstr[0] "ピボット数 {count} は {limit} を超えています。すべてを同時に実行します。"
+
+#. Preserve placeholders: {query}
+#: src/i18n/en/pivot.ts:71
+msgctxt "pivot.panel.noMatch"
+msgid "No pivot matches “{query}”."
+msgstr "「{query}」に一致するピボットはありません。"
+
+#: src/i18n/en/pivot.ts:72
+msgctxt "pivot.panel.noMatch.reveal"
+msgid "Nothing selected."
+msgstr "何も選択されていません。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:73
+msgctxt "pivot.panel.originless"
+msgid "Without an origin ({count})"
+msgstr "起点なし ({count})"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:76
+msgctxt "pivot.panel.unsaved"
+msgid "{count} unsaved"
+msgstr "{count} 件未保存"
+
+#: src/i18n/en/pivot.ts:77
+msgctxt "pivot.panel.unsaved.title"
+msgid "Brought in by a pivot this session, and not written back"
+msgstr "このセッションのピボットで取り込まれ、まだ書き戻されていない項目"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/pivot.ts:78
+msgctxt "pivot.panel.unsaved.titleCounts"
+msgid "{nodes} and {edges} this session's pivots brought in and have not written back"
+msgstr "このセッションのピボットで取り込まれ、まだ書き戻されていない {nodes} と {edges}"
+
+#: src/i18n/en/pivot.ts:79
+msgctxt "pivot.panel.save"
+msgid "Save"
+msgstr "保存"
+
+#: src/i18n/en/pivot.ts:80
+msgctxt "pivot.panel.save.saving"
+msgid "Saving…"
+msgstr "保存中…"
+
+#: src/i18n/en/pivot.ts:81
+msgctxt "pivot.panel.save.title"
+msgid "Write these back to the source system"
+msgstr "ソースシステムに書き戻す"
+
+#: src/i18n/en/pivot.ts:84
+msgctxt "pivot.panel.origin"
+msgid "Origin"
+msgstr "起点"
+
+#: src/i18n/en/pivot.ts:85
+msgctxt "pivot.panel.origin.empty"
+msgid "Nothing picked — click a node on the canvas to see what can be run on it"
+msgstr "未選択です。キャンバスのノードをクリックすると、実行できるピボットを確認できます"
+
+#: src/i18n/en/pivot.ts:86
+msgctxt "pivot.panel.origin.emptyOriginless"
+msgid "Nothing picked — click a node on the canvas, or run one of the pivots below"
+msgstr "未選択です。キャンバスのノードをクリックするか、以下のピボットを実行してください"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:87
+msgctxt "pivot.panel.origin.more"
+msgid "+{count}"
+msgstr "+{count}"
+
+#: src/i18n/en/pivot.ts:88
+msgctxt "pivot.panel.origin.clear"
+msgid "Clear"
+msgstr "クリア"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:89
+msgctxt "pivot.panel.heading"
+msgid "{count} pivot applies"
+msgid_plural "{count} pivots apply"
+msgstr[0] "{count} 件のピボットを実行可能"
+
+#: src/i18n/en/pivot.ts:90
+msgctxt "pivot.panel.heading.none"
+msgid "No pivots apply to this origin"
+msgstr "この起点に適用できるピボットはありません"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:93
+msgctxt "pivot.entry.select.aria"
+msgid "Select {pivot}"
+msgstr "{pivot} を選択"
+
+#: src/i18n/en/pivot.ts:94
+msgctxt "pivot.entry.fetching"
+msgid "Fetching…"
+msgstr "取得中…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:95
+msgctxt "pivot.entry.fetchingCount"
+msgid "Fetching ~{count}…"
+msgstr "約 {count} 件を取得中…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:96
+msgctxt "pivot.entry.ingested"
+msgid "{count} ingested"
+msgstr "{count} 件取り込み済み"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:97
+msgctxt "pivot.entry.declared"
+msgid "~{count} declared"
+msgstr "約 {count} 件の見込み"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:98
+msgctxt "pivot.entry.count"
+msgid "~{count}"
+msgstr "約 {count}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/pivot.ts:99
+msgctxt "pivot.entry.countAcross"
+msgid "~{total} across {count} node"
+msgid_plural "~{total} across {count} nodes"
+msgstr[0] "{count} 個のノード全体で約 {total} 件"
+
+#. Preserve placeholders: {count}, {taken}
+#: src/i18n/en/pivot.ts:100
+msgctxt "pivot.entry.scope"
+msgid "Applies to {taken} of the {count} picked"
+msgstr "選択した {count} 件のうち {taken} 件に適用"
+
+#. Preserve placeholders: {count}, {label}
+#: src/i18n/en/pivot.ts:102
+msgctxt "pivot.entry.breakdownItem"
+msgid "{count} {label}"
+msgstr "{count} {label}"
+
+#: src/i18n/en/pivot.ts:103
+msgctxt "pivot.entry.error"
+msgid "Couldn't reach the source."
+msgstr "ソースに接続できませんでした。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:104
+msgctxt "pivot.entry.gate.over"
+msgid "Over the cap of {count} — narrow further to fetch"
+msgstr "上限の {count} 件を超えています。さらに絞り込んでください"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:105
+msgctxt "pivot.entry.gate.within"
+msgid "Within the cap of {count}"
+msgstr "上限の {count} 件以内です"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:106
+msgctxt "pivot.entry.gate.refused"
+msgid "The source returned {count} candidate, over the {limit} limit. Nothing was staged — narrow and run again."
+msgid_plural "The source returned {count} candidates, over the {limit} limit. Nothing was staged — narrow and run again."
+msgstr[0] "ソースが返した候補は {count} 件で上限の {limit} 件を超えています。候補は準備されませんでした。絞り込んで再実行してください。"
+
+#: src/i18n/en/pivot.ts:110
+msgctxt "pivot.entry.run"
+msgid "Run"
+msgstr "実行"
+
+#: src/i18n/en/pivot.ts:111
+msgctxt "pivot.entry.fetch"
+msgid "Fetch"
+msgstr "取得"
+
+#: src/i18n/en/pivot.ts:112
+msgctxt "pivot.entry.runIngest"
+msgid "Run & ingest"
+msgstr "実行して取り込む"
+
+#: src/i18n/en/pivot.ts:113
+msgctxt "pivot.entry.fetchIngest"
+msgid "Fetch & ingest"
+msgstr "取得して取り込む"
+
+#: src/i18n/en/pivot.ts:114
+msgctxt "pivot.entry.ingest.title"
+msgid "Add every result to the graph without reviewing it first"
+msgstr "確認せずにすべての結果をグラフに追加"
+
+#: src/i18n/en/pivot.ts:115
+msgctxt "pivot.entry.clearNarrowing"
+msgid "Clear narrowing"
+msgstr "絞り込みを解除"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:116
+msgctxt "pivot.entry.inTriage"
+msgid "{count} in triage"
+msgstr "{count} 件を選別中"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:117
+msgctxt "pivot.entry.rejected"
+msgid "{count} rejected"
+msgstr "{count} 件却下済み"
+
+#: src/i18n/en/pivot.ts:118
+msgctxt "pivot.entry.rejected.title"
+msgid "What you rejected here this session. It is not offered again until restored."
+msgstr "このセッションで却下した項目です。復元するまで再表示されません。"
+
+#: src/i18n/en/pivot.ts:119
+msgctxt "pivot.entry.rejected.note"
+msgid "Not offered again this session. Restoring one brings it back on the next run."
+msgstr "このセッションでは再表示されません。復元すると次回の実行で再び表示されます。"
+
+#: src/i18n/en/pivot.ts:120
+msgctxt "pivot.entry.restore"
+msgid "restore"
+msgstr "復元"
+
+#: src/i18n/en/pivot.ts:121
+msgctxt "pivot.entry.restore.title"
+msgid "Offer this again on the next run"
+msgstr "次回の実行で再び表示"
+
+#: src/i18n/en/pivot.ts:122
+msgctxt "pivot.entry.restoreAll"
+msgid "Restore all"
+msgstr "すべて復元"
+
+#: src/i18n/en/pivot.ts:123
+msgctxt "pivot.entry.restoreAll.title"
+msgid "Take back every rejection this pivot holds"
+msgstr "このピボットのすべての却下を取り消す"
+
+#: src/i18n/en/pivot.ts:126
+msgctxt "pivot.review.tab"
+msgid "Review"
+msgstr "レビュー"
+
+#: src/i18n/en/pivot.ts:127
+msgctxt "pivot.review.tabLoading"
+msgid "Review…"
+msgstr "レビュー…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:128
+msgctxt "pivot.review.tabWaiting"
+msgid "Review ({count})"
+msgstr "レビュー ({count})"
+
+#: src/i18n/en/pivot.ts:129
+msgctxt "pivot.review.strip.aria"
+msgid "Staged providers"
+msgstr "準備済みのプロバイダー"
+
+#: src/i18n/en/pivot.ts:130
+msgctxt "pivot.review.closeFailed"
+msgid "Close failed"
+msgstr "失敗した項目を閉じる"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:131
+msgctxt "pivot.review.closeFailed.title"
+msgid "Drop the one provider whose fetch brought nothing back"
+msgid_plural "Drop the {count} providers whose fetches brought nothing back"
+msgstr[0] "取得結果がなかった {count} 件のプロバイダーを閉じる"
+
+#: src/i18n/en/pivot.ts:135
+msgctxt "pivot.review.closeAll"
+msgid "Close all"
+msgstr "すべて閉じる"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:136
+msgctxt "pivot.review.closeAll.title"
+msgid "Drop {count} staged provider. Nothing is rejected."
+msgid_plural "Drop all {count} staged providers. Nothing is rejected."
+msgstr[0] "準備済みの {count} 件のプロバイダーをすべて閉じます。候補は却下されません。"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:140
+msgctxt "pivot.review.item.fetching"
+msgid "{provider} — fetching"
+msgstr "{provider} — 取得中"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:141
+msgctxt "pivot.review.item.failed"
+msgid "{provider} — the fetch failed"
+msgstr "{provider} — 取得失敗"
+
+#. Preserve placeholders: {count}, {provider}
+#: src/i18n/en/pivot.ts:142
+msgctxt "pivot.review.item.waiting"
+msgid "{provider} — {count} waiting for a verdict"
+msgstr "{provider} — {count} 件が判定待ち"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:143
+msgctxt "pivot.review.item.idle"
+msgid "{provider} — nothing waiting"
+msgstr "{provider} — 待機中の候補なし"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:144
+msgctxt "pivot.review.item.close.aria"
+msgid "Close {provider}"
+msgstr "{provider} を閉じる"
+
+#: src/i18n/en/pivot.ts:145
+msgctxt "pivot.review.item.close.title"
+msgid "Drop these candidates. Nothing is rejected."
+msgstr "これらの候補を閉じます。候補は却下されません。"
+
+#: src/i18n/en/pivot.ts:148
+msgctxt "pivot.triage.search.placeholder"
+msgid "Search rows…"
+msgstr "行を検索…"
+
+#: src/i18n/en/pivot.ts:149
+msgctxt "pivot.triage.search.patternPlaceholder"
+msgid "Match rows by pattern…"
+msgstr "パターンで行を検索…"
+
+#: src/i18n/en/pivot.ts:150
+msgctxt "pivot.triage.search.title"
+msgid "Narrow the candidates. Nothing here touches the graph."
+msgstr "候補を絞り込みます。グラフは変更されません。"
+
+#: src/i18n/en/pivot.ts:151
+msgctxt "pivot.triage.regex"
+msgid "regex"
+msgstr "正規表現"
+
+#: src/i18n/en/pivot.ts:152
+msgctxt "pivot.triage.regex.title"
+msgid "Read the search box as a regular expression"
+msgstr "検索欄を正規表現として扱う"
+
+#: src/i18n/en/pivot.ts:153
+msgctxt "pivot.triage.rerun"
+msgid "Re-run"
+msgstr "再実行"
+
+#: src/i18n/en/pivot.ts:154
+msgctxt "pivot.triage.rerun.title"
+msgid "Fetch again with the same narrowing"
+msgstr "同じ絞り込み条件で再取得"
+
+#: src/i18n/en/pivot.ts:157
+msgctxt "pivot.triage.loading"
+msgid "Fetching candidates…"
+msgstr "候補を取得中…"
+
+#: src/i18n/en/pivot.ts:158
+msgctxt "pivot.triage.loading.sub"
+msgid "Nothing is on the canvas yet — candidates are staged, not merged."
+msgstr "まだキャンバスには追加されていません。候補は準備され、統合はされていません。"
+
+#: src/i18n/en/pivot.ts:159
+msgctxt "pivot.triage.error"
+msgid "Couldn't fetch candidates."
+msgstr "候補を取得できませんでした。"
+
+#: src/i18n/en/pivot.ts:160
+msgctxt "pivot.triage.error.sub"
+msgid "Nothing was staged. Retrying runs the same request with the narrowing you already chose."
+msgstr "候補は準備されませんでした。再試行では選択済みの絞り込み条件で同じリクエストを実行します。"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:161
+msgctxt "pivot.triage.refused"
+msgid "The source returned {count} candidate, over the {limit} limit."
+msgid_plural "The source returned {count} candidates, over the {limit} limit."
+msgstr[0] "ソースが返した候補は {count} 件で上限の {limit} 件を超えています。"
+
+#: src/i18n/en/pivot.ts:165
+msgctxt "pivot.triage.refused.sub"
+msgid "Nothing was staged — narrow and run again."
+msgstr "候補は準備されませんでした。絞り込んで再実行してください。"
+
+#: src/i18n/en/pivot.ts:166
+msgctxt "pivot.triage.empty"
+msgid "No candidates came back"
+msgstr "候補がありませんでした"
+
+#: src/i18n/en/pivot.ts:167
+msgctxt "pivot.triage.empty.sub"
+msgid "The narrowing may be tighter than the data."
+msgstr "絞り込み条件が厳しすぎる可能性があります。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:168
+msgctxt "pivot.triage.allRejected"
+msgid "The only candidate was rejected earlier this session"
+msgid_plural "All {count} were rejected earlier this session"
+msgstr[0] "{count} 件すべてがこのセッションで却下済みです"
+
+#: src/i18n/en/pivot.ts:172
+msgctxt "pivot.triage.allRejected.sub"
+msgid "Nothing new came back. Restoring one offers it again on the next run."
+msgstr "新しい候補はありません。復元すると次回の実行で再び表示されます。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:173
+msgctxt "pivot.triage.allOnCanvas"
+msgid "The only candidate is already on the canvas — nothing to triage"
+msgid_plural "All {count} are already on the canvas — nothing to triage"
+msgstr[0] "{count} 件すべてがキャンバス上にあります。選別する候補はありません"
+
+#: src/i18n/en/pivot.ts:177
+msgctxt "pivot.triage.allOnCanvas.sub"
+msgid "Nothing was changed: an id already here is left exactly as it was."
+msgstr "変更はありません。既存の ID の項目はそのまま保持されます。"
+
+#: src/i18n/en/pivot.ts:178
+msgctxt "pivot.triage.done"
+msgid "Nothing left to triage"
+msgstr "選別する候補は残っていません"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:179
+msgctxt "pivot.triage.done.ingested"
+msgid "{count} ingested"
+msgstr "{count} 件取り込み済み"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:180
+msgctxt "pivot.triage.done.rejected"
+msgid "{count} rejected"
+msgstr "{count} 件却下済み"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:181
+msgctxt "pivot.triage.done.onCanvas"
+msgid "{count} already on canvas"
+msgstr "{count} 件はキャンバス上に存在"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:182
+msgctxt "pivot.triage.showRejected"
+msgid "Show the {count} rejected"
+msgstr "却下した {count} 件を表示"
+
+#: src/i18n/en/pivot.ts:183
+msgctxt "pivot.triage.hideRejected"
+msgid "Hide the rejected"
+msgstr "却下した候補を非表示"
+
+#: src/i18n/en/pivot.ts:186
+msgctxt "pivot.triage.banner.running"
+msgid "Running again…"
+msgstr "再実行中…"
+
+#: src/i18n/en/pivot.ts:187
+msgctxt "pivot.triage.banner.failed"
+msgid "The re-run failed. What is below is untouched."
+msgstr "再実行に失敗しました。以下の内容は変更されていません。"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:188
+msgctxt "pivot.triage.banner.ready"
+msgid "This pivot was run again. {count} new candidate is ready."
+msgid_plural "This pivot was run again. {count} new candidates are ready."
+msgstr[0] "このピボットを再実行しました。新しい候補 {count} 件が準備できました。"
+
+#: src/i18n/en/pivot.ts:192
+msgctxt "pivot.triage.banner.show"
+msgid "Show new"
+msgstr "新しい候補を表示"
+
+#: src/i18n/en/pivot.ts:193
+msgctxt "pivot.triage.banner.keep"
+msgid "Keep triaging"
+msgstr "選別を続ける"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:196
+msgctxt "pivot.triage.head.fetched"
+msgid "{count} fetched"
+msgstr "{count} 件取得済み"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:197
+msgctxt "pivot.triage.head.deduped"
+msgid "{count} already on canvas (skipped)"
+msgstr "{count} 件はキャンバス上に存在（スキップ）"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:198
+msgctxt "pivot.triage.head.suppressed"
+msgid "{count} rejected earlier"
+msgstr "{count} 件却下済み"
+
+#: src/i18n/en/pivot.ts:199
+msgctxt "pivot.triage.head.suppressed.title"
+msgid "Suppressed because they were rejected earlier this session"
+msgstr "このセッションで却下済みのため非表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:200
+msgctxt "pivot.triage.head.unsaved"
+msgid "{count} unsaved"
+msgstr "{count} 件未保存"
+
+#: src/i18n/en/pivot.ts:201
+msgctxt "pivot.triage.head.save"
+msgid "save"
+msgstr "保存"
+
+#: src/i18n/en/pivot.ts:202
+msgctxt "pivot.triage.head.saving"
+msgid "saving…"
+msgstr "保存中…"
+
+#: src/i18n/en/pivot.ts:203
+msgctxt "pivot.triage.head.save.title"
+msgid "Write this provider's ingested results back to the source system"
+msgstr "このプロバイダーから取り込んだ結果をソースシステムに書き戻す"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:204
+msgctxt "pivot.triage.head.origin"
+msgid "{count} origin node"
+msgid_plural "{count} origin nodes"
+msgstr[0] "{count} 個の起点ノード"
+
+#: src/i18n/en/pivot.ts:205
+msgctxt "pivot.triage.head.noOrigin"
+msgid "no origin"
+msgstr "起点なし"
+
+#: src/i18n/en/pivot.ts:206
+msgctxt "pivot.triage.head.narrowed"
+msgid "narrowed"
+msgstr "絞り込み済み"
+
+#: src/i18n/en/pivot.ts:209
+msgctxt "pivot.triage.suppressed.note"
+msgid "Rejected earlier, so not offered again this session. Restoring one brings it back on the next run."
+msgstr "却下済みのため、このセッションでは再表示されません。復元すると次回の実行で再び表示されます。"
+
+#: src/i18n/en/pivot.ts:210
+msgctxt "pivot.triage.restore"
+msgid "restore"
+msgstr "復元"
+
+#: src/i18n/en/pivot.ts:211
+msgctxt "pivot.triage.restoreAll"
+msgid "restore all"
+msgstr "すべて復元"
+
+#: src/i18n/en/pivot.ts:214
+msgctxt "pivot.triage.column.candidate"
+msgid "Candidate"
+msgstr "候補"
+
+#: src/i18n/en/pivot.ts:215
+msgctxt "pivot.triage.column.children"
+msgid "Children"
+msgstr "子ノード"
+
+#: src/i18n/en/pivot.ts:216
+msgctxt "pivot.triage.column.from"
+msgid "From"
+msgstr "接続元"
+
+#: src/i18n/en/pivot.ts:217
+msgctxt "pivot.triage.column.to"
+msgid "To"
+msgstr "接続先"
+
+#: src/i18n/en/pivot.ts:218
+msgctxt "pivot.triage.section.nodes"
+msgid "Nodes"
+msgstr "ノード"
+
+#: src/i18n/en/pivot.ts:219
+msgctxt "pivot.triage.section.edges"
+msgid "Edges"
+msgstr "エッジ"
+
+#: src/i18n/en/pivot.ts:220
+msgctxt "pivot.triage.section.edges.note"
+msgid "both ends are already on the canvas"
+msgstr "両端のノードはキャンバス上に存在"
+
+#. Preserve placeholders: {from}, {to}
+#: src/i18n/en/pivot.ts:221
+msgctxt "pivot.triage.edge.endpoints"
+msgid "{from} → {to}"
+msgstr "{from} → {to}"
+
+#. Preserve placeholders: {row}
+#: src/i18n/en/pivot.ts:222
+msgctxt "pivot.triage.row.select.aria"
+msgid "Select {row}"
+msgstr "{row} を選択"
+
+#: src/i18n/en/pivot.ts:223
+msgctxt "pivot.triage.row.onCanvas"
+msgid "on canvas"
+msgstr "キャンバス上"
+
+#: src/i18n/en/pivot.ts:224
+msgctxt "pivot.triage.row.undo"
+msgid "undo"
+msgstr "元に戻す"
+
+#: src/i18n/en/pivot.ts:225
+msgctxt "pivot.triage.row.willIngest"
+msgid "will ingest"
+msgstr "取り込み予定"
+
+#: src/i18n/en/pivot.ts:226
+msgctxt "pivot.triage.children.show.title"
+msgid "Show what this row holds"
+msgstr "この行の内容を表示"
+
+#: src/i18n/en/pivot.ts:227
+msgctxt "pivot.triage.children.hide.title"
+msgid "Hide what this row holds"
+msgstr "この行の内容を非表示"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:228
+msgctxt "pivot.triage.children.summary"
+msgid "{count} child — ingesting this row takes all of them."
+msgid_plural "{count} children — ingesting this row takes all of them."
+msgstr[0] "子ノード {count} 個 — この行を取り込むとすべて取り込まれます。"
+
+#. Preserve placeholders: {key}, {value}
+#: src/i18n/en/pivot.ts:233
+msgctxt "pivot.triage.children.field"
+msgid "{key}: {value}"
+msgstr "{key}: {value}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:234
+msgctxt "pivot.triage.children.nested"
+msgid "+{count} inside"
+msgstr "内部にさらに {count} 件"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:237
+msgctxt "pivot.triage.foot.ingest"
+msgid "Ingest selected ({count})"
+msgstr "選択項目を取り込む ({count})"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:238
+msgctxt "pivot.triage.foot.ingestLoose"
+msgid "Ingest loose ({count})"
+msgstr "個別に取り込む ({count})"
+
+#: src/i18n/en/pivot.ts:239
+msgctxt "pivot.triage.foot.ingestLoose.title"
+msgid "Land the selected rows as separate nodes"
+msgstr "選択した行を個別のノードとして追加"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:240
+msgctxt "pivot.triage.foot.ingestGrouped"
+msgid "Ingest in a group ({count})"
+msgstr "グループとして取り込む ({count})"
+
+#: src/i18n/en/pivot.ts:241
+msgctxt "pivot.triage.foot.ingestGrouped.title"
+msgid "Land the selected rows folded, one group per type"
+msgstr "選択した行を種類ごとのグループにまとめて追加"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:242
+msgctxt "pivot.triage.foot.ingestAll"
+msgid "Ingest all {count}"
+msgstr "全 {count} 件を取り込む"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:243
+msgctxt "pivot.triage.foot.selectAll"
+msgid "Select all {count}"
+msgstr "全 {count} 件を選択"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:244
+msgctxt "pivot.triage.foot.selectMatching"
+msgid "Select all {count} matching"
+msgstr "一致する全 {count} 件を選択"
+
+#: src/i18n/en/pivot.ts:245
+msgctxt "pivot.triage.foot.rejectSelected"
+msgid "Reject selected"
+msgstr "選択項目を却下"
+
+#: src/i18n/en/pivot.ts:246
+msgctxt "pivot.triage.foot.rejectRemaining"
+msgid "Reject all remaining"
+msgstr "残りをすべて却下"
+
+#. Preserve placeholders: {count}, {from}, {to}
+#: src/i18n/en/pivot.ts:247
+msgctxt "pivot.triage.foot.page"
+msgid "{from}–{to} of {count}"
+msgstr "{count} 件中 {from}–{to} 件"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:248
+msgctxt "pivot.triage.foot.shown"
+msgid "{count} shown"
+msgstr "{count} 件表示"
+
+#: src/i18n/en/pivot.ts:249
+msgctxt "pivot.triage.foot.note"
+msgid "closing this pane rejects nothing — leftovers are re-offered next run"
+msgstr "このパネルを閉じても候補は却下されません。残りは次回の実行で再び表示されます"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:6
+msgctxt "history.entry.hid"
+msgid "Hid {count} node"
+msgid_plural "Hid {count} nodes"
+msgstr[0] "{count} 個のノードを非表示にしました"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:7
+msgctxt "history.entry.showed"
+msgid "Showed {count} node"
+msgid_plural "Showed {count} nodes"
+msgstr[0] "{count} 個のノードを表示しました"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:8
+msgctxt "history.entry.deletedNodes"
+msgid "Deleted {count} node"
+msgid_plural "Deleted {count} nodes"
+msgstr[0] "{count} 個のノードを削除しました"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:9
+msgctxt "history.entry.deletedEdges"
+msgid "Deleted {count} edge"
+msgid_plural "Deleted {count} edges"
+msgstr[0] "{count} 本のエッジを削除しました"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/core.ts:10
+msgctxt "history.entry.deletedBoth"
+msgid "Deleted {nodes}, {edges}"
+msgstr "{nodes}、{edges} を削除しました"
+
+#. Preserve placeholders: {label}
+#: src/i18n/en/core.ts:11
+msgctxt "history.entry.created"
+msgid "Created “{label}”"
+msgstr "「{label}」を作成しました"
+
+#: src/i18n/en/core.ts:12
+msgctxt "history.entry.createdNode"
+msgid "Created a node"
+msgstr "ノードを作成しました"
+
+#: src/i18n/en/core.ts:13
+msgctxt "history.entry.createdEdge"
+msgid "Created an edge"
+msgstr "エッジを作成しました"
+
+#: src/i18n/en/core.ts:14
+msgctxt "history.entry.removedSeed"
+msgid "Removed the loaded data"
+msgstr "読み込んだデータを削除しました"
+
+#: src/i18n/en/core.ts:15
+msgctxt "history.entry.removedManual"
+msgid "Removed hand-drawn work"
+msgstr "手描きの内容を削除しました"
+
+#. Preserve placeholders: {source}
+#: src/i18n/en/core.ts:16
+msgctxt "history.entry.removedSource"
+msgid "Removed “{source}”"
+msgstr "「{source}」を削除しました"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:17
+msgctxt "history.entry.grouped"
+msgid "Grouped “{group}”"
+msgstr "「{group}」をグループ化しました"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:18
+msgctxt "history.entry.ungrouped"
+msgid "Ungrouped “{group}”"
+msgstr "「{group}」のグループを解除しました"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:19
+msgctxt "history.entry.ungroupedMany"
+msgid "Ungrouped {count} group"
+msgid_plural "Ungrouped {count} groups"
+msgstr[0] "{count} 個のグループを解除しました"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:20
+msgctxt "history.entry.renamed"
+msgid "Renamed to “{group}”"
+msgstr "「{group}」に名前を変更しました"
+
+#. Preserve placeholders: {count}, {type}
+#: src/i18n/en/core.ts:23
+msgctxt "simplify.typeLabel"
+msgid "{count} × {type}"
+msgstr "{count} × {type}"
+
+#: src/i18n/en/core.ts:24
+msgctxt "simplify.untyped"
+msgid "node"
+msgstr "ノード"
+
+#: src/i18n/en/core.ts:27
+msgctxt "simplify.builtin.neighbours.label"
+msgid "Same neighbours"
+msgstr "同じ隣接ノード"
+
+#: src/i18n/en/core.ts:28
+msgctxt "simplify.builtin.neighbours.description"
+msgid "Nodes of one type linked to exactly the same nodes."
+msgstr "まったく同じノードに接続された、同じ種類のノード。"
+
+#: src/i18n/en/core.ts:29
+msgctxt "simplify.builtin.chains.label"
+msgid "Chains"
+msgstr "チェーン"
+
+#: src/i18n/en/core.ts:30
+msgctxt "simplify.builtin.chains.description"
+msgid "Nodes leading chains of the same shape, folded level by level."
+msgstr "同じ形のチェーンの先頭ノードを階層ごとにまとめます。"
+
+#: src/i18n/en/core.ts:31
+msgctxt "simplify.builtin.degree.label"
+msgid "Few links"
+msgstr "接続数が少ないノード"
+
+#: src/i18n/en/core.ts:32
+msgctxt "simplify.builtin.degree.description"
+msgid "Nodes with fewer links than this fold into the nodes they hang from."
+msgstr "この数より接続の少ないノードを、接続先のノードにまとめます。"
+
+#: src/i18n/en/core.ts:33
+msgctxt "simplify.builtin.kcore.label"
+msgid "Outside the core"
+msgstr "コアの外側"
+
+#: src/i18n/en/core.ts:34
+msgctxt "simplify.builtin.kcore.description"
+msgid "Peels off nodes with fewer links than this, again and again, into the core."
+msgstr "この数より接続の少ないノードを繰り返し取り除き、コアにまとめます。"
+
+#: src/i18n/en/core.ts:35
+msgctxt "simplify.builtin.communities.label"
+msgid "Communities"
+msgstr "コミュニティ"
+
+#: src/i18n/en/core.ts:36
+msgctxt "simplify.builtin.communities.description"
+msgid "Whole neighbourhoods into a few super-nodes."
+msgstr "隣接するノード群を少数のスーパーノードにまとめます。"
+
+#: src/i18n/en/core.ts:37
+msgctxt "simplify.builtin.landings.label"
+msgid "Pivot landings"
+msgstr "ピボットの取り込み結果"
+
+#: src/i18n/en/core.ts:38
+msgctxt "simplify.builtin.landings.description"
+msgid "What a pivot brought in, one group per type."
+msgstr "ピボットで取り込んだ内容を種類ごとのグループにまとめます。"
+
+#: src/i18n/en/core.ts:39
+msgctxt "simplify.builtin.manual.label"
+msgid "By hand"
+msgstr "手動"
+
+#: src/i18n/en/core.ts:40
+msgctxt "simplify.builtin.manual.description"
+msgid "Groups made from a selection."
+msgstr "選択した項目から作成したグループ。"
+
+#: src/i18n/en/core.ts:43
+msgctxt "simplify.setting.level"
+msgid "Level"
+msgstr "階層"
+
+#: src/i18n/en/core.ts:44
+msgctxt "simplify.setting.minSize"
+msgid "Smallest group"
+msgstr "最小グループ"
+
+#: src/i18n/en/core.ts:45
+msgctxt "simplify.setting.fewestLinks"
+msgid "Fewest links"
+msgstr "最小接続数"
+
+#: src/i18n/en/core.ts:46
+msgctxt "simplify.setting.coreStrength"
+msgid "Core strength"
+msgstr "コアの強さ"
+
+#: src/i18n/en/core.ts:49
+msgctxt "renderer.progress.simulating"
+msgid "Optimizing node positions..."
+msgstr "ノードの位置を最適化中…"
+
+#: src/i18n/en/core.ts:50
+msgctxt "renderer.progress.rendering"
+msgid "Rendering in progress"
+msgstr "描画中"
+
+#. Preserve placeholders: {seconds}
+#: src/i18n/en/core.ts:51
+msgctxt "renderer.progress.elapsed"
+msgid "Elapsed time: {seconds} sec"
+msgstr "経過時間: {seconds} 秒"
+
+#: src/i18n/en/core.ts:52
+msgctxt "renderer.progress.done"
+msgid "All done"
+msgstr "完了"
+
+#: src/i18n/en/core.ts:55
+msgctxt "simulation.slow.title"
+msgid "Physics engine running slow"
+msgstr "物理エンジンの動作が遅くなっています"
+
+#: src/i18n/en/core.ts:56
+msgctxt "simulation.slow.message"
+msgid "The physic has been disabled."
+msgstr "物理を無効にしました。"
+
+#: src/i18n/en/core.ts:59
+msgctxt "node.expand.title"
+msgid "Expand node"
+msgstr "ノードを展開"
+
+#: src/i18n/en/core.ts:60
+msgctxt "node.collapse.title"
+msgid "Collapse nodes"
+msgstr "ノードを折りたたむ"
+
+#: src/i18n/en/core.ts:61
+msgctxt "node.defaultLabel"
+msgid "New node"
+msgstr "新しいノード"
+
+#: src/i18n/en/core.ts:64
+msgctxt "groupOutline.drag.title"
+msgid "drag to move the group"
+msgstr "ドラッグでグループを移動"
+
+#: src/i18n/en/core.ts:65
+msgctxt "groupOutline.close.title"
+msgid "Fold back into the group"
+msgstr "グループに折りたたむ"
+
+#. Preserve placeholders: {count}, {pivot}
+#: src/i18n/en/core.ts:68
+msgctxt "pivotBadge.title"
+msgid "~{count} · {pivot}"
+msgstr "約 {count} · {pivot}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/core.ts:69
+msgctxt "pivotBadge.summary.declared"
+msgid "~{total} across {count} pivot"
+msgid_plural "~{total} across {count} pivots"
+msgstr[0] "{count} 件のピボット全体で約 {total} 件"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:70
+msgctxt "pivotBadge.summary.applies"
+msgid "{count} pivot applies"
+msgid_plural "{count} pivots apply"
+msgstr[0] "{count} 件のピボットを実行可能"
+
+#: src/i18n/en/core.ts:73
+msgctxt "noteCard.surfaceToggle.title"
+msgid "Toggle terminal look"
+msgstr "ターミナル風の表示を切り替え"
+
+#: src/i18n/en/core.ts:74
+msgctxt "noteCard.edit.title"
+msgid "Edit the note"
+msgstr "メモを編集"
+
+#: src/i18n/en/core.ts:75
+msgctxt "noteCard.save.title"
+msgid "Save changes"
+msgstr "変更を保存"
+
+#: src/i18n/en/core.ts:76
+msgctxt "noteCard.remove.title"
+msgid "Remove the note"
+msgstr "メモを削除"
+
+#: src/i18n/en/core.ts:77
+msgctxt "noteCard.link.search.title"
+msgid "Search for a note"
+msgstr "メモを検索"
+
+#: src/i18n/en/core.ts:78
+msgctxt "noteCard.link.pickTitle"
+msgid "Select a node to link to this note"
+msgstr "このメモにリンクするノードを選択"
+
+#: src/i18n/en/core.ts:79
+msgctxt "noteCard.link.empty"
+msgid "Link this note to a node"
+msgstr "このメモをノードにリンク"
+
+#. Preserve placeholders: {id}
+#: src/i18n/en/core.ts:80
+msgctxt "noteCard.link.missing"
+msgid "Missing node: {id}"
+msgstr "ノードが見つかりません: {id}"
+
+#: src/i18n/en/core.ts:81
+msgctxt "noteCard.reference.unresolved.title"
+msgid "Could not resolve node"
+msgstr "ノードを特定できませんでした"
+
+#: src/i18n/en/core.ts:84
+msgctxt "minimap.expand.title"
+msgid "Show the minimap"
+msgstr "ミニマップを表示"
+
+#: src/i18n/en/core.ts:85
+msgctxt "minimap.collapse.title"
+msgid "Collapse the minimap"
+msgstr "ミニマップを折りたたむ"

@@ -69,8 +69,9 @@ export interface I18nOptions {
      * A BCP 47 tag such as `'fr'` or `'de-CH'`. It picks the plural rules, how numbers
      * are written and how lists sort. When given, it is also set as the `lang` of the
      * graph's root element.
-     * English, Simplified Chinese (`zh`), French (`fr`), German (`de`) and
-     * Portuguese (`pt`) are bundled. Regional tags such as `de-CH` use their
+     * English, Simplified Chinese (`zh`), French (`fr`), German (`de`), Portuguese (`pt`),
+     * Dutch (`nl`), Japanese (`ja`), Arabic (`ar`) and Spanish (`es`) are bundled.
+     * Regional tags such as `de-CH` use their
      * language's catalogue and retain their own formatting and plural rules.
      * @default 'en'
      */

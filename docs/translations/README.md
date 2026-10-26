@@ -1,7 +1,8 @@
 # Documentation translations
 
 English Markdown and TypeScript documentation comments remain the sources. The site
-generates Chinese (`zh`), French (`fr`), German (`de`) and Portuguese (`pt`) pages from
+generates Chinese (`zh`), French (`fr`), German (`de`), Portuguese (`pt`), Dutch (`nl`),
+Japanese (`ja`), Arabic (`ar`) and Spanish (`es`) pages from
 the catalogues here. English stays at the existing URLs; translated URLs have a language
 prefix. The language selector keeps the current page and section. No browser-language
 redirect or external translation service is used by the built site.
@@ -22,7 +23,7 @@ After changing a guide or a TypeScript documentation comment:
 npm ci
 npm run typedoc:build
 npm run docs:i18n:extract
-# Translate new IDs in zh.json, fr.json, de.json and pt.json.
+# Translate new IDs in every language JSON file.
 npm run docs:i18n:build
 npm run test:docs
 npm run docs:build
@@ -31,8 +32,9 @@ npx playwright install chromium
 npm run test:docs:browser
 ```
 
-Commit the English sources and catalogues together. Do not commit generated `docs/zh`,
-`docs/fr`, `docs/de`, `docs/pt` or `docs/reference` pages. The generated API reference uses
+Commit the English sources and catalogues together. Do not commit generated language-prefixed
+pages (`docs/zh`, `docs/fr`, `docs/de`, `docs/pt`, `docs/nl`, `docs/ja`, `docs/ar`, `docs/es`)
+or `docs/reference` pages. The generated API reference uses
 the same VitePress theme and language selector as the guides. Navigation points there
 instead of opening an English-only TypeDoc site in a separate window.
 

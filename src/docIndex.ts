@@ -41,7 +41,7 @@ import type { Simplification } from './Simplification/Simplification'
 import type * as I18nOptions from './interfaces/I18n'
 import type { I18n } from './i18n/I18n'
 import { messagesEn } from './i18n/en'
-import { bundledMessages, messagesDe, messagesFr, messagesPt, messagesZh } from './i18n/locales'
+import { bundledMessages, messagesAr, messagesDe, messagesEs, messagesFr, messagesJa, messagesNl, messagesPt, messagesZh } from './i18n/locales'
 
 export type {
     GraphOptions,
@@ -115,8 +115,12 @@ export {
     tableColumns,
     messagesEn,
     bundledMessages,
+    messagesAr,
     messagesDe,
+    messagesEs,
     messagesFr,
+    messagesJa,
+    messagesNl,
     messagesPt,
     messagesZh,
     Pivotick

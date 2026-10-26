@@ -3773,5 +3773,20 @@
   "880d08167b388c8a0eaafc44": "⟦0⟧CIRCL⟦1⟧",
   "2775f827470d99a781e75a4c": "Von CIRCL gepflegte Open-Source-Projekte für Cybersicherheit entdecken.",
   "27c906e353829f01ccb92b52": "⟦0⟧MISP⟦1⟧",
-  "0b5a687a2471745cd6e877a8": "Threat Intelligence mit offenen Standards teilen, speichern und korrelieren."
+  "0b5a687a2471745cd6e877a8": "Threat Intelligence mit offenen Standards teilen, speichern und korrelieren.",
+  "ae1c24b78f314d9c41a7270a": "Die Kataloge werden als ⟦0⟧, ⟦1⟧, ⟦2⟧, ⟦3⟧, exportiert.\n⟦4⟧, ⟦5⟧, ⟦6⟧, ⟦7⟧, ⟦8⟧ und zusammen als\n⟦9⟧, auch verfügbar auf ⟦10⟧ in Browser-Builds.",
+  "53e3a600197c1ce882ff2716": "Das ⟦0⟧-Verzeichnis des Repositorys enthält eine Gettext-Vorlage, ⟦1⟧, und vollständig\n⟦2⟧, ⟦3⟧, ⟦4⟧, ⟦5⟧, ⟦6⟧, ⟦7⟧, ⟦8⟧ und ⟦9⟧ Dateien. Diese Dateien werden auch im npm-Paket geliefert.\nÖffnen Sie eine ⟦10⟧-Datei in Poedit oder einem beliebigen UTF-8-Texteditor. Jedes ⟦11⟧ ist der stabile Nachrichtenschlüssel;\n⟦12⟧ ist die englische Quelle und ⟦13⟧ ist die Übersetzung. Halten Sie ⟦14⟧ intakt.\nFür mehrere Einträge übersetzen Sie jeden ⟦15⟧-Slot: Chinesisch und Japanisch haben ⟦16⟧\nnur; Arabisch hat ⟦17⟧, ⟦18⟧, ⟦19⟧, ⟦20⟧, ⟦21⟧, dann ⟦22⟧; Französisch, Deutsch,\nPortugiesisch, Niederländisch und Spanisch haben ⟦23⟧, dann ⟦24⟧. Die Laufzeit verwendet ⟦25⟧,\nBei fehlenden Kategorien wird auf ⟦26⟧ zurückgegriffen, anstatt den gettext-Header als ⟦27⟧ auszuwerten.",
+  "45f16144c18cb09894ec3e24": "Niederländisch",
+  "be4ee906d3efecfc34a94a6c": "Japanisch",
+  "bafb66f32cd77a326693cd4d": "Arabisch",
+  "3411059cb8e0660e29dd7a37": "Spanisch",
+  "f3fab115440cd4b7c0fafd9c": "Ein ⟦0⟧-Tag wie ⟦1⟧ oder ⟦2⟧. Es wählt die Pluralregeln, wie Zahlen\ngeschrieben werden und wie Listen sortiert werden. Wenn angegeben, wird es auch als ⟦3⟧ des festgelegt\nDas Wurzelelement des Diagramms.\nEnglisch, vereinfachtes Chinesisch (⟦4⟧), Französisch (⟦5⟧), Deutsch (⟦6⟧), Portugiesisch (⟦7⟧),\nNiederländisch (⟦8⟧), Japanisch (⟦9⟧), Arabisch (⟦10⟧) und Spanisch (⟦11⟧) sind gebündelt.\nRegionale Tags wie ⟦12⟧ verwenden ihre\nSie übernehmen den Katalog der Sprache und behalten ihre eigenen Formatierungs- und Pluralregeln bei.",
+  "d68fc49e8d27e55b13d13650": "⟦0⟧Pivotick⟦1⟧ / ⟦2⟧",
+  "0d4c9d636788906c5b929ce1": "Definiert in: i18n/locales/ar.ts:5",
+  "0beee2c422df917313088fc4": "⟦0⟧Pivotick⟦1⟧ / ⟦2⟧",
+  "c9ac3aabecd3905d1daff4bb": "Definiert in: i18n/locales/es.ts:5",
+  "8a885994e9030a2f41b91e91": "⟦0⟧Pivotick⟦1⟧ / ⟦2⟧",
+  "bbf585bee73a59c85a972cef": "Definiert in: i18n/locales/ja.ts:5",
+  "ca1bad360aca2b30d314dfb6": "⟦0⟧Pivotick⟦1⟧ / ⟦2⟧",
+  "d8c75e803533d7a6c87fa186": "Definiert in: i18n/locales/nl.ts:5"
 }

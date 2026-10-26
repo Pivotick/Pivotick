@@ -1,0 +1,4141 @@
+msgid ""
+msgstr "Project-Id-Version: Pivotick\nReport-Msgid-Bugs-To: https://github.com/Pivotick/Pivotick/issues\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nLanguage: nl\nPlural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/common.ts:5
+msgctxt "count.nodes"
+msgid "{count} node"
+msgid_plural "{count} nodes"
+msgstr[0] "{count} knoop"
+msgstr[1] "{count} knopen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/common.ts:6
+msgctxt "count.edges"
+msgid "{count} edge"
+msgid_plural "{count} edges"
+msgstr[0] "{count} verbinding"
+msgstr[1] "{count} verbindingen"
+
+#: src/i18n/en/common.ts:9
+msgctxt "note.defaultContent"
+msgid "This is not a note."
+msgstr "Dit is geen notitie."
+
+#. Preserve placeholders: {key}
+#: src/i18n/en/common.ts:12
+msgctxt "keys.ctrlCombo"
+msgid "Ctrl+{key}"
+msgstr "Ctrl+{key}"
+
+#: src/i18n/en/common.ts:13
+msgctxt "keys.escape"
+msgid "esc"
+msgstr "esc"
+
+#: src/i18n/en/shell.ts:9
+msgctxt "asyncContent.error"
+msgid "Content could not be loaded"
+msgstr "Inhoud kon niet worden geladen"
+
+#: src/i18n/en/shell.ts:12
+msgctxt "busy.label"
+msgid "Waiting…"
+msgstr "Wachten…"
+
+#: src/i18n/en/shell.ts:15
+msgctxt "confirm.title"
+msgid "Confirm"
+msgstr "Bevestigen"
+
+#: src/i18n/en/shell.ts:16
+msgctxt "confirm.submit"
+msgid "Confirm"
+msgstr "Bevestigen"
+
+#: src/i18n/en/shell.ts:19
+msgctxt "emptyState.message"
+msgid "Nothing on the canvas yet"
+msgstr "Er staat nog niets op het canvas"
+
+#: src/i18n/en/shell.ts:22
+msgctxt "prompt.title"
+msgid "Details"
+msgstr "Details"
+
+#: src/i18n/en/shell.ts:23
+msgctxt "prompt.submit"
+msgid "Add"
+msgstr "Toevoegen"
+
+#: src/i18n/en/shell.ts:24
+msgctxt "prompt.cancel"
+msgid "Cancel"
+msgstr "Annuleren"
+
+#: src/i18n/en/shell.ts:25
+msgctxt "prompt.nodeTitle"
+msgid "Node details"
+msgstr "Knoopdetails"
+
+#: src/i18n/en/shell.ts:26
+msgctxt "prompt.edgeTitle"
+msgid "Edge details"
+msgstr "Verbindingsdetails"
+
+#: src/i18n/en/shell.ts:27
+msgctxt "prompt.edgeLabelTitle"
+msgid "Edge label"
+msgstr "Verbindingslabel"
+
+#: src/i18n/en/shell.ts:28
+msgctxt "prompt.edgeLabelPlaceholder"
+msgid "Label…"
+msgstr "Label…"
+
+#: src/i18n/en/shell.ts:31
+msgctxt "history.menu.aria"
+msgid "Graph history"
+msgstr "Grafiekgeschiedenis"
+
+#: src/i18n/en/shell.ts:32
+msgctxt "history.menu.title"
+msgid "History"
+msgstr "Geschiedenis"
+
+#: src/i18n/en/shell.ts:33
+msgctxt "history.menu.undoSide"
+msgid "Undo side"
+msgstr "Ongedaan te maken"
+
+#: src/i18n/en/shell.ts:34
+msgctxt "history.menu.redoSide"
+msgid "Redo side"
+msgstr "Opnieuw uit te voeren"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/shell.ts:35
+msgctxt "history.menu.count"
+msgid "{count} of {limit}"
+msgstr "{count} van {limit}"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/shell.ts:36
+msgctxt "history.menu.countFull"
+msgid "{count} of {limit} · oldest evicted"
+msgstr "{count} van {limit} · oudste verwijderd"
+
+#: src/i18n/en/shell.ts:37
+msgctxt "history.menu.empty"
+msgid "Nothing has happened yet"
+msgstr "Er is nog niets gebeurd"
+
+#: src/i18n/en/shell.ts:38
+msgctxt "history.menu.nothingAhead"
+msgid "Nothing ahead — nothing has been undone"
+msgstr "Niets vooruit — er is niets ongedaan gemaakt"
+
+#: src/i18n/en/shell.ts:39
+msgctxt "history.menu.start"
+msgid "The start of the session"
+msgstr "Het begin van de sessie"
+
+#: src/i18n/en/shell.ts:40
+msgctxt "history.menu.now"
+msgid "NOW"
+msgstr "NU"
+
+#. Preserve placeholders: {done}, {undone}
+#: src/i18n/en/shell.ts:41
+msgctxt "history.menu.nowMeta"
+msgid "{undone} undone · {done} done"
+msgstr "{undone} ongedaan · {done} uitgevoerd"
+
+#: src/i18n/en/shell.ts:42
+msgctxt "history.menu.jump.title"
+msgid "Scroll back to now"
+msgstr "Terug naar nu scrollen"
+
+#. Preserve placeholders: {label}, {ordinal}
+#: src/i18n/en/shell.ts:43
+msgctxt "history.row.pivotRun"
+msgid "{label} #{ordinal}"
+msgstr "{label} #{ordinal}"
+
+#: src/i18n/en/shell.ts:44
+msgctxt "history.row.kept"
+msgid "kept"
+msgstr "behouden"
+
+#: src/i18n/en/shell.ts:45
+msgctxt "history.row.locked"
+msgid "locked"
+msgstr "vergrendeld"
+
+#: src/i18n/en/shell.ts:46
+msgctxt "history.row.saved"
+msgid "saved"
+msgstr "opgeslagen"
+
+#: src/i18n/en/shell.ts:47
+msgctxt "history.row.nothingLeft"
+msgid "Nothing left the canvas"
+msgstr "Er is niets van het canvas verwijderd"
+
+#: src/i18n/en/shell.ts:48
+msgctxt "history.foot.idle"
+msgid "Point at a row to travel there."
+msgstr "Wijs een rij aan om daarheen te gaan."
+
+#. Preserve placeholders: {ahead}, {behind}
+#: src/i18n/en/shell.ts:49
+msgctxt "history.foot.position"
+msgid "{ahead} ahead · {behind} behind"
+msgstr "{ahead} vooruit · {behind} terug"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:50
+msgctxt "history.foot.undoesSteps"
+msgid "Undoes {count} step"
+msgid_plural "Undoes {count} steps"
+msgstr[0] "Maakt {count} stap ongedaan"
+msgstr[1] "Maakt {count} stappen ongedaan"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:51
+msgctxt "history.foot.redoesSteps"
+msgid "Redoes {count} step"
+msgid_plural "Redoes {count} steps"
+msgstr[0] "Voert {count} stap opnieuw uit"
+msgstr[1] "Voert {count} stappen opnieuw uit"
+
+#. Preserve placeholders: {acting}, {total}
+#: src/i18n/en/shell.ts:52
+msgctxt "history.foot.undoesSome"
+msgid "Undoes {acting} of {total}"
+msgstr "Maakt {acting} van {total} ongedaan"
+
+#. Preserve placeholders: {acting}, {total}
+#: src/i18n/en/shell.ts:53
+msgctxt "history.foot.redoesSome"
+msgid "Redoes {acting} of {total}"
+msgstr "Voert {acting} van {total} opnieuw uit"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:54
+msgctxt "history.foot.keptSaved"
+msgid "{count} saved item kept"
+msgid_plural "{count} saved items kept"
+msgstr[0] "{count} opgeslagen item behouden"
+msgstr[1] "{count} opgeslagen items behouden"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:55
+msgctxt "history.foot.alreadyApplied"
+msgid "{count} already applied"
+msgstr "{count} al toegepast"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:56
+msgctxt "history.foot.savedUpstream"
+msgid "{count} item saved upstream"
+msgid_plural "{count} items saved upstream"
+msgstr[0] "{count} item opgeslagen in het bronsysteem"
+msgstr[1] "{count} items opgeslagen in het bronsysteem"
+
+#: src/i18n/en/shell.ts:57
+msgctxt "history.foot.nothingToReverse"
+msgid "Nothing to reverse"
+msgstr "Niets om terug te draaien"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:58
+msgctxt "history.delta.nodesAdded"
+msgid "+{count} node"
+msgid_plural "+{count} nodes"
+msgstr[0] "+{count} knoop"
+msgstr[1] "+{count} knopen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:59
+msgctxt "history.delta.nodesRemoved"
+msgid "−{count} node"
+msgid_plural "−{count} nodes"
+msgstr[0] "−{count} knoop"
+msgstr[1] "−{count} knopen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:60
+msgctxt "history.delta.edgesAdded"
+msgid "+{count} edge"
+msgid_plural "+{count} edges"
+msgstr[0] "+{count} verbinding"
+msgstr[1] "+{count} verbindingen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:61
+msgctxt "history.delta.edgesRemoved"
+msgid "−{count} edge"
+msgid_plural "−{count} edges"
+msgstr[0] "−{count} verbinding"
+msgstr[1] "−{count} verbindingen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:62
+msgctxt "history.delta.shownNodes"
+msgid "{count} node back in view"
+msgid_plural "{count} nodes back in view"
+msgstr[0] "{count} knoop weer zichtbaar"
+msgstr[1] "{count} knopen weer zichtbaar"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:63
+msgctxt "history.delta.shown"
+msgid "{count} back in view"
+msgstr "{count} weer zichtbaar"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:64
+msgctxt "history.delta.hiddenNodes"
+msgid "{count} node hidden"
+msgid_plural "{count} nodes hidden"
+msgstr[0] "{count} knoop verborgen"
+msgstr[1] "{count} knopen verborgen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:65
+msgctxt "history.delta.hidden"
+msgid "{count} hidden"
+msgstr "{count} verborgen"
+
+#: src/i18n/en/shell.ts:66
+msgctxt "history.delta.groups"
+msgid "groups change"
+msgstr "groepen wijzigen"
+
+#: src/i18n/en/shell.ts:67
+msgctxt "history.delta.none"
+msgid "nothing changes"
+msgstr "niets verandert"
+
+#: src/i18n/en/shell.ts:68
+msgctxt "history.time.now"
+msgid "now"
+msgstr "nu"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:69
+msgctxt "history.time.minutes"
+msgid "{count}m"
+msgstr "{count} min"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:70
+msgctxt "history.time.hours"
+msgid "{count}h"
+msgstr "{count} u"
+
+#. Preserve placeholders: {hours}, {minutes}
+#: src/i18n/en/shell.ts:71
+msgctxt "history.time.hoursMinutes"
+msgid "{hours}h {minutes}m"
+msgstr "{hours} u {minutes} min"
+
+#: src/i18n/en/shell.ts:74
+msgctxt "jsonViewer.copy"
+msgid "Copy JSON"
+msgstr "JSON kopiëren"
+
+#: src/i18n/en/shell.ts:75
+msgctxt "jsonViewer.copied"
+msgid "Copied!"
+msgstr "Gekopieerd!"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:76
+msgctxt "jsonViewer.items"
+msgid "{count} item"
+msgid_plural "{count} items"
+msgstr[0] "{count} item"
+msgstr[1] "{count} items"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:77
+msgctxt "jsonViewer.properties"
+msgid "{count} property"
+msgid_plural "{count} properties"
+msgstr[0] "{count} eigenschap"
+msgstr[1] "{count} eigenschappen"
+
+#: src/i18n/en/shell.ts:80
+msgctxt "modal.ok"
+msgid "Ok"
+msgstr "Oké"
+
+#: src/i18n/en/shell.ts:81
+msgctxt "modal.close.aria"
+msgid "Close"
+msgstr "Sluiten"
+
+#: src/i18n/en/shell.ts:82
+msgctxt "modal.editNode.heading"
+msgid "Editing node:"
+msgstr "Knoop bewerken:"
+
+#: src/i18n/en/shell.ts:83
+msgctxt "modal.editNode.submit"
+msgid "Edit Node"
+msgstr "Knoop bewerken"
+
+#: src/i18n/en/shell.ts:84
+msgctxt "modal.editEdge.heading"
+msgid "Editing edge:"
+msgstr "Verbinding bewerken:"
+
+#: src/i18n/en/shell.ts:85
+msgctxt "modal.editEdge.submit"
+msgid "Edit Edge"
+msgstr "Verbinding bewerken"
+
+#. Preserve placeholders: {from}, {to}
+#: src/i18n/en/shell.ts:86
+msgctxt "modal.editEdge.endpoints"
+msgid "{from} → {to}"
+msgstr "{from} → {to}"
+
+#: src/i18n/en/shell.ts:87
+msgctxt "modal.editEdge.labelField"
+msgid "Label"
+msgstr "Label"
+
+#: src/i18n/en/shell.ts:88
+msgctxt "modal.inspect.properties"
+msgid "Properties"
+msgstr "Eigenschappen"
+
+#: src/i18n/en/shell.ts:89
+msgctxt "modal.inspect.json"
+msgid "JSON"
+msgstr "JSON"
+
+#: src/i18n/en/shell.ts:92
+msgctxt "navigation.fit"
+msgid "Fit and center"
+msgstr "Passend maken en centreren"
+
+#: src/i18n/en/shell.ts:93
+msgctxt "navigation.zoomIn"
+msgid "Zoom In"
+msgstr "Inzoomen"
+
+#: src/i18n/en/shell.ts:94
+msgctxt "navigation.zoomOut"
+msgid "Zoom Out"
+msgstr "Uitzoomen"
+
+#: src/i18n/en/shell.ts:95
+msgctxt "navigation.fullscreen"
+msgid "Toggle Fullscreen"
+msgstr "Volledig scherm wisselen"
+
+#: src/i18n/en/shell.ts:98
+msgctxt "notification.dismiss.aria"
+msgid "Dismiss"
+msgstr "Verbergen"
+
+#: src/i18n/en/shell.ts:101
+msgctxt "rail.select"
+msgid "Select"
+msgstr "Selecteren"
+
+#: src/i18n/en/shell.ts:102
+msgctxt "rail.create"
+msgid "Create"
+msgstr "Maken"
+
+#: src/i18n/en/shell.ts:103
+msgctxt "rail.view"
+msgid "View"
+msgstr "Weergave"
+
+#: src/i18n/en/shell.ts:104
+msgctxt "rail.physics"
+msgid "Physics"
+msgstr "Fysica"
+
+#: src/i18n/en/shell.ts:105
+msgctxt "rail.simplify"
+msgid "Simplify"
+msgstr "Vereenvoudigen"
+
+#: src/i18n/en/shell.ts:106
+msgctxt "rail.lasso"
+msgid "Lasso"
+msgstr "Lasso"
+
+#: src/i18n/en/shell.ts:107
+msgctxt "rail.edge"
+msgid "Edge"
+msgstr "Verbinding"
+
+#. Preserve placeholders: {label}, {shortcut}
+#: src/i18n/en/shell.ts:108
+msgctxt "rail.button.title"
+msgid "{label} ({shortcut})"
+msgstr "{label} ({shortcut})"
+
+#. Preserve placeholders: {folded}, {groups}
+#: src/i18n/en/shell.ts:109
+msgctxt "rail.simplify.summary"
+msgid "Simplify: {groups}, {folded}"
+msgstr "Vereenvoudigen: {groups}, {folded}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:110
+msgctxt "rail.simplify.groups"
+msgid "{count} group"
+msgid_plural "{count} groups"
+msgstr[0] "{count} groep"
+msgstr[1] "{count} groepen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:111
+msgctxt "rail.simplify.folded"
+msgid "{count} node folded"
+msgid_plural "{count} nodes folded"
+msgstr[0] "{count} knoop samengevouwen"
+msgstr[1] "{count} knopen samengevouwen"
+
+#: src/i18n/en/shell.ts:114
+msgctxt "slidePanel.empty"
+msgid "- empty panel -"
+msgstr "- leeg paneel -"
+
+#: src/i18n/en/shell.ts:117
+msgctxt "search.placeholder"
+msgid "Search"
+msgstr "Zoeken"
+
+#: src/i18n/en/shell.ts:118
+msgctxt "search.hint.navigate"
+msgid "to navigate"
+msgstr "om te navigeren"
+
+#: src/i18n/en/shell.ts:119
+msgctxt "search.hint.select"
+msgid "to select"
+msgstr "om te selecteren"
+
+#: src/i18n/en/shell.ts:120
+msgctxt "search.hint.showAll"
+msgid "to show all"
+msgstr "om alles te tonen"
+
+#: src/i18n/en/shell.ts:121
+msgctxt "search.hint.close"
+msgid "to close"
+msgstr "om te sluiten"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/shell.ts:122
+msgctxt "search.result.inGroup"
+msgid "in {group}"
+msgstr "in {group}"
+
+#: src/i18n/en/shell.ts:123
+msgctxt "search.summary.none"
+msgid "No results found"
+msgstr "Geen resultaten gevonden"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/shell.ts:124
+msgctxt "search.summary.top"
+msgid "Showing top {shown} of {count} results"
+msgstr "Toont de eerste {shown} van {count} resultaten"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:125
+msgctxt "search.summary.all"
+msgid "{count} result"
+msgid_plural "{count} results"
+msgstr[0] "{count} resultaat"
+msgstr[1] "{count} resultaten"
+
+#: src/i18n/en/shell.ts:126
+msgctxt "search.showAll"
+msgid "Show all on the canvas"
+msgstr "Alles op het canvas tonen"
+
+#: src/i18n/en/shell.ts:129
+msgctxt "toolPanel.select"
+msgid "Select"
+msgstr "Selecteren"
+
+#: src/i18n/en/shell.ts:130
+msgctxt "toolPanel.create"
+msgid "Create"
+msgstr "Maken"
+
+#: src/i18n/en/shell.ts:131
+msgctxt "toolPanel.pointer"
+msgid "Pointer"
+msgstr "Aanwijzer"
+
+#: src/i18n/en/shell.ts:132
+msgctxt "toolPanel.lasso"
+msgid "Lasso"
+msgstr "Lasso"
+
+#: src/i18n/en/shell.ts:133
+msgctxt "toolPanel.pathSelect"
+msgid "Path select"
+msgstr "Pad selecteren"
+
+#: src/i18n/en/shell.ts:134
+msgctxt "toolPanel.invertSelection"
+msgid "Invert selection"
+msgstr "Selectie omkeren"
+
+#: src/i18n/en/shell.ts:135
+msgctxt "toolPanel.addNode"
+msgid "Add node"
+msgstr "Knoop toevoegen"
+
+#: src/i18n/en/shell.ts:136
+msgctxt "toolPanel.addEdge"
+msgid "Add edge"
+msgstr "Verbinding toevoegen"
+
+#: src/i18n/en/shell.ts:137
+msgctxt "toolPanel.addNote"
+msgid "Add note"
+msgstr "Notitie toevoegen"
+
+#: src/i18n/en/shell.ts:138
+msgctxt "toolPanel.editNode"
+msgid "Edit node"
+msgstr "Knoop bewerken"
+
+#: src/i18n/en/shell.ts:139
+msgctxt "toolPanel.soon"
+msgid "SOON"
+msgstr "BINNENKORT"
+
+#. Preserve placeholders: {tool}
+#: src/i18n/en/shell.ts:140
+msgctxt "toolPanel.soon.title"
+msgid "{tool} — coming soon"
+msgstr "{tool} — binnenkort beschikbaar"
+
+#: src/i18n/en/shell.ts:141
+msgctxt "toolPanel.resize.aria"
+msgid "Resize the tool panel"
+msgstr "Grootte van het gereedschapspaneel wijzigen"
+
+#: src/i18n/en/shell.ts:144
+msgctxt "topBar.search"
+msgid "Search"
+msgstr "Zoeken"
+
+#: src/i18n/en/shell.ts:145
+msgctxt "topBar.search.aria"
+msgid "Search for a node"
+msgstr "Een knoop zoeken"
+
+#: src/i18n/en/shell.ts:146
+msgctxt "topBar.filter"
+msgid "Filter Graph"
+msgstr "Grafiek filteren"
+
+#: src/i18n/en/shell.ts:147
+msgctxt "topBar.filter.aria"
+msgid "Filter the graph"
+msgstr "De grafiek filteren"
+
+#: src/i18n/en/shell.ts:148
+msgctxt "topBar.filter.panelTitle"
+msgid "Graph Filters"
+msgstr "Grafiekfilters"
+
+#: src/i18n/en/shell.ts:149
+msgctxt "topBar.notes"
+msgid "Notes"
+msgstr "Notities"
+
+#: src/i18n/en/shell.ts:150
+msgctxt "topBar.undo"
+msgid "Undo"
+msgstr "Ongedaan maken"
+
+#. Preserve placeholders: {shortcut}
+#: src/i18n/en/shell.ts:151
+msgctxt "topBar.undo.title"
+msgid "Undo ({shortcut})"
+msgstr "Ongedaan maken ({shortcut})"
+
+#. Preserve placeholders: {entry}, {shortcut}
+#: src/i18n/en/shell.ts:152
+msgctxt "topBar.undo.titleNamed"
+msgid "Undo — {entry} ({shortcut})"
+msgstr "Ongedaan maken — {entry} ({shortcut})"
+
+#. Preserve placeholders: {entry}
+#: src/i18n/en/shell.ts:153
+msgctxt "topBar.undo.ariaNamed"
+msgid "Undo {entry}"
+msgstr "{entry} ongedaan maken"
+
+#: src/i18n/en/shell.ts:154
+msgctxt "topBar.redo"
+msgid "Redo"
+msgstr "Opnieuw uitvoeren"
+
+#. Preserve placeholders: {shortcut}
+#: src/i18n/en/shell.ts:155
+msgctxt "topBar.redo.title"
+msgid "Redo ({shortcut})"
+msgstr "Opnieuw uitvoeren ({shortcut})"
+
+#. Preserve placeholders: {entry}, {shortcut}
+#: src/i18n/en/shell.ts:156
+msgctxt "topBar.redo.titleNamed"
+msgid "Redo — {entry} ({shortcut})"
+msgstr "Opnieuw uitvoeren — {entry} ({shortcut})"
+
+#. Preserve placeholders: {entry}
+#: src/i18n/en/shell.ts:157
+msgctxt "topBar.redo.ariaNamed"
+msgid "Redo {entry}"
+msgstr "{entry} opnieuw uitvoeren"
+
+#: src/i18n/en/shell.ts:158
+msgctxt "topBar.undoHistory.aria"
+msgid "Undo history"
+msgstr "Geschiedenis ongedaan maken"
+
+#: src/i18n/en/shell.ts:159
+msgctxt "topBar.redoHistory.aria"
+msgid "Redo history"
+msgstr "Geschiedenis opnieuw uitvoeren"
+
+#. Preserve placeholders: {action}
+#: src/i18n/en/shell.ts:160
+msgctxt "topBar.action.more.aria"
+msgid "More: {action}"
+msgstr "Meer: {action}"
+
+#: src/i18n/en/shell.ts:161
+msgctxt "topBar.promptSubmit"
+msgid "OK"
+msgstr "OK"
+
+#: src/i18n/en/contextMenu.ts:6
+msgctxt "contextMenu.selectNeighbors"
+msgid "Select Neighbors"
+msgstr "Buren selecteren"
+
+#: src/i18n/en/contextMenu.ts:7
+msgctxt "contextMenu.ungroup"
+msgid "Ungroup"
+msgstr "Groepering opheffen"
+
+#: src/i18n/en/contextMenu.ts:10
+msgctxt "contextMenu.node.pin"
+msgid "Pin Node"
+msgstr "Knoop vastzetten"
+
+#: src/i18n/en/contextMenu.ts:11
+msgctxt "contextMenu.node.unpin"
+msgid "Unpin Node"
+msgstr "Knoop losmaken"
+
+#: src/i18n/en/contextMenu.ts:12
+msgctxt "contextMenu.node.focus"
+msgid "Focus Node"
+msgstr "Knoop centreren"
+
+#: src/i18n/en/contextMenu.ts:13
+msgctxt "contextMenu.node.hide"
+msgid "Hide Node"
+msgstr "Knoop verbergen"
+
+#: src/i18n/en/contextMenu.ts:14
+msgctxt "contextMenu.node.viewImage"
+msgid "View Image"
+msgstr "Afbeelding bekijken"
+
+#: src/i18n/en/contextMenu.ts:15
+msgctxt "contextMenu.node.hideChildren"
+msgid "Hide Children"
+msgstr "Onderliggende knopen verbergen"
+
+#: src/i18n/en/contextMenu.ts:16
+msgctxt "contextMenu.node.connect"
+msgid "Connect to..."
+msgstr "Verbinden met…"
+
+#: src/i18n/en/contextMenu.ts:17
+msgctxt "contextMenu.node.connect.picker"
+msgid "Select the target node to link with"
+msgstr "Selecteer de doelknoop om mee te verbinden"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/contextMenu.ts:18
+msgctxt "contextMenu.node.connect.pickerNode"
+msgid "\"{node}\""
+msgstr "\"{node}\""
+
+#: src/i18n/en/contextMenu.ts:19
+msgctxt "contextMenu.node.expand"
+msgid "Expand Node"
+msgstr "Knoop uitvouwen"
+
+#: src/i18n/en/contextMenu.ts:20
+msgctxt "contextMenu.node.inspect"
+msgid "Inspect Properties"
+msgstr "Eigenschappen inspecteren"
+
+#: src/i18n/en/contextMenu.ts:21
+msgctxt "contextMenu.node.delete"
+msgid "Delete Node"
+msgstr "Knoop verwijderen"
+
+#: src/i18n/en/contextMenu.ts:24
+msgctxt "contextMenu.group.pin"
+msgid "Pin Group"
+msgstr "Groep vastzetten"
+
+#: src/i18n/en/contextMenu.ts:25
+msgctxt "contextMenu.group.unpin"
+msgid "Unpin Group"
+msgstr "Groep losmaken"
+
+#: src/i18n/en/contextMenu.ts:26
+msgctxt "contextMenu.group.focus"
+msgid "Focus Group"
+msgstr "Groep centreren"
+
+#: src/i18n/en/contextMenu.ts:27
+msgctxt "contextMenu.group.selectNeighbors.title"
+msgid "Select the nodes this group links to"
+msgstr "Selecteer de knopen waarmee deze groep verbonden is"
+
+#: src/i18n/en/contextMenu.ts:28
+msgctxt "contextMenu.group.open"
+msgid "Open group"
+msgstr "Groep openen"
+
+#: src/i18n/en/contextMenu.ts:29
+msgctxt "contextMenu.group.open.title"
+msgid "Put the members back on the canvas"
+msgstr "De leden weer op het canvas plaatsen"
+
+#: src/i18n/en/contextMenu.ts:30
+msgctxt "contextMenu.group.selectMembers"
+msgid "Select members"
+msgstr "Leden selecteren"
+
+#: src/i18n/en/contextMenu.ts:31
+msgctxt "contextMenu.group.selectMembers.title"
+msgid "Select the nodes in this group"
+msgstr "De knopen in deze groep selecteren"
+
+#: src/i18n/en/contextMenu.ts:32
+msgctxt "contextMenu.group.viewInTable"
+msgid "View members in table"
+msgstr "Leden in tabel bekijken"
+
+#: src/i18n/en/contextMenu.ts:33
+msgctxt "contextMenu.group.viewInTable.title"
+msgid "List the members in the data dock, to filter and search them"
+msgstr "De leden in het gegevenspaneel tonen om ze te filteren en doorzoeken"
+
+#: src/i18n/en/contextMenu.ts:34
+msgctxt "contextMenu.group.rename"
+msgid "Rename group"
+msgstr "Groep hernoemen"
+
+#: src/i18n/en/contextMenu.ts:35
+msgctxt "contextMenu.group.rename.title"
+msgid "Give this group a title"
+msgstr "Deze groep een titel geven"
+
+#: src/i18n/en/contextMenu.ts:36
+msgctxt "contextMenu.group.ungroup.title"
+msgid "Draw the members as they were before this group"
+msgstr "De leden weergeven zoals vóór het groeperen"
+
+#: src/i18n/en/contextMenu.ts:37
+msgctxt "contextMenu.group.deleteMembers"
+msgid "Delete members"
+msgstr "Leden verwijderen"
+
+#: src/i18n/en/contextMenu.ts:38
+msgctxt "contextMenu.group.deleteMembers.title"
+msgid "Delete every node in this group"
+msgstr "Elke knoop in deze groep verwijderen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:41
+msgctxt "contextMenu.selection.count"
+msgid "{count} selected"
+msgstr "{count} geselecteerd"
+
+#: src/i18n/en/contextMenu.ts:42
+msgctxt "contextMenu.selection.pin"
+msgid "Pin Selected"
+msgstr "Selectie vastzetten"
+
+#: src/i18n/en/contextMenu.ts:43
+msgctxt "contextMenu.selection.unpin"
+msgid "Unpin Selected"
+msgstr "Selectie losmaken"
+
+#: src/i18n/en/contextMenu.ts:44
+msgctxt "contextMenu.selection.hide"
+msgid "Hide Selected"
+msgstr "Selectie verbergen"
+
+#: src/i18n/en/contextMenu.ts:45
+msgctxt "contextMenu.selection.selectNeighbors.title"
+msgid "Select the nodes linked to the selection"
+msgstr "De knopen selecteren die met de selectie verbonden zijn"
+
+#: src/i18n/en/contextMenu.ts:46
+msgctxt "contextMenu.selection.group"
+msgid "Group selected nodes"
+msgstr "Geselecteerde knopen groeperen"
+
+#: src/i18n/en/contextMenu.ts:47
+msgctxt "contextMenu.selection.group.title"
+msgid "Fold the selection into one group with a title"
+msgstr "De selectie samenvouwen tot één groep met een titel"
+
+#: src/i18n/en/contextMenu.ts:48
+msgctxt "contextMenu.selection.ungroup.title"
+msgid "Draw the members of these hand-made groups as they were"
+msgstr "De leden van deze handgemaakte groepen weergeven zoals ze waren"
+
+#: src/i18n/en/contextMenu.ts:49
+msgctxt "contextMenu.selection.delete"
+msgid "Delete Selected"
+msgstr "Selectie verwijderen"
+
+#: src/i18n/en/contextMenu.ts:50
+msgctxt "contextMenu.selection.delete.title"
+msgid "Delete every selected node"
+msgstr "Elke geselecteerde knoop verwijderen"
+
+#: src/i18n/en/contextMenu.ts:53
+msgctxt "contextMenu.membership.pullOut"
+msgid "Pull out of group"
+msgstr "Uit groep halen"
+
+#: src/i18n/en/contextMenu.ts:54
+msgctxt "contextMenu.membership.pullOut.title"
+msgid "Keep these nodes out of their groups"
+msgstr "Deze knopen buiten hun groepen houden"
+
+#: src/i18n/en/contextMenu.ts:55
+msgctxt "contextMenu.membership.putBack"
+msgid "Put back in group"
+msgstr "Terug in groep plaatsen"
+
+#: src/i18n/en/contextMenu.ts:56
+msgctxt "contextMenu.membership.putBack.title"
+msgid "Let these nodes be grouped again"
+msgstr "Deze knopen weer laten groeperen"
+
+#: src/i18n/en/contextMenu.ts:59
+msgctxt "contextMenu.edge.edit"
+msgid "Edit Edge"
+msgstr "Verbinding bewerken"
+
+#: src/i18n/en/contextMenu.ts:60
+msgctxt "contextMenu.edge.delete"
+msgid "Delete Edge"
+msgstr "Verbinding verwijderen"
+
+#: src/i18n/en/contextMenu.ts:63
+msgctxt "contextMenu.note.hide"
+msgid "Hide Note"
+msgstr "Notitie verbergen"
+
+#: src/i18n/en/contextMenu.ts:64
+msgctxt "contextMenu.note.remove"
+msgid "Remove Note"
+msgstr "Notitie verwijderen"
+
+#: src/i18n/en/contextMenu.ts:67
+msgctxt "contextMenu.canvas.pinAll"
+msgid "Pin All"
+msgstr "Alles vastzetten"
+
+#: src/i18n/en/contextMenu.ts:68
+msgctxt "contextMenu.canvas.unpinAll"
+msgid "Unpin All"
+msgstr "Alles losmaken"
+
+#: src/i18n/en/contextMenu.ts:69
+msgctxt "contextMenu.canvas.addNode"
+msgid "Add Node Here"
+msgstr "Hier een knoop toevoegen"
+
+#: src/i18n/en/contextMenu.ts:70
+msgctxt "contextMenu.canvas.addNote"
+msgid "Add Note"
+msgstr "Notitie toevoegen"
+
+#: src/i18n/en/contextMenu.ts:71
+msgctxt "contextMenu.canvas.releasePinned"
+msgid "Release pinned nodes"
+msgstr "Vastgezette knopen vrijgeven"
+
+#: src/i18n/en/contextMenu.ts:72
+msgctxt "contextMenu.canvas.releasePinned.title"
+msgid "Unpin every pinned node so the layout can move them again"
+msgstr "Alle vastgezette knopen losmaken zodat de indeling ze weer kan verplaatsen"
+
+#: src/i18n/en/contextMenu.ts:75
+msgctxt "contextMenu.pivot"
+msgid "Pivot"
+msgstr "Pivot"
+
+#: src/i18n/en/contextMenu.ts:76
+msgctxt "contextMenu.pivot.openPanel"
+msgid "Open pivot panel…"
+msgstr "Pivotpaneel openen…"
+
+#: src/i18n/en/contextMenu.ts:77
+msgctxt "contextMenu.pivot.openPanel.title"
+msgid "Read the counts, narrow, then run"
+msgstr "Bekijk de aantallen, verfijn en voer dan uit"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:78
+msgctxt "contextMenu.pivot.peek"
+msgid "~{count}"
+msgstr "~{count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:79
+msgctxt "contextMenu.pivot.peek.title"
+msgid "About {count} out there"
+msgstr "Ongeveer {count} beschikbaar"
+
+#. Preserve placeholders: {count}, {nodes}
+#: src/i18n/en/contextMenu.ts:80
+msgctxt "contextMenu.pivot.peek.titleAcross"
+msgid "About {count} across {nodes}"
+msgstr "Ongeveer {count} via {nodes}"
+
+#: src/i18n/en/contextMenu.ts:81
+msgctxt "contextMenu.pivot.peek.failed.title"
+msgid "This pivot could not say what is out there"
+msgstr "Deze pivot kon niet aangeven wat beschikbaar is"
+
+#: src/i18n/en/sidebar.ts:6
+msgctxt "sidebar.collapse.aria"
+msgid "Collapse sidebar"
+msgstr "Zijbalk inklappen"
+
+#: src/i18n/en/sidebar.ts:7
+msgctxt "sidebar.expand.aria"
+msgid "Expand sidebar"
+msgstr "Zijbalk uitklappen"
+
+#: src/i18n/en/sidebar.ts:8
+msgctxt "sidebar.clearSelection"
+msgid "Clear selection"
+msgstr "Selectie wissen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:11
+msgctxt "sidebar.header.representedEdges"
+msgid "Stands for {count} edge"
+msgid_plural "Stands for {count} edges"
+msgstr[0] "Vertegenwoordigt {count} verbinding"
+msgstr[1] "Vertegenwoordigt {count} verbindingen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:12
+msgctxt "sidebar.header.nodesSelected"
+msgid "{count} node selected"
+msgid_plural "{count} nodes selected"
+msgstr[0] "{count} knoop geselecteerd"
+msgstr[1] "{count} knopen geselecteerd"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:13
+msgctxt "sidebar.header.edgesSelected"
+msgid "{count} edge selected"
+msgid_plural "{count} edges selected"
+msgstr[0] "{count} verbinding geselecteerd"
+msgstr[1] "{count} verbindingen geselecteerd"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:14
+msgctxt "sidebar.header.nodesTotal"
+msgid "Out of {count} total"
+msgstr "Van in totaal {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:15
+msgctxt "sidebar.header.edgesTotal"
+msgid "Out of {count} total"
+msgstr "Van in totaal {count}"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/sidebar.ts:16
+msgctxt "sidebar.header.showing"
+msgid "Showing {nodes} and {edges}"
+msgstr "Toont {nodes} en {edges}"
+
+#: src/i18n/en/sidebar.ts:19
+msgctxt "headerMap.untitled"
+msgid "Could not resolve title"
+msgstr "Titel kon niet worden bepaald"
+
+#: src/i18n/en/sidebar.ts:20
+msgctxt "headerMap.nameFallback"
+msgid "Optional name or label"
+msgstr "Optionele naam of label"
+
+#: src/i18n/en/sidebar.ts:21
+msgctxt "headerMap.descriptionFallback"
+msgid "Optional subtitle or description"
+msgstr "Optionele ondertitel of beschrijving"
+
+#: src/i18n/en/sidebar.ts:24
+msgctxt "sidebar.bulk.pin"
+msgid "Pin"
+msgstr "Vastzetten"
+
+#: src/i18n/en/sidebar.ts:25
+msgctxt "sidebar.bulk.unpin"
+msgid "Unpin"
+msgstr "Losmaken"
+
+#: src/i18n/en/sidebar.ts:26
+msgctxt "sidebar.bulk.hide"
+msgid "Hide"
+msgstr "Verbergen"
+
+#: src/i18n/en/sidebar.ts:27
+msgctxt "sidebar.bulk.isolate"
+msgid "Isolate"
+msgstr "Isoleren"
+
+#: src/i18n/en/sidebar.ts:28
+msgctxt "sidebar.bulk.group"
+msgid "Group"
+msgstr "Groeperen"
+
+#: src/i18n/en/sidebar.ts:29
+msgctxt "sidebar.bulk.ungroup"
+msgid "Ungroup"
+msgstr "Groepering opheffen"
+
+#: src/i18n/en/sidebar.ts:30
+msgctxt "sidebar.bulk.bulkEdit"
+msgid "Bulk edit"
+msgstr "In bulk bewerken"
+
+#: src/i18n/en/sidebar.ts:31
+msgctxt "sidebar.bulk.delete"
+msgid "Delete"
+msgstr "Verwijderen"
+
+#. Preserve placeholders: {action}
+#: src/i18n/en/sidebar.ts:32
+msgctxt "sidebar.bulk.soon.title"
+msgid "{action} — coming soon"
+msgstr "{action} — binnenkort beschikbaar"
+
+#: src/i18n/en/sidebar.ts:35
+msgctxt "sidebar.properties.nodeHeading"
+msgid "Basic Node Properties"
+msgstr "Basiseigenschappen van de knoop"
+
+#: src/i18n/en/sidebar.ts:36
+msgctxt "sidebar.properties.edgeHeading"
+msgid "Basic Edge Properties"
+msgstr "Basiseigenschappen van de verbinding"
+
+#: src/i18n/en/sidebar.ts:37
+msgctxt "sidebar.properties.nodesHeading"
+msgid "Aggregated Node Properties"
+msgstr "Samengevoegde knoopeigenschappen"
+
+#: src/i18n/en/sidebar.ts:38
+msgctxt "sidebar.properties.edgesHeading"
+msgid "Aggregated Edge Properties"
+msgstr "Samengevoegde verbindingseigenschappen"
+
+#: src/i18n/en/sidebar.ts:39
+msgctxt "sidebar.properties.keep.title"
+msgid "Keep only nodes with this value"
+msgstr "Alleen knopen met deze waarde behouden"
+
+#: src/i18n/en/sidebar.ts:40
+msgctxt "sidebar.properties.exclude.title"
+msgid "Exclude nodes with this value"
+msgstr "Knopen met deze waarde uitsluiten"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:43
+msgctxt "sidebar.facets.unique"
+msgid "{count} unique"
+msgstr "{count} uniek"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:44
+msgctxt "sidebar.facets.values"
+msgid "{count} value"
+msgid_plural "{count} values"
+msgstr[0] "{count} waarde"
+msgstr[1] "{count} waarden"
+
+#: src/i18n/en/sidebar.ts:45
+msgctxt "sidebar.facets.shared"
+msgid "shared"
+msgstr "gedeeld"
+
+#: src/i18n/en/sidebar.ts:46
+msgctxt "sidebar.facets.empty"
+msgid "— empty —"
+msgstr "— leeg —"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:47
+msgctxt "sidebar.facets.allNodes"
+msgid "all {count} node"
+msgid_plural "all {count} nodes"
+msgstr[0] "alle {count} knoop"
+msgstr[1] "alle {count} knopen"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/sidebar.ts:48
+msgctxt "sidebar.facets.someNodes"
+msgid "{count} of {total}"
+msgstr "{count} van {total}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:49
+msgctxt "sidebar.facets.percent"
+msgid "{count}%"
+msgstr "{count}%"
+
+#. Preserve placeholders: {count}, {percent}, {value}
+#: src/i18n/en/sidebar.ts:50
+msgctxt "sidebar.facets.segment.title"
+msgid "{value} — {count} ({percent}%)"
+msgstr "{value} — {count} ({percent}%)"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:51
+msgctxt "sidebar.facets.otherValues"
+msgid "{count} other value"
+msgid_plural "{count} other values"
+msgstr[0] "{count} andere waarde"
+msgstr[1] "{count} andere waarden"
+
+#. Preserve placeholders: {count}, {percent}, {values}
+#: src/i18n/en/sidebar.ts:52
+msgctxt "sidebar.facets.other.title"
+msgid "{values} — {count} ({percent}%)"
+msgstr "{values} — {count} ({percent}%)"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:53
+msgctxt "sidebar.facets.moreValues"
+msgid "+{count} more value"
+msgid_plural "+{count} more values"
+msgstr[0] "+{count} andere waarde"
+msgstr[1] "+{count} andere waarden"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:54
+msgctxt "sidebar.facets.moreChips"
+msgid "+{count} more"
+msgstr "+{count} meer"
+
+#: src/i18n/en/sidebar.ts:55
+msgctxt "sidebar.facets.noRepeats"
+msgid "no repeated values"
+msgstr "geen herhaalde waarden"
+
+#: src/i18n/en/sidebar.ts:56
+msgctxt "sidebar.facets.filterHint"
+msgid "Click to keep only · Alt-click to exclude"
+msgstr "Klik om alleen deze te behouden · Alt-klik om uit te sluiten"
+
+#: src/i18n/en/sidebar.ts:59
+msgctxt "propertyList.label"
+msgid "PROPERTIES"
+msgstr "EIGENSCHAPPEN"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:60
+msgctxt "propertyList.fields"
+msgid "{count} field"
+msgid_plural "{count} fields"
+msgstr[0] "{count} veld"
+msgstr[1] "{count} velden"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:61
+msgctxt "propertyList.items"
+msgid "{count} item"
+msgid_plural "{count} items"
+msgstr[0] "{count} item"
+msgstr[1] "{count} items"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:62
+msgctxt "propertyList.keys"
+msgid "{count} key"
+msgid_plural "{count} keys"
+msgstr[0] "{count} sleutel"
+msgstr[1] "{count} sleutels"
+
+#: src/i18n/en/sidebar.ts:63
+msgctxt "propertyList.copy.title"
+msgid "Copy"
+msgstr "Kopiëren"
+
+#: src/i18n/en/sidebar.ts:66
+msgctxt "sidebar.neighbors.tab.graph"
+msgid "Neighbor Graph"
+msgstr "Burengrafiek"
+
+#: src/i18n/en/sidebar.ts:67
+msgctxt "sidebar.neighbors.tab.stats"
+msgid "Stats"
+msgstr "Statistieken"
+
+#: src/i18n/en/sidebar.ts:68
+msgctxt "sidebar.neighbors.tab.list"
+msgid "List"
+msgstr "Lijst"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:69
+msgctxt "sidebar.neighbors.connections"
+msgid "{count} connection"
+msgid_plural "{count} connections"
+msgstr[0] "{count} verbinding"
+msgstr[1] "{count} verbindingen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:70
+msgctxt "sidebar.neighbors.moreNode"
+msgid "{count} more"
+msgstr "{count} meer"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:71
+msgctxt "sidebar.neighbors.aggregate.count"
+msgid "+{count}"
+msgstr "+{count}"
+
+#: src/i18n/en/sidebar.ts:72
+msgctxt "sidebar.neighbors.aggregate.group"
+msgid "Group"
+msgstr "Groeperen"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:73
+msgctxt "sidebar.neighbors.row.outgoing"
+msgid "Outgoing connection — {node}"
+msgstr "Uitgaande verbinding — {node}"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:74
+msgctxt "sidebar.neighbors.row.incoming"
+msgid "Incoming connection — {node}"
+msgstr "Inkomende verbinding — {node}"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:75
+msgctxt "sidebar.neighbors.row.undirected"
+msgid "Connection — {node}"
+msgstr "Verbinding — {node}"
+
+#: src/i18n/en/sidebar.ts:76
+msgctxt "sidebar.neighbors.stats.degree"
+msgid "Degree"
+msgstr "Graad"
+
+#: src/i18n/en/sidebar.ts:77
+msgctxt "sidebar.neighbors.stats.degree.title"
+msgid "Total connections"
+msgstr "Totaal aantal verbindingen"
+
+#: src/i18n/en/sidebar.ts:78
+msgctxt "sidebar.neighbors.stats.outgoing.title"
+msgid "Outgoing edges"
+msgstr "Uitgaande verbindingen"
+
+#: src/i18n/en/sidebar.ts:79
+msgctxt "sidebar.neighbors.stats.incoming.title"
+msgid "Incoming edges"
+msgstr "Inkomende verbindingen"
+
+#: src/i18n/en/sidebar.ts:80
+msgctxt "sidebar.neighbors.stats.label"
+msgid "Label"
+msgstr "Label"
+
+#: src/i18n/en/sidebar.ts:81
+msgctxt "sidebar.neighbors.stats.select.title"
+msgid "Select nodes linked with this label"
+msgstr "Knopen selecteren die via dit label verbonden zijn"
+
+#: src/i18n/en/sidebar.ts:82
+msgctxt "sidebar.neighbors.stats.exclude.title"
+msgid "Exclude nodes linked with this label"
+msgstr "Knopen uitsluiten die via dit label verbonden zijn"
+
+#: src/i18n/en/sidebar.ts:85
+msgctxt "sidebar.group.open"
+msgid "Open"
+msgstr "Openen"
+
+#: src/i18n/en/sidebar.ts:86
+msgctxt "sidebar.group.cancel"
+msgid "Cancel"
+msgstr "Annuleren"
+
+#: src/i18n/en/sidebar.ts:87
+msgctxt "sidebar.group.close"
+msgid "Close"
+msgstr "Sluiten"
+
+#: src/i18n/en/sidebar.ts:88
+msgctxt "sidebar.group.selectMembers"
+msgid "Select members"
+msgstr "Leden selecteren"
+
+#: src/i18n/en/sidebar.ts:89
+msgctxt "sidebar.group.rename"
+msgid "Rename"
+msgstr "Hernoemen"
+
+#: src/i18n/en/sidebar.ts:90
+msgctxt "sidebar.group.ungroup"
+msgid "Ungroup"
+msgstr "Groepering opheffen"
+
+#: src/i18n/en/sidebar.ts:91
+msgctxt "sidebar.group.ungroup.title"
+msgid "Draw the members as they were before this group"
+msgstr "De leden weergeven zoals vóór het groeperen"
+
+#: src/i18n/en/sidebar.ts:92
+msgctxt "sidebar.group.viewInTable"
+msgid "View in table"
+msgstr "In tabel bekijken"
+
+#: src/i18n/en/sidebar.ts:93
+msgctxt "sidebar.group.viewInTable.title"
+msgid "List the members in the data dock, to filter and search them"
+msgstr "De leden in het gegevenspaneel tonen om ze te filteren en doorzoeken"
+
+#: src/i18n/en/sidebar.ts:94
+msgctxt "sidebar.group.pivot"
+msgid "Pivot ▸"
+msgstr "Pivot ▸"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:95
+msgctxt "sidebar.group.delete"
+msgid "Delete {count}"
+msgstr "{count} verwijderen"
+
+#: src/i18n/en/sidebar.ts:96
+msgctxt "sidebar.group.edit"
+msgid "Edit"
+msgstr "Bewerken"
+
+#: src/i18n/en/sidebar.ts:97
+msgctxt "sidebar.group.edit.title"
+msgid "A group has no data of its own to edit"
+msgstr "Een groep heeft geen eigen gegevens om te bewerken"
+
+#: src/i18n/en/sidebar.ts:98
+msgctxt "sidebar.group.members"
+msgid "Members"
+msgstr "Leden"
+
+#: src/i18n/en/sidebar.ts:99
+msgctxt "sidebar.group.pullOut"
+msgid "Pull out"
+msgstr "Eruit halen"
+
+#: src/i18n/en/sidebar.ts:100
+msgctxt "sidebar.group.pullOut.title"
+msgid "Keep this node out of the group"
+msgstr "Deze knoop buiten de groep houden"
+
+#. Preserve placeholders: {rule}
+#: src/i18n/en/sidebar.ts:103
+msgctxt "groupSummary.subtitle"
+msgid "Group · {rule}"
+msgstr "Groep · {rule}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/sidebar.ts:104
+msgctxt "groupSummary.match"
+msgid "{count} of {total} match"
+msgstr "{count} van {total} komen overeen"
+
+#. Preserve placeholders: {count}, {query}, {total}
+#: src/i18n/en/sidebar.ts:105
+msgctxt "groupSummary.matchQuery"
+msgid "{count} of {total} match \"{query}\""
+msgstr "{count} van {total} komen overeen met \"{query}\""
+
+#: src/i18n/en/sidebar.ts:106
+msgctxt "groupSummary.members"
+msgid "Members"
+msgstr "Leden"
+
+#: src/i18n/en/sidebar.ts:107
+msgctxt "groupSummary.linkedTo"
+msgid "Linked to"
+msgstr "Verbonden met"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:108
+msgctxt "groupSummary.more"
+msgid "{count} more"
+msgstr "{count} meer"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/sidebar.ts:111
+msgctxt "groupActions.openAsk"
+msgid "Put {group} on the canvas?"
+msgstr "{group} op het canvas plaatsen?"
+
+#: src/i18n/en/sidebar.ts:112
+msgctxt "groupActions.open"
+msgid "Open"
+msgstr "Openen"
+
+#: src/i18n/en/sidebar.ts:113
+msgctxt "groupActions.titleField.aria"
+msgid "Group title"
+msgstr "Groepstitel"
+
+#: src/i18n/en/sidebar.ts:114
+msgctxt "groupActions.group.heading"
+msgid "Group nodes"
+msgstr "Knopen groeperen"
+
+#: src/i18n/en/sidebar.ts:115
+msgctxt "groupActions.group.submit"
+msgid "Group"
+msgstr "Groeperen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:116
+msgctxt "groupActions.group.left"
+msgid "{count} of the selected node stays out: annotated, or an open cluster."
+msgid_plural "{count} of the selected nodes stay out: annotated, or an open cluster."
+msgstr[0] "{count} geselecteerde knoop blijft erbuiten: voorzien van een annotatie of een open cluster."
+msgstr[1] "{count} geselecteerde knopen blijven erbuiten: voorzien van een annotatie of een open cluster."
+
+#: src/i18n/en/sidebar.ts:120
+msgctxt "groupActions.rename.heading"
+msgid "Rename group"
+msgstr "Groep hernoemen"
+
+#: src/i18n/en/sidebar.ts:121
+msgctxt "groupActions.rename.submit"
+msgid "Rename"
+msgstr "Hernoemen"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/sidebar.ts:122
+msgctxt "groupActions.tableScope"
+msgid "Members of {group}"
+msgstr "Leden van {group}"
+
+#: src/i18n/en/sidebar.ts:125
+msgctxt "tooltip.pin"
+msgid "Pin Tooltip"
+msgstr "Tooltip vastzetten"
+
+#: src/i18n/en/sidebar.ts:126
+msgctxt "tooltip.close"
+msgid "Close Tooltip"
+msgstr "Tooltip sluiten"
+
+#: src/i18n/en/sidebar.ts:127
+msgctxt "tooltip.focus"
+msgid "Focus Element in Graph"
+msgstr "Element centreren in de grafiek"
+
+#: src/i18n/en/sidebar.ts:128
+msgctxt "tooltip.select"
+msgid "Select Element in Graph"
+msgstr "Element selecteren in de grafiek"
+
+#: src/i18n/en/sidebar.ts:129
+msgctxt "tooltip.image.title"
+msgid "Click to view full size"
+msgstr "Klik om op ware grootte te bekijken"
+
+#: src/i18n/en/sidebar.ts:130
+msgctxt "tooltip.groupHint"
+msgid "Double-click to open · Select for the member list"
+msgstr "Dubbelklik om te openen · Selecteer voor de ledenlijst"
+
+#: src/i18n/en/sidebar.ts:133
+msgctxt "noteSidebar.empty"
+msgid "No notes yet"
+msgstr "Nog geen notities"
+
+#: src/i18n/en/sidebar.ts:134
+msgctxt "noteSidebar.untitled"
+msgid "Untitled note"
+msgstr "Notitie zonder titel"
+
+#: src/i18n/en/sidebar.ts:135
+msgctxt "noteSidebar.hide.title"
+msgid "Hide note"
+msgstr "Notitie verbergen"
+
+#: src/i18n/en/sidebar.ts:136
+msgctxt "noteSidebar.restore.title"
+msgid "Restore hidden note"
+msgstr "Verborgen notitie herstellen"
+
+#: src/i18n/en/sidebar.ts:137
+msgctxt "noteSidebar.remove.title"
+msgid "Remove note"
+msgstr "Notitie verwijderen"
+
+#: src/i18n/en/sidebar.ts:138
+msgctxt "noteSidebar.add"
+msgid "Add Note"
+msgstr "Notitie toevoegen"
+
+#: src/i18n/en/sidebar.ts:139
+msgctxt "noteSidebar.hideAll"
+msgid "Hide all"
+msgstr "Alles verbergen"
+
+#: src/i18n/en/sidebar.ts:140
+msgctxt "noteSidebar.hideAll.title"
+msgid "Hide all notes"
+msgstr "Alle notities verbergen"
+
+#: src/i18n/en/sidebar.ts:141
+msgctxt "noteSidebar.hidden.heading"
+msgid "Hidden notes"
+msgstr "Verborgen notities"
+
+#: src/i18n/en/sidebar.ts:142
+msgctxt "noteSidebar.showAll"
+msgid "Show all notes"
+msgstr "Alle notities tonen"
+
+#: src/i18n/en/sidebar.ts:143
+msgctxt "noteSidebar.showAll.title"
+msgid "Restore hidden notes"
+msgstr "Verborgen notities herstellen"
+
+#: src/i18n/en/sidebar.ts:146
+msgctxt "nodePreview.imageUnavailable"
+msgid "Image unavailable"
+msgstr "Afbeelding niet beschikbaar"
+
+#: src/i18n/en/table.ts:6
+msgctxt "table.tab"
+msgid "Table"
+msgstr "Tabel"
+
+#: src/i18n/en/table.ts:7
+msgctxt "table.view.nodes"
+msgid "Nodes"
+msgstr "Knopen"
+
+#: src/i18n/en/table.ts:8
+msgctxt "table.view.edges"
+msgid "Edges"
+msgstr "Verbindingen"
+
+#: src/i18n/en/table.ts:11
+msgctxt "table.column.label"
+msgid "Label"
+msgstr "Label"
+
+#: src/i18n/en/table.ts:12
+msgctxt "table.column.degree"
+msgid "Degree"
+msgstr "Graad"
+
+#: src/i18n/en/table.ts:13
+msgctxt "table.column.degreeIn"
+msgid "In"
+msgstr "In"
+
+#: src/i18n/en/table.ts:14
+msgctxt "table.column.degreeOut"
+msgid "Out"
+msgstr "Uit"
+
+#: src/i18n/en/table.ts:15
+msgctxt "table.column.visibility"
+msgid "Visibility"
+msgstr "Zichtbaarheid"
+
+#: src/i18n/en/table.ts:16
+msgctxt "table.column.pinned"
+msgid "Pinned"
+msgstr "Vastgezet"
+
+#: src/i18n/en/table.ts:17
+msgctxt "table.column.children"
+msgid "Children"
+msgstr "Onderliggende knopen"
+
+#: src/i18n/en/table.ts:18
+msgctxt "table.column.cluster"
+msgid "Cluster"
+msgstr "Cluster"
+
+#: src/i18n/en/table.ts:19
+msgctxt "table.column.group"
+msgid "Group"
+msgstr "Groeperen"
+
+#: src/i18n/en/table.ts:20
+msgctxt "table.column.source"
+msgid "Source"
+msgstr "Bron"
+
+#: src/i18n/en/table.ts:21
+msgctxt "table.column.target"
+msgid "Target"
+msgstr "Doel"
+
+#. Preserve placeholders: {column}
+#: src/i18n/en/table.ts:22
+msgctxt "table.column.sort.title"
+msgid "Sort by {column}"
+msgstr "Sorteren op {column}"
+
+#: src/i18n/en/table.ts:25
+msgctxt "table.visibility.visible"
+msgid "visible"
+msgstr "zichtbaar"
+
+#: src/i18n/en/table.ts:26
+msgctxt "table.visibility.filtered"
+msgid "filtered"
+msgstr "gefilterd"
+
+#: src/i18n/en/table.ts:27
+msgctxt "table.visibility.excluded"
+msgid "excluded"
+msgstr "uitgesloten"
+
+#: src/i18n/en/table.ts:28
+msgctxt "table.visibility.endpoint"
+msgid "endpoint"
+msgstr "eindpunt"
+
+#: src/i18n/en/table.ts:29
+msgctxt "table.visibility.nested"
+msgid "nested"
+msgstr "genest"
+
+#: src/i18n/en/table.ts:30
+msgctxt "table.visibility.grouped"
+msgid "grouped"
+msgstr "gegroepeerd"
+
+#: src/i18n/en/table.ts:33
+msgctxt "table.value.true"
+msgid "true"
+msgstr "waar"
+
+#: src/i18n/en/table.ts:34
+msgctxt "table.value.false"
+msgid "false"
+msgstr "onwaar"
+
+#. Preserve placeholders: {column}
+#: src/i18n/en/table.ts:37
+msgctxt "table.filter.title"
+msgid "Narrow the rows by {column}"
+msgstr "De rijen verfijnen op {column}"
+
+#: src/i18n/en/table.ts:38
+msgctxt "table.filter.placeholder"
+msgid "Filter rows…"
+msgstr "Rijen filteren…"
+
+#: src/i18n/en/table.ts:39
+msgctxt "table.filter.all"
+msgid "All"
+msgstr "Alles"
+
+#: src/i18n/en/table.ts:40
+msgctxt "table.filter.min.placeholder"
+msgid "Min"
+msgstr "Min"
+
+#: src/i18n/en/table.ts:41
+msgctxt "table.filter.max.placeholder"
+msgid "Max"
+msgstr "Max"
+
+#: src/i18n/en/table.ts:44
+msgctxt "table.empty.filtered"
+msgid "No rows match the column filters."
+msgstr "Geen rijen voldoen aan de kolomfilters."
+
+#. Preserve placeholders: {scope}
+#: src/i18n/en/table.ts:45
+msgctxt "table.empty.scope"
+msgid "{scope}: none left."
+msgstr "{scope}: niets over."
+
+#: src/i18n/en/table.ts:46
+msgctxt "table.empty.nodes"
+msgid "This graph has no nodes."
+msgstr "Deze grafiek bevat geen knopen."
+
+#: src/i18n/en/table.ts:47
+msgctxt "table.empty.edges"
+msgid "This graph has no edges."
+msgstr "Deze grafiek bevat geen verbindingen."
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/table.ts:50
+msgctxt "table.summary.someNodes"
+msgid "{shown} of {count} node"
+msgid_plural "{shown} of {count} nodes"
+msgstr[0] "{shown} van {count} knoop"
+msgstr[1] "{shown} van {count} knopen"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/table.ts:51
+msgctxt "table.summary.someEdges"
+msgid "{shown} of {count} edge"
+msgid_plural "{shown} of {count} edges"
+msgstr[0] "{shown} van {count} verbinding"
+msgstr[1] "{shown} van {count} verbindingen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:52
+msgctxt "table.summary.hidden"
+msgid "{count} hidden"
+msgstr "{count} verborgen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:53
+msgctxt "table.summary.hiddenNodes.title"
+msgid "{count} node hidden on the canvas by this table's column filters"
+msgid_plural "{count} nodes hidden on the canvas by this table's column filters"
+msgstr[0] "{count} knoop verborgen op het canvas door de kolomfilters van deze tabel"
+msgstr[1] "{count} knopen verborgen op het canvas door de kolomfilters van deze tabel"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:57
+msgctxt "table.summary.hiddenEdges.title"
+msgid "{count} relation hidden on the canvas by this table's column filters"
+msgid_plural "{count} relations hidden on the canvas by this table's column filters"
+msgstr[0] "{count} relatie verborgen op het canvas door de kolomfilters van deze tabel"
+msgstr[1] "{count} relaties verborgen op het canvas door de kolomfilters van deze tabel"
+
+#: src/i18n/en/table.ts:63
+msgctxt "table.selectAll"
+msgid "Select all"
+msgstr "Alles selecteren"
+
+#: src/i18n/en/table.ts:64
+msgctxt "table.selectAll.title"
+msgid "Select every row currently listed"
+msgstr "Elke weergegeven rij selecteren"
+
+#. Preserve placeholders: {format}
+#: src/i18n/en/table.ts:65
+msgctxt "table.export.title"
+msgid "Export the rows and columns currently shown as {format}"
+msgstr "De weergegeven rijen en kolommen exporteren als {format}"
+
+#: src/i18n/en/table.ts:66
+msgctxt "table.export.blocked"
+msgid "Export blocked"
+msgstr "Exporteren geblokkeerd"
+
+#: src/i18n/en/table.ts:67
+msgctxt "table.export.blocked.message"
+msgid "This page will not let the file download. Try the example outside its frame."
+msgstr "Deze pagina staat het downloaden niet toe. Probeer het voorbeeld buiten het frame."
+
+#: src/i18n/en/table.ts:68
+msgctxt "table.columns"
+msgid "Columns"
+msgstr "Kolommen"
+
+#: src/i18n/en/table.ts:69
+msgctxt "table.columns.title"
+msgid "Choose which columns to show"
+msgstr "Kies welke kolommen worden getoond"
+
+#: src/i18n/en/table.ts:70
+msgctxt "table.scope.clear.title"
+msgid "List every node again"
+msgstr "Alle knopen weer tonen"
+
+#: src/i18n/en/table.ts:71
+msgctxt "table.nested"
+msgid "Nested nodes"
+msgstr "Geneste knopen"
+
+#: src/i18n/en/table.ts:72
+msgctxt "table.nested.title"
+msgid "List the nodes inside clusters alongside the graph's own"
+msgstr "Knopen in clusters tonen naast de eigen knopen van de grafiek"
+
+#: src/i18n/en/table.ts:75
+msgctxt "table.apply"
+msgid "Apply to graph"
+msgstr "Toepassen op grafiek"
+
+#: src/i18n/en/table.ts:76
+msgctxt "table.apply.clear"
+msgid "Clear"
+msgstr "Wissen"
+
+#: src/i18n/en/table.ts:77
+msgctxt "table.apply.disabled.title"
+msgid "Narrow a column first, then apply it to the graph"
+msgstr "Verfijn eerst een kolom en pas het filter dan toe op de grafiek"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:78
+msgctxt "table.apply.nodes.title"
+msgid "Hide the {count} node the column filters leave out"
+msgid_plural "Hide the {count} nodes the column filters leave out"
+msgstr[0] "De {count} knoop verbergen die niet aan de kolomfilters voldoet"
+msgstr[1] "De {count} knopen verbergen die niet aan de kolomfilters voldoen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:82
+msgctxt "table.apply.edges.title"
+msgid "Hide the {count} relation the column filters leave out"
+msgid_plural "Hide the {count} relations the column filters leave out"
+msgstr[0] "De {count} relatie verbergen die niet aan de kolomfilters voldoet"
+msgstr[1] "De {count} relaties verbergen die niet aan de kolomfilters voldoen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:86
+msgctxt "table.apply.clearNodes.title"
+msgid "Stop filtering the graph from this table — {count} node hidden"
+msgid_plural "Stop filtering the graph from this table — {count} nodes hidden"
+msgstr[0] "Stop met filteren vanuit deze tabel — {count} knoop verborgen"
+msgstr[1] "Stop met filteren vanuit deze tabel — {count} knopen verborgen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:90
+msgctxt "table.apply.clearEdges.title"
+msgid "Stop filtering the graph from this table — {count} relation hidden"
+msgid_plural "Stop filtering the graph from this table — {count} relations hidden"
+msgstr[0] "Stop met filteren vanuit deze tabel — {count} relatie verborgen"
+msgstr[1] "Stop met filteren vanuit deze tabel — {count} relaties verborgen"
+
+#: src/i18n/en/table.ts:94
+msgctxt "table.graphFilter.label"
+msgid "From the table"
+msgstr "Vanuit de tabel"
+
+#: src/i18n/en/table.ts:97
+msgctxt "dock.resize.aria"
+msgid "Resize the dock"
+msgstr "Grootte van het gegevenspaneel wijzigen"
+
+#: src/i18n/en/table.ts:98
+msgctxt "dock.expand.title"
+msgid "Expand the dock"
+msgstr "Gegevenspaneel uitklappen"
+
+#: src/i18n/en/table.ts:99
+msgctxt "dock.collapse.title"
+msgid "Collapse the dock"
+msgstr "Gegevenspaneel inklappen"
+
+#: src/i18n/en/panels.ts:6
+msgctxt "filter.attributes"
+msgid "Attributes"
+msgstr "Attributen"
+
+#: src/i18n/en/panels.ts:7
+msgctxt "filter.reset"
+msgid "Reset"
+msgstr "Herstellen"
+
+#: src/i18n/en/panels.ts:8
+msgctxt "filter.reset.title"
+msgid "Clear all attribute filters"
+msgstr "Alle attribuutfilters wissen"
+
+#: src/i18n/en/panels.ts:9
+msgctxt "filter.value.true"
+msgid "true"
+msgstr "waar"
+
+#: src/i18n/en/panels.ts:10
+msgctxt "filter.value.false"
+msgid "false"
+msgstr "onwaar"
+
+#: src/i18n/en/panels.ts:11
+msgctxt "filter.invalidPattern"
+msgid "Invalid pattern"
+msgstr "Ongeldig patroon"
+
+#: src/i18n/en/panels.ts:12
+msgctxt "filter.layers"
+msgid "Relationships"
+msgstr "Relaties"
+
+#: src/i18n/en/panels.ts:13
+msgctxt "filter.layers.showAll"
+msgid "Show all"
+msgstr "Alles tonen"
+
+#: src/i18n/en/panels.ts:14
+msgctxt "filter.layers.showAll.title"
+msgid "Show every relationship layer"
+msgstr "Elke relatielaag tonen"
+
+#. Preserve placeholders: {layer}
+#: src/i18n/en/panels.ts:15
+msgctxt "filter.layer.hide.title"
+msgid "Hide {layer}"
+msgstr "{layer} verbergen"
+
+#. Preserve placeholders: {layer}
+#: src/i18n/en/panels.ts:16
+msgctxt "filter.layer.show.title"
+msgid "Show {layer}"
+msgstr "{layer} tonen"
+
+#: src/i18n/en/panels.ts:17
+msgctxt "filter.fromTable"
+msgid "From the table"
+msgstr "Vanuit de tabel"
+
+#: src/i18n/en/panels.ts:18
+msgctxt "filter.fromTable.clear"
+msgid "Clear"
+msgstr "Wissen"
+
+#: src/i18n/en/panels.ts:19
+msgctxt "filter.fromTable.clearNodes.title"
+msgid "Stop hiding the nodes the table's column filters leave out"
+msgstr "De knopen die niet aan de kolomfilters voldoen niet langer verbergen"
+
+#: src/i18n/en/panels.ts:20
+msgctxt "filter.fromTable.clearEdges.title"
+msgid "Stop hiding the relations the table's column filters leave out"
+msgstr "De relaties die niet aan de kolomfilters voldoen niet langer verbergen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:21
+msgctxt "filter.fromTable.nodesHidden"
+msgid "{count} node hidden"
+msgid_plural "{count} nodes hidden"
+msgstr[0] "{count} knoop verborgen"
+msgstr[1] "{count} knopen verborgen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:22
+msgctxt "filter.fromTable.edgesHidden"
+msgid "{count} relation hidden"
+msgid_plural "{count} relations hidden"
+msgstr[0] "{count} relatie verborgen"
+msgstr[1] "{count} relaties verborgen"
+
+#: src/i18n/en/panels.ts:23
+msgctxt "filter.hiddenNodes"
+msgid "Hidden nodes"
+msgstr "Verborgen knopen"
+
+#: src/i18n/en/panels.ts:24
+msgctxt "filter.hiddenNodes.showAll"
+msgid "Show all"
+msgstr "Alles tonen"
+
+#: src/i18n/en/panels.ts:25
+msgctxt "filter.hiddenNodes.showAll.title"
+msgid "Restore manually hidden nodes"
+msgstr "Handmatig verborgen knopen herstellen"
+
+#: src/i18n/en/panels.ts:26
+msgctxt "filter.hiddenNode.show"
+msgid "Show node"
+msgstr "Knoop tonen"
+
+#: src/i18n/en/panels.ts:27
+msgctxt "filter.hiddenNode.show.title"
+msgid "Restore manually hidden node"
+msgstr "Handmatig verborgen knoop herstellen"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/panels.ts:28
+msgctxt "filter.hiddenNode.inspect.aria"
+msgid "Inspect {node}"
+msgstr "{node} inspecteren"
+
+#: src/i18n/en/panels.ts:32
+msgctxt "filter.button.active"
+msgid "active filter"
+msgid_plural "active filters"
+msgstr[0] "actief filter"
+msgstr[1] "actieve filters"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:33
+msgctxt "filter.button.hidden"
+msgid "{count} hidden"
+msgstr "{count} verborgen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:34
+msgctxt "filter.button.hiddenEdges"
+msgid "{count} edge hidden"
+msgid_plural "{count} edges hidden"
+msgstr[0] "{count} verbinding verborgen"
+msgstr[1] "{count} verbindingen verborgen"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/panels.ts:35
+msgctxt "filter.button.hiddenNodesAndEdges"
+msgid "{nodes}, {edges} hidden"
+msgstr "{nodes}, {edges} verborgen"
+
+#: src/i18n/en/panels.ts:38
+msgctxt "form.pattern.placeholder"
+msgid "pattern…"
+msgstr "patroon…"
+
+#: src/i18n/en/panels.ts:39
+msgctxt "form.min.placeholder"
+msgid "Min"
+msgstr "Min"
+
+#: src/i18n/en/panels.ts:40
+msgctxt "form.max.placeholder"
+msgid "Max"
+msgstr "Max"
+
+#. Preserve placeholders: {field}
+#: src/i18n/en/panels.ts:41
+msgctxt "form.negate.aria"
+msgid "How {field} filters"
+msgstr "Hoe {field} filtert"
+
+#: src/i18n/en/panels.ts:42
+msgctxt "form.negate.is"
+msgid "is"
+msgstr "is"
+
+#: src/i18n/en/panels.ts:43
+msgctxt "form.negate.is.title"
+msgid "Keep what matches"
+msgstr "Behouden wat overeenkomt"
+
+#: src/i18n/en/panels.ts:44
+msgctxt "form.negate.not"
+msgid "is not"
+msgstr "is niet"
+
+#: src/i18n/en/panels.ts:45
+msgctxt "form.negate.not.title"
+msgid "Keep what does not match, and what has no value"
+msgstr "Behouden wat niet overeenkomt en wat geen waarde heeft"
+
+#: src/i18n/en/panels.ts:46
+msgctxt "picker.placeholder"
+msgid "Select..."
+msgstr "Selecteren…"
+
+#: src/i18n/en/panels.ts:47
+msgctxt "picker.search.placeholder"
+msgid "Search..."
+msgstr "Zoeken…"
+
+#: src/i18n/en/panels.ts:48
+msgctxt "picker.empty"
+msgid "No options available"
+msgstr "Geen opties beschikbaar"
+
+#. Preserve placeholders: {option}
+#: src/i18n/en/panels.ts:49
+msgctxt "picker.remove.aria"
+msgid "Remove {option}"
+msgstr "{option} verwijderen"
+
+#: src/i18n/en/panels.ts:52
+msgctxt "legend.title"
+msgid "Legend"
+msgstr "Legenda"
+
+#: src/i18n/en/panels.ts:53
+msgctxt "legend.title.type"
+msgid "Type"
+msgstr "Type"
+
+#: src/i18n/en/panels.ts:54
+msgctxt "legend.showAll.title"
+msgid "Show every category"
+msgstr "Elke categorie tonen"
+
+#: src/i18n/en/panels.ts:55
+msgctxt "legend.invert.title"
+msgid "Invert which categories are shown"
+msgstr "Omkeren welke categorieën worden getoond"
+
+#: src/i18n/en/panels.ts:56
+msgctxt "legend.expand.title"
+msgid "Expand this section"
+msgstr "Dit onderdeel uitklappen"
+
+#: src/i18n/en/panels.ts:57
+msgctxt "legend.collapse.title"
+msgid "Collapse this section"
+msgstr "Dit onderdeel inklappen"
+
+#: src/i18n/en/panels.ts:58
+msgctxt "legend.expandAll.title"
+msgid "Expand this section (alt-click for every section)"
+msgstr "Dit onderdeel uitklappen (Alt-klik voor alle onderdelen)"
+
+#: src/i18n/en/panels.ts:59
+msgctxt "legend.collapseAll.title"
+msgid "Collapse this section (alt-click for every section)"
+msgstr "Dit onderdeel inklappen (Alt-klik voor alle onderdelen)"
+
+#. Preserve placeholders: {category}
+#: src/i18n/en/panels.ts:60
+msgctxt "legend.entry.show.title"
+msgid "Show {category}"
+msgstr "{category} tonen"
+
+#. Preserve placeholders: {category}
+#: src/i18n/en/panels.ts:61
+msgctxt "legend.entry.hide.title"
+msgid "Hide {category} (alt-click to show only this one)"
+msgstr "{category} verbergen (Alt-klik om alleen deze te tonen)"
+
+#: src/i18n/en/panels.ts:62
+msgctxt "legend.entry.lastShown.title"
+msgid "The last shown category can't be hidden while the legend drives the filter panel's facet."
+msgstr "De laatste zichtbare categorie kan niet worden verborgen zolang de legenda het facet van het filterpaneel aanstuurt."
+
+#: src/i18n/en/panels.ts:65
+msgctxt "physicsFlyout.title"
+msgid "Physics"
+msgstr "Fysica"
+
+#: src/i18n/en/panels.ts:66
+msgctxt "physicsFlyout.section"
+msgid "LAYOUT & SIMULATION"
+msgstr "INDELING EN SIMULATIE"
+
+#: src/i18n/en/panels.ts:67
+msgctxt "physicsFlyout.layout.force"
+msgid "Force"
+msgstr "Kracht"
+
+#: src/i18n/en/panels.ts:68
+msgctxt "physicsFlyout.layout.force.title"
+msgid "Force — positions nodes freely using the physics simulation."
+msgstr "Kracht — plaatst knopen vrij met behulp van de fysicasimulatie."
+
+#: src/i18n/en/panels.ts:69
+msgctxt "physicsFlyout.layout.treeV"
+msgid "Vertical"
+msgstr "Verticaal"
+
+#: src/i18n/en/panels.ts:70
+msgctxt "physicsFlyout.layout.treeV.title"
+msgid "Tree — hierarchical layout flowing from top to bottom."
+msgstr "Boom — hiërarchische indeling van boven naar beneden."
+
+#: src/i18n/en/panels.ts:71
+msgctxt "physicsFlyout.layout.treeH"
+msgid "Horizontal"
+msgstr "Horizontaal"
+
+#: src/i18n/en/panels.ts:72
+msgctxt "physicsFlyout.layout.treeH.title"
+msgid "Tree — hierarchical layout flowing from left to right."
+msgstr "Boom — hiërarchische indeling van links naar rechts."
+
+#: src/i18n/en/panels.ts:73
+msgctxt "physicsFlyout.layout.treeR"
+msgid "Radial"
+msgstr "Radiaal"
+
+#: src/i18n/en/panels.ts:74
+msgctxt "physicsFlyout.layout.treeR.title"
+msgid "Tree — hierarchical layout radiating out from a central root."
+msgstr "Boom — hiërarchische indeling vanuit een centrale wortel."
+
+#: src/i18n/en/panels.ts:75
+msgctxt "physicsFlyout.root"
+msgid "Root"
+msgstr "Wortel"
+
+#: src/i18n/en/panels.ts:76
+msgctxt "physicsFlyout.root.selected"
+msgid "Selected node"
+msgstr "Geselecteerde knoop"
+
+#: src/i18n/en/panels.ts:77
+msgctxt "physicsFlyout.root.selected.description"
+msgid "Hangs the tree from the node you have selected, following edges either way round."
+msgstr "Gebruikt de geselecteerde knoop als wortel en volgt verbindingen in beide richtingen."
+
+#: src/i18n/en/panels.ts:78
+msgctxt "physicsFlyout.root.firstSource"
+msgid "First source"
+msgstr "Eerste bron"
+
+#: src/i18n/en/panels.ts:79
+msgctxt "physicsFlyout.root.firstSource.description"
+msgid "The first node nothing points at."
+msgstr "De eerste knoop waar niets naar wijst."
+
+#: src/i18n/en/panels.ts:80
+msgctxt "physicsFlyout.root.widestReach"
+msgid "Widest reach"
+msgstr "Grootste bereik"
+
+#: src/i18n/en/panels.ts:81
+msgctxt "physicsFlyout.root.widestReach.description"
+msgid "Reaches the most other nodes."
+msgstr "Bereikt de meeste andere knopen."
+
+#: src/i18n/en/panels.ts:82
+msgctxt "physicsFlyout.root.shallowest"
+msgid "Shallowest"
+msgstr "Minste diepte"
+
+#: src/i18n/en/panels.ts:83
+msgctxt "physicsFlyout.root.shallowest.description"
+msgid "Makes the tree as shallow as it can be."
+msgstr "Maakt de boom zo ondiep mogelijk."
+
+#: src/i18n/en/panels.ts:84
+msgctxt "physicsFlyout.root.selectFirst"
+msgid "Select a node first."
+msgstr "Selecteer eerst een knoop."
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/panels.ts:85
+msgctxt "physicsFlyout.root.pinned.title"
+msgid "The tree is hung from \"{node}\". Pick again to change it."
+msgstr "De boom hangt aan \"{node}\". Kies opnieuw om dit te wijzigen."
+
+#. Preserve placeholders: {description}, {label}
+#: src/i18n/en/panels.ts:86
+msgctxt "physicsFlyout.root.finder.title"
+msgid "{label}: {description}"
+msgstr "{label}: {description}"
+
+#: src/i18n/en/panels.ts:87
+msgctxt "physicsFlyout.spacing"
+msgid "Spacing"
+msgstr "Afstand"
+
+#: src/i18n/en/panels.ts:88
+msgctxt "physicsFlyout.spacing.auto"
+msgid "Auto"
+msgstr "Automatisch"
+
+#: src/i18n/en/panels.ts:89
+msgctxt "physicsFlyout.spacing.auto.title"
+msgid "Let the tree work out its own distances from the size of the nodes and the shape of the tree — and keep working them out as the graph changes."
+msgstr "Laat de boom afstanden bepalen op basis van knoopgrootte en boomvorm, en aanpassen wanneer de grafiek verandert."
+
+#: src/i18n/en/panels.ts:90
+msgctxt "physicsFlyout.spacing.level"
+msgid "Level distance"
+msgstr "Niveauafstand"
+
+#: src/i18n/en/panels.ts:91
+msgctxt "physicsFlyout.spacing.level.title"
+msgid "How far apart consecutive levels of the tree sit — the gap between rings, in the radial layout."
+msgstr "De afstand tussen opeenvolgende boomniveaus — tussen ringen bij een radiale indeling."
+
+#: src/i18n/en/panels.ts:92
+msgctxt "physicsFlyout.spacing.sibling"
+msgid "Sibling distance"
+msgstr "Afstand tussen nevenknopen"
+
+#: src/i18n/en/panels.ts:93
+msgctxt "physicsFlyout.spacing.sibling.title"
+msgid "How far apart nodes on the same level sit. The radial layout spreads a level over the whole circle, so it ignores this one."
+msgstr "De afstand tussen knopen op hetzelfde niveau. Bij de radiale indeling wordt dit genegeerd, omdat een niveau over de hele cirkel wordt verdeeld."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:94
+msgctxt "physicsFlyout.spacing.value"
+msgid "{count}×"
+msgstr "{count}×"
+
+#: src/i18n/en/panels.ts:95
+msgctxt "physicsFlyout.simulation"
+msgid "Simulation"
+msgstr "Simulatie"
+
+#: src/i18n/en/panels.ts:96
+msgctxt "physicsFlyout.pause.title"
+msgid "Pause physics"
+msgstr "Fysica pauzeren"
+
+#: src/i18n/en/panels.ts:97
+msgctxt "physicsFlyout.resume.title"
+msgid "Resume physics"
+msgstr "Fysica hervatten"
+
+#: src/i18n/en/panels.ts:98
+msgctxt "physicsFlyout.preset.auto"
+msgid "Auto"
+msgstr "Automatisch"
+
+#: src/i18n/en/panels.ts:99
+msgctxt "physicsFlyout.preset.auto.title"
+msgid "Let the layout tune itself from the number of nodes, their size and the canvas — and keep tuning as the graph changes."
+msgstr "Laat de indeling zichzelf afstemmen op het aantal knopen, hun grootte en het canvas, ook wanneer de grafiek verandert."
+
+#: src/i18n/en/panels.ts:100
+msgctxt "physicsFlyout.preset.tight"
+msgid "Tight"
+msgstr "Compact"
+
+#: src/i18n/en/panels.ts:101
+msgctxt "physicsFlyout.preset.tight.title"
+msgid "Compact layout with nodes packed closely together."
+msgstr "Compacte indeling met knopen dicht bij elkaar."
+
+#: src/i18n/en/panels.ts:102
+msgctxt "physicsFlyout.preset.loose"
+msgid "Loose"
+msgstr "Ruim"
+
+#: src/i18n/en/panels.ts:103
+msgctxt "physicsFlyout.preset.loose.title"
+msgid "Spacious layout with nodes spread further apart."
+msgstr "Ruime indeling met knopen verder uit elkaar."
+
+#: src/i18n/en/panels.ts:104
+msgctxt "physicsFlyout.knob.repulsion"
+msgid "Repulsion"
+msgstr "Afstoting"
+
+#: src/i18n/en/panels.ts:105
+msgctxt "physicsFlyout.knob.repulsion.title"
+msgid "How strongly nodes push each other apart. Higher values spread the graph out."
+msgstr "Hoe sterk knopen elkaar afstoten. Hogere waarden spreiden de grafiek verder uit."
+
+#: src/i18n/en/panels.ts:106
+msgctxt "physicsFlyout.knob.linkDistance"
+msgid "Link distance"
+msgstr "Verbindingsafstand"
+
+#: src/i18n/en/panels.ts:107
+msgctxt "physicsFlyout.knob.linkDistance.title"
+msgid "The resting length of edges, in pixels. Higher values place connected nodes further apart."
+msgstr "De rustlengte van verbindingen in pixels. Hogere waarden plaatsen verbonden knopen verder uit elkaar."
+
+#: src/i18n/en/panels.ts:108
+msgctxt "physicsFlyout.knob.collisionRadius"
+msgid "Collision radius"
+msgstr "Botsingsstraal"
+
+#: src/i18n/en/panels.ts:109
+msgctxt "physicsFlyout.knob.collisionRadius.title"
+msgid "The clear space kept around each node to prevent overlap. Higher values keep nodes further apart."
+msgstr "De vrije ruimte rond elke knoop om overlap te voorkomen. Hogere waarden houden knopen verder uit elkaar."
+
+#: src/i18n/en/panels.ts:110
+msgctxt "physicsFlyout.knob.friction"
+msgid "Friction"
+msgstr "Wrijving"
+
+#: src/i18n/en/panels.ts:111
+msgctxt "physicsFlyout.knob.friction.title"
+msgid "How quickly node motion is damped. Higher values calm the layout and settle it faster."
+msgstr "Hoe snel beweging wordt gedempt. Hogere waarden maken de indeling rustiger en sneller stabiel."
+
+#: src/i18n/en/panels.ts:112
+msgctxt "physicsFlyout.knob.centering"
+msgid "Centering"
+msgstr "Centrering"
+
+#: src/i18n/en/panels.ts:113
+msgctxt "physicsFlyout.knob.centering.title"
+msgid "How strongly the graph is pulled toward the middle of the canvas. Higher values keep disconnected parts in frame."
+msgstr "Hoe sterk de grafiek naar het midden wordt getrokken. Hogere waarden houden losse delen in beeld."
+
+#: src/i18n/en/panels.ts:114
+msgctxt "physicsFlyout.knob.settleTime"
+msgid "Settle time"
+msgstr "Stabilisatietijd"
+
+#: src/i18n/en/panels.ts:115
+msgctxt "physicsFlyout.knob.settleTime.title"
+msgid "How long the layout is given to settle, in seconds. Higher values let large graphs unfold further before they stop."
+msgstr "De tijd in seconden die de indeling krijgt om te stabiliseren. Hogere waarden geven grote grafieken meer tijd om zich te ontvouwen."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:116
+msgctxt "physicsFlyout.knob.seconds"
+msgid "{count}s"
+msgstr "{count} s"
+
+#: src/i18n/en/panels.ts:119
+msgctxt "viewFlyout.title"
+msgid "View"
+msgstr "Weergave"
+
+#: src/i18n/en/panels.ts:120
+msgctxt "viewFlyout.section"
+msgid "GRID & CANVAS"
+msgstr "RASTER EN CANVAS"
+
+#: src/i18n/en/panels.ts:121
+msgctxt "viewFlyout.background"
+msgid "Background"
+msgstr "Achtergrond"
+
+#: src/i18n/en/panels.ts:122
+msgctxt "viewFlyout.background.grid"
+msgid "Grid"
+msgstr "Raster"
+
+#: src/i18n/en/panels.ts:123
+msgctxt "viewFlyout.background.grid.title"
+msgid "Rule the canvas with grid lines."
+msgstr "Rasterlijnen op het canvas tekenen."
+
+#: src/i18n/en/panels.ts:124
+msgctxt "viewFlyout.background.dots"
+msgid "Dots"
+msgstr "Stippen"
+
+#: src/i18n/en/panels.ts:125
+msgctxt "viewFlyout.background.dots.title"
+msgid "Mark the grid with dots instead of lines."
+msgstr "Het raster met stippen in plaats van lijnen markeren."
+
+#: src/i18n/en/panels.ts:126
+msgctxt "viewFlyout.background.none"
+msgid "None"
+msgstr "Geen"
+
+#: src/i18n/en/panels.ts:127
+msgctxt "viewFlyout.background.none.title"
+msgid "Leave the canvas plain."
+msgstr "Het canvas leeg laten."
+
+#: src/i18n/en/panels.ts:128
+msgctxt "viewFlyout.background.image"
+msgid "Image"
+msgstr "Afbeelding"
+
+#: src/i18n/en/panels.ts:129
+msgctxt "viewFlyout.background.image.title"
+msgid "Paint an image behind the graph."
+msgstr "Een afbeelding achter de grafiek weergeven."
+
+#: src/i18n/en/panels.ts:130
+msgctxt "viewFlyout.canvasColour"
+msgid "Canvas colour"
+msgstr "Canvaskleur"
+
+#: src/i18n/en/panels.ts:131
+msgctxt "viewFlyout.canvasColour.custom.title"
+msgid "Custom canvas colour"
+msgstr "Aangepaste canvaskleur"
+
+#: src/i18n/en/panels.ts:132
+msgctxt "viewFlyout.gridColour"
+msgid "Grid colour"
+msgstr "Rasterkleur"
+
+#: src/i18n/en/panels.ts:133
+msgctxt "viewFlyout.gridColour.custom.title"
+msgid "Custom grid colour"
+msgstr "Aangepaste rasterkleur"
+
+#: src/i18n/en/panels.ts:134
+msgctxt "viewFlyout.colour.default"
+msgid "Theme default"
+msgstr "Themastandaard"
+
+#: src/i18n/en/panels.ts:135
+msgctxt "viewFlyout.colour.white"
+msgid "White"
+msgstr "Wit"
+
+#: src/i18n/en/panels.ts:136
+msgctxt "viewFlyout.colour.lightGrey"
+msgid "Light grey"
+msgstr "Lichtgrijs"
+
+#: src/i18n/en/panels.ts:137
+msgctxt "viewFlyout.colour.darkGrey"
+msgid "Dark grey"
+msgstr "Donkergrijs"
+
+#: src/i18n/en/panels.ts:138
+msgctxt "viewFlyout.colour.black"
+msgid "Black"
+msgstr "Zwart"
+
+#: src/i18n/en/panels.ts:139
+msgctxt "viewFlyout.highlightGrid"
+msgid "Highlight grid"
+msgstr "Raster benadrukken"
+
+#: src/i18n/en/panels.ts:140
+msgctxt "viewFlyout.highlightGrid.title"
+msgid "Make the background grid lines more visible."
+msgstr "De rasterlijnen op de achtergrond duidelijker maken."
+
+#: src/i18n/en/panels.ts:141
+msgctxt "viewFlyout.image.url.placeholder"
+msgid "Image URL..."
+msgstr "Afbeeldings-URL…"
+
+#: src/i18n/en/panels.ts:142
+msgctxt "viewFlyout.image.browse"
+msgid "Browse"
+msgstr "Bladeren"
+
+#: src/i18n/en/panels.ts:143
+msgctxt "viewFlyout.image.browse.title"
+msgid "Pick an image file from this device."
+msgstr "Een afbeeldingsbestand op dit apparaat kiezen."
+
+#: src/i18n/en/panels.ts:144
+msgctxt "viewFlyout.image.fit.cover"
+msgid "Cover"
+msgstr "Bedekken"
+
+#: src/i18n/en/panels.ts:145
+msgctxt "viewFlyout.image.fit.cover.title"
+msgid "Scale the image to fill the canvas, cropping whatever overflows."
+msgstr "De afbeelding schalen tot het canvas gevuld is en het overschot bijsnijden."
+
+#: src/i18n/en/panels.ts:146
+msgctxt "viewFlyout.image.fit.contain"
+msgid "Contain"
+msgstr "Passend maken"
+
+#: src/i18n/en/panels.ts:147
+msgctxt "viewFlyout.image.fit.contain.title"
+msgid "Scale the image until all of it fits on the canvas."
+msgstr "De afbeelding schalen tot deze volledig op het canvas past."
+
+#: src/i18n/en/panels.ts:148
+msgctxt "viewFlyout.image.fit.tile"
+msgid "Tile"
+msgstr "Herhalen"
+
+#: src/i18n/en/panels.ts:149
+msgctxt "viewFlyout.image.fit.tile.title"
+msgid "Keep the image at its own size and repeat it across the canvas."
+msgstr "De afbeelding op oorspronkelijke grootte herhalen over het canvas."
+
+#: src/i18n/en/panels.ts:150
+msgctxt "viewFlyout.image.remove"
+msgid "Remove image"
+msgstr "Afbeelding verwijderen"
+
+#: src/i18n/en/panels.ts:151
+msgctxt "viewFlyout.snap"
+msgid "Snap to grid"
+msgstr "Uitlijnen op raster"
+
+#: src/i18n/en/panels.ts:152
+msgctxt "viewFlyout.snap.title"
+msgid "Align nodes to the grid while you drag them."
+msgstr "Knopen tijdens het slepen uitlijnen op het raster."
+
+#: src/i18n/en/panels.ts:153
+msgctxt "viewFlyout.freeze"
+msgid "Freeze on drag"
+msgstr "Vastzetten na slepen"
+
+#: src/i18n/en/panels.ts:154
+msgctxt "viewFlyout.freeze.title"
+msgid "Keep nodes pinned where you drop them instead of letting physics move them again."
+msgstr "Knopen vastzetten waar u ze neerzet, zodat de fysica ze niet opnieuw verplaatst."
+
+#: src/i18n/en/panels.ts:155
+msgctxt "viewFlyout.fit"
+msgid "Fit on expand/collapse"
+msgstr "Passend maken bij uit- en inklappen"
+
+#: src/i18n/en/panels.ts:156
+msgctxt "viewFlyout.fit.title"
+msgid "Zoom and re-center to fit the graph when clusters or groups are expanded or collapsed."
+msgstr "Zoomen en centreren om de grafiek passend te maken wanneer clusters of groepen worden uit- of ingeklapt."
+
+#: src/i18n/en/panels.ts:157
+msgctxt "viewFlyout.orphans"
+msgid "Hide unconnected"
+msgstr "Niet-verbonden knopen verbergen"
+
+#: src/i18n/en/panels.ts:158
+msgctxt "viewFlyout.orphans.title"
+msgid "Hide nodes that have no visible relation left. Unlike hiding a relationship layer, this moves the graph."
+msgstr "Knopen zonder zichtbare relaties verbergen. Anders dan bij het verbergen van een relatielaag wordt de grafiek hierdoor verplaatst."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:159
+msgctxt "viewFlyout.orphans.note.title"
+msgid "{count} unconnected node hidden"
+msgid_plural "{count} unconnected nodes hidden"
+msgstr[0] "{count} niet-verbonden knoop verborgen"
+msgstr[1] "{count} niet-verbonden knopen verborgen"
+
+#: src/i18n/en/panels.ts:162
+msgctxt "simplifyFlyout.title"
+msgid "Simplify"
+msgstr "Vereenvoudigen"
+
+#: src/i18n/en/panels.ts:163
+msgctxt "simplifyFlyout.onCanvas"
+msgid "On the canvas"
+msgstr "Op het canvas"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/panels.ts:164
+msgctxt "simplifyFlyout.shown"
+msgid "{shown} of {count} node"
+msgid_plural "{shown} of {count} nodes"
+msgstr[0] "{shown} van {count} knoop"
+msgstr[1] "{shown} van {count} knopen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:165
+msgctxt "simplifyFlyout.groups"
+msgid "{count} group"
+msgid_plural "{count} groups"
+msgstr[0] "{count} groep"
+msgstr[1] "{count} groepen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:166
+msgctxt "simplifyFlyout.folded"
+msgid "{count} folded"
+msgstr "{count} samengevouwen"
+
+#: src/i18n/en/panels.ts:167
+msgctxt "simplifyFlyout.rule.app"
+msgid "app"
+msgstr "app"
+
+#: src/i18n/en/panels.ts:168
+msgctxt "simplifyFlyout.smaller.aria"
+msgid "Smaller"
+msgstr "Kleiner"
+
+#: src/i18n/en/panels.ts:169
+msgctxt "simplifyFlyout.larger.aria"
+msgid "Larger"
+msgstr "Groter"
+
+#: src/i18n/en/panels.ts:170
+msgctxt "simplifyFlyout.slider.fine"
+msgid "Fine"
+msgstr "Fijn"
+
+#: src/i18n/en/panels.ts:171
+msgctxt "simplifyFlyout.slider.coarse"
+msgid "Coarse"
+msgstr "Grof"
+
+#: src/i18n/en/panels.ts:172
+msgctxt "simplifyFlyout.result.failed"
+msgid "This rule failed"
+msgstr "Deze regel is mislukt"
+
+#: src/i18n/en/panels.ts:173
+msgctxt "simplifyFlyout.result.grouping"
+msgid "Grouping…"
+msgstr "Groeperen…"
+
+#: src/i18n/en/panels.ts:174
+msgctxt "simplifyFlyout.result.nothing"
+msgid "Nothing to fold"
+msgstr "Niets om samen te vouwen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:175
+msgctxt "simplifyFlyout.result.nothingAt"
+msgid "Nothing to fold at {count} or more"
+msgstr "Niets om samen te vouwen bij {count} of meer"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:176
+msgctxt "simplifyFlyout.result.nothingByDegree"
+msgid "Every node has {count} link or more"
+msgid_plural "Every node has {count} links or more"
+msgstr[0] "Elke knoop heeft {count} verbinding of meer"
+msgstr[1] "Elke knoop heeft {count} verbindingen of meer"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:177
+msgctxt "simplifyFlyout.result.nothingByCore"
+msgid "Every node is in the {count}-core"
+msgstr "Elke knoop bevindt zich in de {count}-kern"
+
+#: src/i18n/en/pivot.ts:6
+msgctxt "pivot.retry"
+msgid "Retry"
+msgstr "Opnieuw proberen"
+
+#: src/i18n/en/pivot.ts:7
+msgctxt "pivot.cancel"
+msgid "Cancel"
+msgstr "Annuleren"
+
+#: src/i18n/en/pivot.ts:8
+msgctxt "pivot.close"
+msgid "Close"
+msgstr "Sluiten"
+
+#: src/i18n/en/pivot.ts:9
+msgctxt "pivot.dismiss"
+msgid "Dismiss"
+msgstr "Verbergen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:10
+msgctxt "pivot.more"
+msgid "…and {count} more"
+msgstr "…en nog {count}"
+
+#: src/i18n/en/pivot.ts:13
+msgctxt "pivot.mode.label"
+msgid "Pivot"
+msgstr "Pivot"
+
+#: src/i18n/en/pivot.ts:14
+msgctxt "pivot.mode.pickOrigin"
+msgid "Pick origin"
+msgstr "Oorsprong kiezen"
+
+#: src/i18n/en/pivot.ts:15
+msgctxt "pivot.mode.lassoOrigin"
+msgid "Lasso origin"
+msgstr "Oorsprong met lasso selecteren"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:18
+msgctxt "pivot.toast.fetchFailed"
+msgid "Couldn't fetch {pivot}"
+msgstr "{pivot} kon niet worden opgehaald"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:19
+msgctxt "pivot.toast.refused.title"
+msgid "{pivot} returned too much"
+msgstr "{pivot} gaf te veel resultaten"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:20
+msgctxt "pivot.toast.refused.message"
+msgid "{count} candidate, over the {limit} limit. Nothing was ingested — narrow and run again."
+msgid_plural "{count} candidates, over the {limit} limit. Nothing was ingested — narrow and run again."
+msgstr[0] "{count} kandidaat, boven de limiet van {limit}. Niets is geïmporteerd — verfijn en voer opnieuw uit."
+msgstr[1] "{count} kandidaten, boven de limiet van {limit}. Niets is geïmporteerd — verfijn en voer opnieuw uit."
+
+#: src/i18n/en/pivot.ts:26
+msgctxt "pivot.save.promptTitle"
+msgid "Save"
+msgstr "Opslaan"
+
+#: src/i18n/en/pivot.ts:27
+msgctxt "pivot.save.promptSubmit"
+msgid "Save"
+msgstr "Opslaan"
+
+#: src/i18n/en/pivot.ts:28
+msgctxt "pivot.save.saving"
+msgid "Saving…"
+msgstr "Opslaan…"
+
+#. Preserve placeholders: {elements}
+#: src/i18n/en/pivot.ts:29
+msgctxt "pivot.save.saved"
+msgid "Saved {elements}"
+msgstr "{elements} opgeslagen"
+
+#. Preserve placeholders: {elements}
+#: src/i18n/en/pivot.ts:30
+msgctxt "pivot.save.failed"
+msgid "Couldn't save {elements}"
+msgstr "{elements} konden niet worden opgeslagen"
+
+#: src/i18n/en/pivot.ts:31
+msgctxt "pivot.save.failedDetail"
+msgid "Nothing was written, and nothing left the canvas."
+msgstr "Er is niets geschreven en niets van het canvas verwijderd."
+
+#. Preserve placeholders: {saved}, {total}
+#: src/i18n/en/pivot.ts:32
+msgctxt "pivot.save.partial"
+msgid "Saved {saved} of {total}"
+msgstr "{saved} van {total} opgeslagen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:33
+msgctxt "pivot.save.partialDetail"
+msgid "{count} still unsaved."
+msgstr "{count} nog niet opgeslagen."
+
+#: src/i18n/en/pivot.ts:34
+msgctxt "pivot.save.nothing"
+msgid "nothing"
+msgstr "niets"
+
+#: src/i18n/en/pivot.ts:37
+msgctxt "pivot.ingest.failed"
+msgid "Ingest failed"
+msgstr "Importeren mislukt"
+
+#: src/i18n/en/pivot.ts:38
+msgctxt "pivot.ingest.cancelled"
+msgid "Ingest cancelled"
+msgstr "Importeren geannuleerd"
+
+#: src/i18n/en/pivot.ts:39
+msgctxt "pivot.ingest.nothing"
+msgid "Nothing was ingested"
+msgstr "Niets geïmporteerd"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:40
+msgctxt "pivot.ingest.nodes"
+msgid "Ingested {count} node"
+msgid_plural "Ingested {count} nodes"
+msgstr[0] "{count} knoop geïmporteerd"
+msgstr[1] "{count} knopen geïmporteerd"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:41
+msgctxt "pivot.ingest.edges"
+msgid "Ingested {count} edge"
+msgid_plural "Ingested {count} edges"
+msgstr[0] "{count} verbinding geïmporteerd"
+msgstr[1] "{count} verbindingen geïmporteerd"
+
+#. Preserve placeholders: {count}, {landed}
+#: src/i18n/en/pivot.ts:42
+msgctxt "pivot.ingest.someNodes"
+msgid "Ingested {landed} of {count} node"
+msgid_plural "Ingested {landed} of {count} nodes"
+msgstr[0] "{landed} van {count} knoop geïmporteerd"
+msgstr[1] "{landed} van {count} knopen geïmporteerd"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/pivot.ts:44
+msgctxt "pivot.ingest.nodesAndEdges"
+msgid "Ingested {nodes}, {edges}"
+msgstr "{nodes}, {edges} geïmporteerd"
+
+#. Preserve placeholders: {count}, {landed}
+#: src/i18n/en/pivot.ts:45
+msgctxt "pivot.ingest.nodesOfAsked"
+msgid "{landed} of {count} node"
+msgid_plural "{landed} of {count} nodes"
+msgstr[0] "{landed} van {count} knoop"
+msgstr[1] "{landed} van {count} knopen"
+
+#: src/i18n/en/pivot.ts:48
+msgctxt "pivot.panel.filter.placeholder"
+msgid "Filter pivots"
+msgstr "Pivots filteren"
+
+#: src/i18n/en/pivot.ts:49
+msgctxt "pivot.panel.filter.aria"
+msgid "Filter pivots"
+msgstr "Pivots filteren"
+
+#: src/i18n/en/pivot.ts:50
+msgctxt "pivot.panel.filter.clear.title"
+msgid "Clear the filter"
+msgstr "Het filter wissen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:51
+msgctxt "pivot.panel.hits.selected"
+msgid "Showing your {count} selected"
+msgstr "Toont uw {count} geselecteerde items"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:52
+msgctxt "pivot.panel.hits.matching"
+msgid "{count} match"
+msgstr "{count} komen overeen"
+
+#: src/i18n/en/pivot.ts:53
+msgctxt "pivot.panel.selectNone"
+msgid "Select none"
+msgstr "Niets selecteren"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:54
+msgctxt "pivot.panel.deselect"
+msgid "Deselect {count}"
+msgstr "{count} deselecteren"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:55
+msgctxt "pivot.panel.selectMatching"
+msgid "Select {count} matching"
+msgstr "{count} overeenkomende items selecteren"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:56
+msgctxt "pivot.panel.selectAll"
+msgid "Select all {count}"
+msgstr "Alle {count} selecteren"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:57
+msgctxt "pivot.panel.tray.selected"
+msgid "{count} selected"
+msgstr "{count} geselecteerd"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:58
+msgctxt "pivot.panel.tray.hidden"
+msgid "{count} hidden"
+msgstr "{count} verborgen"
+
+#: src/i18n/en/pivot.ts:59
+msgctxt "pivot.panel.tray.none"
+msgid "Nothing selected"
+msgstr "Niets geselecteerd"
+
+#: src/i18n/en/pivot.ts:60
+msgctxt "pivot.panel.tray.reveal.title"
+msgid "Show only what is selected"
+msgstr "Alleen de selectie tonen"
+
+#: src/i18n/en/pivot.ts:61
+msgctxt "pivot.panel.tray.unreveal.title"
+msgid "Back to the filtered list"
+msgstr "Terug naar de gefilterde lijst"
+
+#: src/i18n/en/pivot.ts:62
+msgctxt "pivot.panel.tray.clear"
+msgid "Clear"
+msgstr "Wissen"
+
+#: src/i18n/en/pivot.ts:63
+msgctxt "pivot.panel.tray.clear.title"
+msgid "Clear the selection"
+msgstr "De selectie wissen"
+
+#: src/i18n/en/pivot.ts:64
+msgctxt "pivot.panel.tray.run"
+msgid "Run"
+msgstr "Uitvoeren"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:65
+msgctxt "pivot.panel.tray.runCount"
+msgid "Run {count}"
+msgstr "{count} uitvoeren"
+
+#: src/i18n/en/pivot.ts:66
+msgctxt "pivot.panel.tray.run.title"
+msgid "Run every selected pivot"
+msgstr "Elke geselecteerde pivot uitvoeren"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:67
+msgctxt "pivot.panel.tray.caution"
+msgid "{count} pivot is over {limit} — this asks every one of them at once."
+msgid_plural "{count} pivots is over {limit} — this asks every one of them at once."
+msgstr[0] "{count} pivot is meer dan {limit} — hiermee worden ze allemaal tegelijk opgevraagd."
+msgstr[1] "{count} pivots is meer dan {limit} — hiermee worden ze allemaal tegelijk opgevraagd."
+
+#. Preserve placeholders: {query}
+#: src/i18n/en/pivot.ts:71
+msgctxt "pivot.panel.noMatch"
+msgid "No pivot matches “{query}”."
+msgstr "Geen pivot komt overeen met “{query}”."
+
+#: src/i18n/en/pivot.ts:72
+msgctxt "pivot.panel.noMatch.reveal"
+msgid "Nothing selected."
+msgstr "Niets geselecteerd."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:73
+msgctxt "pivot.panel.originless"
+msgid "Without an origin ({count})"
+msgstr "Zonder oorsprong ({count})"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:76
+msgctxt "pivot.panel.unsaved"
+msgid "{count} unsaved"
+msgstr "{count} niet opgeslagen"
+
+#: src/i18n/en/pivot.ts:77
+msgctxt "pivot.panel.unsaved.title"
+msgid "Brought in by a pivot this session, and not written back"
+msgstr "Deze sessie opgehaald door een pivot en nog niet teruggeschreven"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/pivot.ts:78
+msgctxt "pivot.panel.unsaved.titleCounts"
+msgid "{nodes} and {edges} this session's pivots brought in and have not written back"
+msgstr "{nodes} en {edges} die deze sessie door pivots zijn opgehaald en nog niet teruggeschreven"
+
+#: src/i18n/en/pivot.ts:79
+msgctxt "pivot.panel.save"
+msgid "Save"
+msgstr "Opslaan"
+
+#: src/i18n/en/pivot.ts:80
+msgctxt "pivot.panel.save.saving"
+msgid "Saving…"
+msgstr "Opslaan…"
+
+#: src/i18n/en/pivot.ts:81
+msgctxt "pivot.panel.save.title"
+msgid "Write these back to the source system"
+msgstr "Terugschrijven naar het bronsysteem"
+
+#: src/i18n/en/pivot.ts:84
+msgctxt "pivot.panel.origin"
+msgid "Origin"
+msgstr "Oorsprong"
+
+#: src/i18n/en/pivot.ts:85
+msgctxt "pivot.panel.origin.empty"
+msgid "Nothing picked — click a node on the canvas to see what can be run on it"
+msgstr "Niets gekozen — klik op een knoop op het canvas om te zien wat u erop kunt uitvoeren"
+
+#: src/i18n/en/pivot.ts:86
+msgctxt "pivot.panel.origin.emptyOriginless"
+msgid "Nothing picked — click a node on the canvas, or run one of the pivots below"
+msgstr "Niets gekozen — klik op een knoop op het canvas of voer een van de onderstaande pivots uit"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:87
+msgctxt "pivot.panel.origin.more"
+msgid "+{count}"
+msgstr "+{count}"
+
+#: src/i18n/en/pivot.ts:88
+msgctxt "pivot.panel.origin.clear"
+msgid "Clear"
+msgstr "Wissen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:89
+msgctxt "pivot.panel.heading"
+msgid "{count} pivot applies"
+msgid_plural "{count} pivots apply"
+msgstr[0] "{count} pivot beschikbaar"
+msgstr[1] "{count} pivots beschikbaar"
+
+#: src/i18n/en/pivot.ts:90
+msgctxt "pivot.panel.heading.none"
+msgid "No pivots apply to this origin"
+msgstr "Geen pivots beschikbaar voor deze oorsprong"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:93
+msgctxt "pivot.entry.select.aria"
+msgid "Select {pivot}"
+msgstr "{pivot} selecteren"
+
+#: src/i18n/en/pivot.ts:94
+msgctxt "pivot.entry.fetching"
+msgid "Fetching…"
+msgstr "Ophalen…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:95
+msgctxt "pivot.entry.fetchingCount"
+msgid "Fetching ~{count}…"
+msgstr "Ongeveer {count} ophalen…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:96
+msgctxt "pivot.entry.ingested"
+msgid "{count} ingested"
+msgstr "{count} geïmporteerd"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:97
+msgctxt "pivot.entry.declared"
+msgid "~{count} declared"
+msgstr "Ongeveer {count} aangegeven"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:98
+msgctxt "pivot.entry.count"
+msgid "~{count}"
+msgstr "~{count}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/pivot.ts:99
+msgctxt "pivot.entry.countAcross"
+msgid "~{total} across {count} node"
+msgid_plural "~{total} across {count} nodes"
+msgstr[0] "~{total} via {count} knoop"
+msgstr[1] "~{total} via {count} knopen"
+
+#. Preserve placeholders: {count}, {taken}
+#: src/i18n/en/pivot.ts:100
+msgctxt "pivot.entry.scope"
+msgid "Applies to {taken} of the {count} picked"
+msgstr "Van toepassing op {taken} van de {count} gekozen items"
+
+#. Preserve placeholders: {count}, {label}
+#: src/i18n/en/pivot.ts:102
+msgctxt "pivot.entry.breakdownItem"
+msgid "{count} {label}"
+msgstr "{count} {label}"
+
+#: src/i18n/en/pivot.ts:103
+msgctxt "pivot.entry.error"
+msgid "Couldn't reach the source."
+msgstr "De bron kon niet worden bereikt."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:104
+msgctxt "pivot.entry.gate.over"
+msgid "Over the cap of {count} — narrow further to fetch"
+msgstr "Boven de limiet van {count} — verfijn verder om op te halen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:105
+msgctxt "pivot.entry.gate.within"
+msgid "Within the cap of {count}"
+msgstr "Binnen de limiet van {count}"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:106
+msgctxt "pivot.entry.gate.refused"
+msgid "The source returned {count} candidate, over the {limit} limit. Nothing was staged — narrow and run again."
+msgid_plural "The source returned {count} candidates, over the {limit} limit. Nothing was staged — narrow and run again."
+msgstr[0] "De bron gaf {count} kandidaat terug, boven de limiet van {limit}. Niets is klaargezet — verfijn en voer opnieuw uit."
+msgstr[1] "De bron gaf {count} kandidaten terug, boven de limiet van {limit}. Niets is klaargezet — verfijn en voer opnieuw uit."
+
+#: src/i18n/en/pivot.ts:110
+msgctxt "pivot.entry.run"
+msgid "Run"
+msgstr "Uitvoeren"
+
+#: src/i18n/en/pivot.ts:111
+msgctxt "pivot.entry.fetch"
+msgid "Fetch"
+msgstr "Ophalen"
+
+#: src/i18n/en/pivot.ts:112
+msgctxt "pivot.entry.runIngest"
+msgid "Run & ingest"
+msgstr "Uitvoeren en importeren"
+
+#: src/i18n/en/pivot.ts:113
+msgctxt "pivot.entry.fetchIngest"
+msgid "Fetch & ingest"
+msgstr "Ophalen en importeren"
+
+#: src/i18n/en/pivot.ts:114
+msgctxt "pivot.entry.ingest.title"
+msgid "Add every result to the graph without reviewing it first"
+msgstr "Elk resultaat aan de grafiek toevoegen zonder voorafgaande controle"
+
+#: src/i18n/en/pivot.ts:115
+msgctxt "pivot.entry.clearNarrowing"
+msgid "Clear narrowing"
+msgstr "Verfijning wissen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:116
+msgctxt "pivot.entry.inTriage"
+msgid "{count} in triage"
+msgstr "{count} in beoordeling"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:117
+msgctxt "pivot.entry.rejected"
+msgid "{count} rejected"
+msgstr "{count} afgewezen"
+
+#: src/i18n/en/pivot.ts:118
+msgctxt "pivot.entry.rejected.title"
+msgid "What you rejected here this session. It is not offered again until restored."
+msgstr "Wat u deze sessie hier hebt afgewezen. Dit wordt pas na herstel opnieuw aangeboden."
+
+#: src/i18n/en/pivot.ts:119
+msgctxt "pivot.entry.rejected.note"
+msgid "Not offered again this session. Restoring one brings it back on the next run."
+msgstr "Wordt deze sessie niet opnieuw aangeboden. Herstel een item om het bij de volgende uitvoering terug te krijgen."
+
+#: src/i18n/en/pivot.ts:120
+msgctxt "pivot.entry.restore"
+msgid "restore"
+msgstr "herstellen"
+
+#: src/i18n/en/pivot.ts:121
+msgctxt "pivot.entry.restore.title"
+msgid "Offer this again on the next run"
+msgstr "Dit bij de volgende uitvoering opnieuw aanbieden"
+
+#: src/i18n/en/pivot.ts:122
+msgctxt "pivot.entry.restoreAll"
+msgid "Restore all"
+msgstr "Alles herstellen"
+
+#: src/i18n/en/pivot.ts:123
+msgctxt "pivot.entry.restoreAll.title"
+msgid "Take back every rejection this pivot holds"
+msgstr "Alle afwijzingen van deze pivot ongedaan maken"
+
+#: src/i18n/en/pivot.ts:126
+msgctxt "pivot.review.tab"
+msgid "Review"
+msgstr "Beoordelen"
+
+#: src/i18n/en/pivot.ts:127
+msgctxt "pivot.review.tabLoading"
+msgid "Review…"
+msgstr "Beoordelen…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:128
+msgctxt "pivot.review.tabWaiting"
+msgid "Review ({count})"
+msgstr "Beoordelen ({count})"
+
+#: src/i18n/en/pivot.ts:129
+msgctxt "pivot.review.strip.aria"
+msgid "Staged providers"
+msgstr "Klaargezette aanbieders"
+
+#: src/i18n/en/pivot.ts:130
+msgctxt "pivot.review.closeFailed"
+msgid "Close failed"
+msgstr "Mislukte sluiten"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:131
+msgctxt "pivot.review.closeFailed.title"
+msgid "Drop the one provider whose fetch brought nothing back"
+msgid_plural "Drop the {count} providers whose fetches brought nothing back"
+msgstr[0] "De aanbieder sluiten waarvan het ophalen niets opleverde"
+msgstr[1] "De {count} aanbieders sluiten waarvan het ophalen niets opleverde"
+
+#: src/i18n/en/pivot.ts:135
+msgctxt "pivot.review.closeAll"
+msgid "Close all"
+msgstr "Alles sluiten"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:136
+msgctxt "pivot.review.closeAll.title"
+msgid "Drop {count} staged provider. Nothing is rejected."
+msgid_plural "Drop all {count} staged providers. Nothing is rejected."
+msgstr[0] "{count} klaargezette aanbieder sluiten. Niets wordt afgewezen."
+msgstr[1] "Alle {count} klaargezette aanbieders sluiten. Niets wordt afgewezen."
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:140
+msgctxt "pivot.review.item.fetching"
+msgid "{provider} — fetching"
+msgstr "{provider} — ophalen"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:141
+msgctxt "pivot.review.item.failed"
+msgid "{provider} — the fetch failed"
+msgstr "{provider} — ophalen mislukt"
+
+#. Preserve placeholders: {count}, {provider}
+#: src/i18n/en/pivot.ts:142
+msgctxt "pivot.review.item.waiting"
+msgid "{provider} — {count} waiting for a verdict"
+msgstr "{provider} — {count} wachten op beoordeling"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:143
+msgctxt "pivot.review.item.idle"
+msgid "{provider} — nothing waiting"
+msgstr "{provider} — niets in afwachting"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:144
+msgctxt "pivot.review.item.close.aria"
+msgid "Close {provider}"
+msgstr "{provider} sluiten"
+
+#: src/i18n/en/pivot.ts:145
+msgctxt "pivot.review.item.close.title"
+msgid "Drop these candidates. Nothing is rejected."
+msgstr "Deze kandidaten sluiten. Niets wordt afgewezen."
+
+#: src/i18n/en/pivot.ts:148
+msgctxt "pivot.triage.search.placeholder"
+msgid "Search rows…"
+msgstr "Rijen doorzoeken…"
+
+#: src/i18n/en/pivot.ts:149
+msgctxt "pivot.triage.search.patternPlaceholder"
+msgid "Match rows by pattern…"
+msgstr "Rijen zoeken met een patroon…"
+
+#: src/i18n/en/pivot.ts:150
+msgctxt "pivot.triage.search.title"
+msgid "Narrow the candidates. Nothing here touches the graph."
+msgstr "De kandidaten verfijnen. De grafiek blijft ongewijzigd."
+
+#: src/i18n/en/pivot.ts:151
+msgctxt "pivot.triage.regex"
+msgid "regex"
+msgstr "regex"
+
+#: src/i18n/en/pivot.ts:152
+msgctxt "pivot.triage.regex.title"
+msgid "Read the search box as a regular expression"
+msgstr "Het zoekveld als reguliere expressie lezen"
+
+#: src/i18n/en/pivot.ts:153
+msgctxt "pivot.triage.rerun"
+msgid "Re-run"
+msgstr "Opnieuw uitvoeren"
+
+#: src/i18n/en/pivot.ts:154
+msgctxt "pivot.triage.rerun.title"
+msgid "Fetch again with the same narrowing"
+msgstr "Opnieuw ophalen met dezelfde verfijning"
+
+#: src/i18n/en/pivot.ts:157
+msgctxt "pivot.triage.loading"
+msgid "Fetching candidates…"
+msgstr "Kandidaten ophalen…"
+
+#: src/i18n/en/pivot.ts:158
+msgctxt "pivot.triage.loading.sub"
+msgid "Nothing is on the canvas yet — candidates are staged, not merged."
+msgstr "Er staat nog niets op het canvas — kandidaten worden klaargezet, niet samengevoegd."
+
+#: src/i18n/en/pivot.ts:159
+msgctxt "pivot.triage.error"
+msgid "Couldn't fetch candidates."
+msgstr "Kandidaten konden niet worden opgehaald."
+
+#: src/i18n/en/pivot.ts:160
+msgctxt "pivot.triage.error.sub"
+msgid "Nothing was staged. Retrying runs the same request with the narrowing you already chose."
+msgstr "Niets is klaargezet. Opnieuw proberen voert hetzelfde verzoek uit met de al gekozen verfijning."
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:161
+msgctxt "pivot.triage.refused"
+msgid "The source returned {count} candidate, over the {limit} limit."
+msgid_plural "The source returned {count} candidates, over the {limit} limit."
+msgstr[0] "De bron gaf {count} kandidaat terug, boven de limiet van {limit}."
+msgstr[1] "De bron gaf {count} kandidaten terug, boven de limiet van {limit}."
+
+#: src/i18n/en/pivot.ts:165
+msgctxt "pivot.triage.refused.sub"
+msgid "Nothing was staged — narrow and run again."
+msgstr "Niets is klaargezet — verfijn en voer opnieuw uit."
+
+#: src/i18n/en/pivot.ts:166
+msgctxt "pivot.triage.empty"
+msgid "No candidates came back"
+msgstr "Geen kandidaten ontvangen"
+
+#: src/i18n/en/pivot.ts:167
+msgctxt "pivot.triage.empty.sub"
+msgid "The narrowing may be tighter than the data."
+msgstr "De verfijning is mogelijk te strikt voor de gegevens."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:168
+msgctxt "pivot.triage.allRejected"
+msgid "The only candidate was rejected earlier this session"
+msgid_plural "All {count} were rejected earlier this session"
+msgstr[0] "De enige kandidaat is eerder deze sessie afgewezen"
+msgstr[1] "Alle {count} zijn eerder deze sessie afgewezen"
+
+#: src/i18n/en/pivot.ts:172
+msgctxt "pivot.triage.allRejected.sub"
+msgid "Nothing new came back. Restoring one offers it again on the next run."
+msgstr "Niets nieuws ontvangen. Herstel een kandidaat om die bij de volgende uitvoering weer aan te bieden."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:173
+msgctxt "pivot.triage.allOnCanvas"
+msgid "The only candidate is already on the canvas — nothing to triage"
+msgid_plural "All {count} are already on the canvas — nothing to triage"
+msgstr[0] "De enige kandidaat staat al op het canvas — niets om te beoordelen"
+msgstr[1] "Alle {count} staan al op het canvas — niets om te beoordelen"
+
+#: src/i18n/en/pivot.ts:177
+msgctxt "pivot.triage.allOnCanvas.sub"
+msgid "Nothing was changed: an id already here is left exactly as it was."
+msgstr "Niets gewijzigd: een bestaande id blijft precies zoals die was."
+
+#: src/i18n/en/pivot.ts:178
+msgctxt "pivot.triage.done"
+msgid "Nothing left to triage"
+msgstr "Niets meer om te beoordelen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:179
+msgctxt "pivot.triage.done.ingested"
+msgid "{count} ingested"
+msgstr "{count} geïmporteerd"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:180
+msgctxt "pivot.triage.done.rejected"
+msgid "{count} rejected"
+msgstr "{count} afgewezen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:181
+msgctxt "pivot.triage.done.onCanvas"
+msgid "{count} already on canvas"
+msgstr "{count} staan al op het canvas"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:182
+msgctxt "pivot.triage.showRejected"
+msgid "Show the {count} rejected"
+msgstr "De {count} afgewezen items tonen"
+
+#: src/i18n/en/pivot.ts:183
+msgctxt "pivot.triage.hideRejected"
+msgid "Hide the rejected"
+msgstr "Afgewezen items verbergen"
+
+#: src/i18n/en/pivot.ts:186
+msgctxt "pivot.triage.banner.running"
+msgid "Running again…"
+msgstr "Opnieuw uitvoeren…"
+
+#: src/i18n/en/pivot.ts:187
+msgctxt "pivot.triage.banner.failed"
+msgid "The re-run failed. What is below is untouched."
+msgstr "Opnieuw uitvoeren mislukt. De onderstaande gegevens zijn ongewijzigd."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:188
+msgctxt "pivot.triage.banner.ready"
+msgid "This pivot was run again. {count} new candidate is ready."
+msgid_plural "This pivot was run again. {count} new candidates are ready."
+msgstr[0] "Deze pivot is opnieuw uitgevoerd. {count} nieuwe kandidaat staat klaar."
+msgstr[1] "Deze pivot is opnieuw uitgevoerd. {count} nieuwe kandidaten staan klaar."
+
+#: src/i18n/en/pivot.ts:192
+msgctxt "pivot.triage.banner.show"
+msgid "Show new"
+msgstr "Nieuwe tonen"
+
+#: src/i18n/en/pivot.ts:193
+msgctxt "pivot.triage.banner.keep"
+msgid "Keep triaging"
+msgstr "Doorgaan met beoordelen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:196
+msgctxt "pivot.triage.head.fetched"
+msgid "{count} fetched"
+msgstr "{count} opgehaald"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:197
+msgctxt "pivot.triage.head.deduped"
+msgid "{count} already on canvas (skipped)"
+msgstr "{count} al op het canvas (overgeslagen)"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:198
+msgctxt "pivot.triage.head.suppressed"
+msgid "{count} rejected earlier"
+msgstr "{count} eerder afgewezen"
+
+#: src/i18n/en/pivot.ts:199
+msgctxt "pivot.triage.head.suppressed.title"
+msgid "Suppressed because they were rejected earlier this session"
+msgstr "Niet getoond omdat ze eerder deze sessie zijn afgewezen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:200
+msgctxt "pivot.triage.head.unsaved"
+msgid "{count} unsaved"
+msgstr "{count} niet opgeslagen"
+
+#: src/i18n/en/pivot.ts:201
+msgctxt "pivot.triage.head.save"
+msgid "save"
+msgstr "opslaan"
+
+#: src/i18n/en/pivot.ts:202
+msgctxt "pivot.triage.head.saving"
+msgid "saving…"
+msgstr "opslaan…"
+
+#: src/i18n/en/pivot.ts:203
+msgctxt "pivot.triage.head.save.title"
+msgid "Write this provider's ingested results back to the source system"
+msgstr "De geïmporteerde resultaten van deze aanbieder terugschrijven naar het bronsysteem"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:204
+msgctxt "pivot.triage.head.origin"
+msgid "{count} origin node"
+msgid_plural "{count} origin nodes"
+msgstr[0] "{count} oorsprongsknoop"
+msgstr[1] "{count} oorsprongsknopen"
+
+#: src/i18n/en/pivot.ts:205
+msgctxt "pivot.triage.head.noOrigin"
+msgid "no origin"
+msgstr "geen oorsprong"
+
+#: src/i18n/en/pivot.ts:206
+msgctxt "pivot.triage.head.narrowed"
+msgid "narrowed"
+msgstr "verfijnd"
+
+#: src/i18n/en/pivot.ts:209
+msgctxt "pivot.triage.suppressed.note"
+msgid "Rejected earlier, so not offered again this session. Restoring one brings it back on the next run."
+msgstr "Eerder afgewezen en daarom niet opnieuw aangeboden deze sessie. Herstel een item om het bij de volgende uitvoering terug te krijgen."
+
+#: src/i18n/en/pivot.ts:210
+msgctxt "pivot.triage.restore"
+msgid "restore"
+msgstr "herstellen"
+
+#: src/i18n/en/pivot.ts:211
+msgctxt "pivot.triage.restoreAll"
+msgid "restore all"
+msgstr "alles herstellen"
+
+#: src/i18n/en/pivot.ts:214
+msgctxt "pivot.triage.column.candidate"
+msgid "Candidate"
+msgstr "Kandidaat"
+
+#: src/i18n/en/pivot.ts:215
+msgctxt "pivot.triage.column.children"
+msgid "Children"
+msgstr "Onderliggende knopen"
+
+#: src/i18n/en/pivot.ts:216
+msgctxt "pivot.triage.column.from"
+msgid "From"
+msgstr "Van"
+
+#: src/i18n/en/pivot.ts:217
+msgctxt "pivot.triage.column.to"
+msgid "To"
+msgstr "Naar"
+
+#: src/i18n/en/pivot.ts:218
+msgctxt "pivot.triage.section.nodes"
+msgid "Nodes"
+msgstr "Knopen"
+
+#: src/i18n/en/pivot.ts:219
+msgctxt "pivot.triage.section.edges"
+msgid "Edges"
+msgstr "Verbindingen"
+
+#: src/i18n/en/pivot.ts:220
+msgctxt "pivot.triage.section.edges.note"
+msgid "both ends are already on the canvas"
+msgstr "beide uiteinden staan al op het canvas"
+
+#. Preserve placeholders: {from}, {to}
+#: src/i18n/en/pivot.ts:221
+msgctxt "pivot.triage.edge.endpoints"
+msgid "{from} → {to}"
+msgstr "{from} → {to}"
+
+#. Preserve placeholders: {row}
+#: src/i18n/en/pivot.ts:222
+msgctxt "pivot.triage.row.select.aria"
+msgid "Select {row}"
+msgstr "{row} selecteren"
+
+#: src/i18n/en/pivot.ts:223
+msgctxt "pivot.triage.row.onCanvas"
+msgid "on canvas"
+msgstr "op het canvas"
+
+#: src/i18n/en/pivot.ts:224
+msgctxt "pivot.triage.row.undo"
+msgid "undo"
+msgstr "ongedaan maken"
+
+#: src/i18n/en/pivot.ts:225
+msgctxt "pivot.triage.row.willIngest"
+msgid "will ingest"
+msgstr "wordt geïmporteerd"
+
+#: src/i18n/en/pivot.ts:226
+msgctxt "pivot.triage.children.show.title"
+msgid "Show what this row holds"
+msgstr "De inhoud van deze rij tonen"
+
+#: src/i18n/en/pivot.ts:227
+msgctxt "pivot.triage.children.hide.title"
+msgid "Hide what this row holds"
+msgstr "De inhoud van deze rij verbergen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:228
+msgctxt "pivot.triage.children.summary"
+msgid "{count} child — ingesting this row takes all of them."
+msgid_plural "{count} children — ingesting this row takes all of them."
+msgstr[0] "{count} onderliggende knoop — bij het importeren van deze rij worden ze allemaal meegenomen."
+msgstr[1] "{count} onderliggende knopen — bij het importeren van deze rij worden ze allemaal meegenomen."
+
+#. Preserve placeholders: {key}, {value}
+#: src/i18n/en/pivot.ts:233
+msgctxt "pivot.triage.children.field"
+msgid "{key}: {value}"
+msgstr "{key}: {value}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:234
+msgctxt "pivot.triage.children.nested"
+msgid "+{count} inside"
+msgstr "+{count} binnenin"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:237
+msgctxt "pivot.triage.foot.ingest"
+msgid "Ingest selected ({count})"
+msgstr "Selectie importeren ({count})"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:238
+msgctxt "pivot.triage.foot.ingestLoose"
+msgid "Ingest loose ({count})"
+msgstr "Los importeren ({count})"
+
+#: src/i18n/en/pivot.ts:239
+msgctxt "pivot.triage.foot.ingestLoose.title"
+msgid "Land the selected rows as separate nodes"
+msgstr "De geselecteerde rijen als losse knopen toevoegen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:240
+msgctxt "pivot.triage.foot.ingestGrouped"
+msgid "Ingest in a group ({count})"
+msgstr "In een groep importeren ({count})"
+
+#: src/i18n/en/pivot.ts:241
+msgctxt "pivot.triage.foot.ingestGrouped.title"
+msgid "Land the selected rows folded, one group per type"
+msgstr "De geselecteerde rijen samengevouwen toevoegen, één groep per type"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:242
+msgctxt "pivot.triage.foot.ingestAll"
+msgid "Ingest all {count}"
+msgstr "Alle {count} importeren"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:243
+msgctxt "pivot.triage.foot.selectAll"
+msgid "Select all {count}"
+msgstr "Alle {count} selecteren"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:244
+msgctxt "pivot.triage.foot.selectMatching"
+msgid "Select all {count} matching"
+msgstr "Alle {count} overeenkomende items selecteren"
+
+#: src/i18n/en/pivot.ts:245
+msgctxt "pivot.triage.foot.rejectSelected"
+msgid "Reject selected"
+msgstr "Selectie afwijzen"
+
+#: src/i18n/en/pivot.ts:246
+msgctxt "pivot.triage.foot.rejectRemaining"
+msgid "Reject all remaining"
+msgstr "Alle resterende afwijzen"
+
+#. Preserve placeholders: {count}, {from}, {to}
+#: src/i18n/en/pivot.ts:247
+msgctxt "pivot.triage.foot.page"
+msgid "{from}–{to} of {count}"
+msgstr "{from}–{to} van {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:248
+msgctxt "pivot.triage.foot.shown"
+msgid "{count} shown"
+msgstr "{count} getoond"
+
+#: src/i18n/en/pivot.ts:249
+msgctxt "pivot.triage.foot.note"
+msgid "closing this pane rejects nothing — leftovers are re-offered next run"
+msgstr "dit paneel sluiten wijst niets af — resterende kandidaten worden bij de volgende uitvoering opnieuw aangeboden"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:6
+msgctxt "history.entry.hid"
+msgid "Hid {count} node"
+msgid_plural "Hid {count} nodes"
+msgstr[0] "{count} knoop verborgen"
+msgstr[1] "{count} knopen verborgen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:7
+msgctxt "history.entry.showed"
+msgid "Showed {count} node"
+msgid_plural "Showed {count} nodes"
+msgstr[0] "{count} knoop getoond"
+msgstr[1] "{count} knopen getoond"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:8
+msgctxt "history.entry.deletedNodes"
+msgid "Deleted {count} node"
+msgid_plural "Deleted {count} nodes"
+msgstr[0] "{count} knoop verwijderd"
+msgstr[1] "{count} knopen verwijderd"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:9
+msgctxt "history.entry.deletedEdges"
+msgid "Deleted {count} edge"
+msgid_plural "Deleted {count} edges"
+msgstr[0] "{count} verbinding verwijderd"
+msgstr[1] "{count} verbindingen verwijderd"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/core.ts:10
+msgctxt "history.entry.deletedBoth"
+msgid "Deleted {nodes}, {edges}"
+msgstr "{nodes}, {edges} verwijderd"
+
+#. Preserve placeholders: {label}
+#: src/i18n/en/core.ts:11
+msgctxt "history.entry.created"
+msgid "Created “{label}”"
+msgstr "“{label}” gemaakt"
+
+#: src/i18n/en/core.ts:12
+msgctxt "history.entry.createdNode"
+msgid "Created a node"
+msgstr "Een knoop gemaakt"
+
+#: src/i18n/en/core.ts:13
+msgctxt "history.entry.createdEdge"
+msgid "Created an edge"
+msgstr "Een verbinding gemaakt"
+
+#: src/i18n/en/core.ts:14
+msgctxt "history.entry.removedSeed"
+msgid "Removed the loaded data"
+msgstr "De geladen gegevens verwijderd"
+
+#: src/i18n/en/core.ts:15
+msgctxt "history.entry.removedManual"
+msgid "Removed hand-drawn work"
+msgstr "Handmatig getekend werk verwijderd"
+
+#. Preserve placeholders: {source}
+#: src/i18n/en/core.ts:16
+msgctxt "history.entry.removedSource"
+msgid "Removed “{source}”"
+msgstr "“{source}” verwijderd"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:17
+msgctxt "history.entry.grouped"
+msgid "Grouped “{group}”"
+msgstr "“{group}” gegroepeerd"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:18
+msgctxt "history.entry.ungrouped"
+msgid "Ungrouped “{group}”"
+msgstr "Groepering van “{group}” opgeheven"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:19
+msgctxt "history.entry.ungroupedMany"
+msgid "Ungrouped {count} group"
+msgid_plural "Ungrouped {count} groups"
+msgstr[0] "Groepering van {count} groep opgeheven"
+msgstr[1] "Groepering van {count} groepen opgeheven"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:20
+msgctxt "history.entry.renamed"
+msgid "Renamed to “{group}”"
+msgstr "Hernoemd naar “{group}”"
+
+#. Preserve placeholders: {count}, {type}
+#: src/i18n/en/core.ts:23
+msgctxt "simplify.typeLabel"
+msgid "{count} × {type}"
+msgstr "{count} × {type}"
+
+#: src/i18n/en/core.ts:24
+msgctxt "simplify.untyped"
+msgid "node"
+msgstr "knoop"
+
+#: src/i18n/en/core.ts:27
+msgctxt "simplify.builtin.neighbours.label"
+msgid "Same neighbours"
+msgstr "Dezelfde buren"
+
+#: src/i18n/en/core.ts:28
+msgctxt "simplify.builtin.neighbours.description"
+msgid "Nodes of one type linked to exactly the same nodes."
+msgstr "Knopen van één type die met precies dezelfde knopen verbonden zijn."
+
+#: src/i18n/en/core.ts:29
+msgctxt "simplify.builtin.chains.label"
+msgid "Chains"
+msgstr "Ketens"
+
+#: src/i18n/en/core.ts:30
+msgctxt "simplify.builtin.chains.description"
+msgid "Nodes leading chains of the same shape, folded level by level."
+msgstr "Knopen aan het begin van ketens met dezelfde vorm, niveau voor niveau samengevouwen."
+
+#: src/i18n/en/core.ts:31
+msgctxt "simplify.builtin.degree.label"
+msgid "Few links"
+msgstr "Weinig verbindingen"
+
+#: src/i18n/en/core.ts:32
+msgctxt "simplify.builtin.degree.description"
+msgid "Nodes with fewer links than this fold into the nodes they hang from."
+msgstr "Knopen met minder verbindingen dan dit worden samengevouwen in de knopen waaraan ze hangen."
+
+#: src/i18n/en/core.ts:33
+msgctxt "simplify.builtin.kcore.label"
+msgid "Outside the core"
+msgstr "Buiten de kern"
+
+#: src/i18n/en/core.ts:34
+msgctxt "simplify.builtin.kcore.description"
+msgid "Peels off nodes with fewer links than this, again and again, into the core."
+msgstr "Knopen met minder verbindingen dan dit worden herhaaldelijk in de kern samengevouwen."
+
+#: src/i18n/en/core.ts:35
+msgctxt "simplify.builtin.communities.label"
+msgid "Communities"
+msgstr "Gemeenschappen"
+
+#: src/i18n/en/core.ts:36
+msgctxt "simplify.builtin.communities.description"
+msgid "Whole neighbourhoods into a few super-nodes."
+msgstr "Hele buurten samengevoegd tot enkele superknopen."
+
+#: src/i18n/en/core.ts:37
+msgctxt "simplify.builtin.landings.label"
+msgid "Pivot landings"
+msgstr "Pivotresultaten"
+
+#: src/i18n/en/core.ts:38
+msgctxt "simplify.builtin.landings.description"
+msgid "What a pivot brought in, one group per type."
+msgstr "Wat een pivot heeft opgehaald, één groep per type."
+
+#: src/i18n/en/core.ts:39
+msgctxt "simplify.builtin.manual.label"
+msgid "By hand"
+msgstr "Handmatig"
+
+#: src/i18n/en/core.ts:40
+msgctxt "simplify.builtin.manual.description"
+msgid "Groups made from a selection."
+msgstr "Groepen gemaakt van een selectie."
+
+#: src/i18n/en/core.ts:43
+msgctxt "simplify.setting.level"
+msgid "Level"
+msgstr "Niveau"
+
+#: src/i18n/en/core.ts:44
+msgctxt "simplify.setting.minSize"
+msgid "Smallest group"
+msgstr "Kleinste groep"
+
+#: src/i18n/en/core.ts:45
+msgctxt "simplify.setting.fewestLinks"
+msgid "Fewest links"
+msgstr "Minste verbindingen"
+
+#: src/i18n/en/core.ts:46
+msgctxt "simplify.setting.coreStrength"
+msgid "Core strength"
+msgstr "Kernsterkte"
+
+#: src/i18n/en/core.ts:49
+msgctxt "renderer.progress.simulating"
+msgid "Optimizing node positions..."
+msgstr "Knoopposities optimaliseren…"
+
+#: src/i18n/en/core.ts:50
+msgctxt "renderer.progress.rendering"
+msgid "Rendering in progress"
+msgstr "Bezig met tekenen"
+
+#. Preserve placeholders: {seconds}
+#: src/i18n/en/core.ts:51
+msgctxt "renderer.progress.elapsed"
+msgid "Elapsed time: {seconds} sec"
+msgstr "Verstreken tijd: {seconds} sec"
+
+#: src/i18n/en/core.ts:52
+msgctxt "renderer.progress.done"
+msgid "All done"
+msgstr "Klaar"
+
+#: src/i18n/en/core.ts:55
+msgctxt "simulation.slow.title"
+msgid "Physics engine running slow"
+msgstr "De fysica-engine is traag"
+
+#: src/i18n/en/core.ts:56
+msgctxt "simulation.slow.message"
+msgid "The physic has been disabled."
+msgstr "De fysica is uitgeschakeld."
+
+#: src/i18n/en/core.ts:59
+msgctxt "node.expand.title"
+msgid "Expand node"
+msgstr "Knoop uitvouwen"
+
+#: src/i18n/en/core.ts:60
+msgctxt "node.collapse.title"
+msgid "Collapse nodes"
+msgstr "Knopen samenvouwen"
+
+#: src/i18n/en/core.ts:61
+msgctxt "node.defaultLabel"
+msgid "New node"
+msgstr "Nieuwe knoop"
+
+#: src/i18n/en/core.ts:64
+msgctxt "groupOutline.drag.title"
+msgid "drag to move the group"
+msgstr "sleep om de groep te verplaatsen"
+
+#: src/i18n/en/core.ts:65
+msgctxt "groupOutline.close.title"
+msgid "Fold back into the group"
+msgstr "Weer samenvouwen in de groep"
+
+#. Preserve placeholders: {count}, {pivot}
+#: src/i18n/en/core.ts:68
+msgctxt "pivotBadge.title"
+msgid "~{count} · {pivot}"
+msgstr "~{count} · {pivot}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/core.ts:69
+msgctxt "pivotBadge.summary.declared"
+msgid "~{total} across {count} pivot"
+msgid_plural "~{total} across {count} pivots"
+msgstr[0] "~{total} via {count} pivot"
+msgstr[1] "~{total} via {count} pivots"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:70
+msgctxt "pivotBadge.summary.applies"
+msgid "{count} pivot applies"
+msgid_plural "{count} pivots apply"
+msgstr[0] "{count} pivot beschikbaar"
+msgstr[1] "{count} pivots beschikbaar"
+
+#: src/i18n/en/core.ts:73
+msgctxt "noteCard.surfaceToggle.title"
+msgid "Toggle terminal look"
+msgstr "Terminalweergave wisselen"
+
+#: src/i18n/en/core.ts:74
+msgctxt "noteCard.edit.title"
+msgid "Edit the note"
+msgstr "De notitie bewerken"
+
+#: src/i18n/en/core.ts:75
+msgctxt "noteCard.save.title"
+msgid "Save changes"
+msgstr "Wijzigingen opslaan"
+
+#: src/i18n/en/core.ts:76
+msgctxt "noteCard.remove.title"
+msgid "Remove the note"
+msgstr "De notitie verwijderen"
+
+#: src/i18n/en/core.ts:77
+msgctxt "noteCard.link.search.title"
+msgid "Search for a note"
+msgstr "Een notitie zoeken"
+
+#: src/i18n/en/core.ts:78
+msgctxt "noteCard.link.pickTitle"
+msgid "Select a node to link to this note"
+msgstr "Selecteer een knoop om aan deze notitie te koppelen"
+
+#: src/i18n/en/core.ts:79
+msgctxt "noteCard.link.empty"
+msgid "Link this note to a node"
+msgstr "Deze notitie aan een knoop koppelen"
+
+#. Preserve placeholders: {id}
+#: src/i18n/en/core.ts:80
+msgctxt "noteCard.link.missing"
+msgid "Missing node: {id}"
+msgstr "Ontbrekende knoop: {id}"
+
+#: src/i18n/en/core.ts:81
+msgctxt "noteCard.reference.unresolved.title"
+msgid "Could not resolve node"
+msgstr "Knoop kon niet worden gevonden"
+
+#: src/i18n/en/core.ts:84
+msgctxt "minimap.expand.title"
+msgid "Show the minimap"
+msgstr "Minikaart tonen"
+
+#: src/i18n/en/core.ts:85
+msgctxt "minimap.collapse.title"
+msgid "Collapse the minimap"
+msgstr "Minikaart inklappen"

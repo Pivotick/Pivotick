@@ -1,0 +1,4417 @@
+msgid ""
+msgstr "Project-Id-Version: Pivotick\nReport-Msgid-Bugs-To: https://github.com/Pivotick/Pivotick/issues\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nLanguage: ar\nPlural-Forms: nplurals=6; plural=(n == 0 ? 0 : n == 1 ? 1 : n == 2 ? 2 : n % 100 >= 3 && n % 100 <= 10 ? 3 : n % 100 >= 11 && n % 100 <= 99 ? 4 : 5);\n"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/common.ts:5
+msgctxt "count.nodes"
+msgid "{count} node"
+msgid_plural "{count} nodes"
+msgstr[0] "{count} عقدة"
+msgstr[1] "{count} عقدة"
+msgstr[2] "{count} عقدتان"
+msgstr[3] "{count} عقد"
+msgstr[4] "{count} عقدة"
+msgstr[5] "{count} عقدة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/common.ts:6
+msgctxt "count.edges"
+msgid "{count} edge"
+msgid_plural "{count} edges"
+msgstr[0] "{count} حافة"
+msgstr[1] "{count} حافة"
+msgstr[2] "{count} حافتان"
+msgstr[3] "{count} حواف"
+msgstr[4] "{count} حافة"
+msgstr[5] "{count} حافة"
+
+#: src/i18n/en/common.ts:9
+msgctxt "note.defaultContent"
+msgid "This is not a note."
+msgstr "هذه ليست ملاحظة."
+
+#. Preserve placeholders: {key}
+#: src/i18n/en/common.ts:12
+msgctxt "keys.ctrlCombo"
+msgid "Ctrl+{key}"
+msgstr "Ctrl+{key}"
+
+#: src/i18n/en/common.ts:13
+msgctxt "keys.escape"
+msgid "esc"
+msgstr "Esc"
+
+#: src/i18n/en/shell.ts:9
+msgctxt "asyncContent.error"
+msgid "Content could not be loaded"
+msgstr "تعذر تحميل المحتوى"
+
+#: src/i18n/en/shell.ts:12
+msgctxt "busy.label"
+msgid "Waiting…"
+msgstr "جارٍ الانتظار…"
+
+#: src/i18n/en/shell.ts:15
+msgctxt "confirm.title"
+msgid "Confirm"
+msgstr "تأكيد"
+
+#: src/i18n/en/shell.ts:16
+msgctxt "confirm.submit"
+msgid "Confirm"
+msgstr "تأكيد"
+
+#: src/i18n/en/shell.ts:19
+msgctxt "emptyState.message"
+msgid "Nothing on the canvas yet"
+msgstr "لا يوجد شيء على اللوحة بعد"
+
+#: src/i18n/en/shell.ts:22
+msgctxt "prompt.title"
+msgid "Details"
+msgstr "التفاصيل"
+
+#: src/i18n/en/shell.ts:23
+msgctxt "prompt.submit"
+msgid "Add"
+msgstr "إضافة"
+
+#: src/i18n/en/shell.ts:24
+msgctxt "prompt.cancel"
+msgid "Cancel"
+msgstr "إلغاء"
+
+#: src/i18n/en/shell.ts:25
+msgctxt "prompt.nodeTitle"
+msgid "Node details"
+msgstr "تفاصيل العقدة"
+
+#: src/i18n/en/shell.ts:26
+msgctxt "prompt.edgeTitle"
+msgid "Edge details"
+msgstr "تفاصيل الحافة"
+
+#: src/i18n/en/shell.ts:27
+msgctxt "prompt.edgeLabelTitle"
+msgid "Edge label"
+msgstr "تسمية الحافة"
+
+#: src/i18n/en/shell.ts:28
+msgctxt "prompt.edgeLabelPlaceholder"
+msgid "Label…"
+msgstr "التسمية…"
+
+#: src/i18n/en/shell.ts:31
+msgctxt "history.menu.aria"
+msgid "Graph history"
+msgstr "سجل الرسم البياني"
+
+#: src/i18n/en/shell.ts:32
+msgctxt "history.menu.title"
+msgid "History"
+msgstr "السجل"
+
+#: src/i18n/en/shell.ts:33
+msgctxt "history.menu.undoSide"
+msgid "Undo side"
+msgstr "جهة التراجع"
+
+#: src/i18n/en/shell.ts:34
+msgctxt "history.menu.redoSide"
+msgid "Redo side"
+msgstr "جهة الإعادة"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/shell.ts:35
+msgctxt "history.menu.count"
+msgid "{count} of {limit}"
+msgstr "{count} من {limit}"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/shell.ts:36
+msgctxt "history.menu.countFull"
+msgid "{count} of {limit} · oldest evicted"
+msgstr "{count} من {limit} · أزيل الأقدم"
+
+#: src/i18n/en/shell.ts:37
+msgctxt "history.menu.empty"
+msgid "Nothing has happened yet"
+msgstr "لم يحدث شيء بعد"
+
+#: src/i18n/en/shell.ts:38
+msgctxt "history.menu.nothingAhead"
+msgid "Nothing ahead — nothing has been undone"
+msgstr "لا شيء لاحقًا — لم يتم التراجع عن شيء"
+
+#: src/i18n/en/shell.ts:39
+msgctxt "history.menu.start"
+msgid "The start of the session"
+msgstr "بداية الجلسة"
+
+#: src/i18n/en/shell.ts:40
+msgctxt "history.menu.now"
+msgid "NOW"
+msgstr "الآن"
+
+#. Preserve placeholders: {done}, {undone}
+#: src/i18n/en/shell.ts:41
+msgctxt "history.menu.nowMeta"
+msgid "{undone} undone · {done} done"
+msgstr "{undone} تم التراجع عنها · {done} مكتملة"
+
+#: src/i18n/en/shell.ts:42
+msgctxt "history.menu.jump.title"
+msgid "Scroll back to now"
+msgstr "التمرير إلى الآن"
+
+#. Preserve placeholders: {label}, {ordinal}
+#: src/i18n/en/shell.ts:43
+msgctxt "history.row.pivotRun"
+msgid "{label} #{ordinal}"
+msgstr "{label} #{ordinal}"
+
+#: src/i18n/en/shell.ts:44
+msgctxt "history.row.kept"
+msgid "kept"
+msgstr "محتفظ به"
+
+#: src/i18n/en/shell.ts:45
+msgctxt "history.row.locked"
+msgid "locked"
+msgstr "مقفل"
+
+#: src/i18n/en/shell.ts:46
+msgctxt "history.row.saved"
+msgid "saved"
+msgstr "محفوظ"
+
+#: src/i18n/en/shell.ts:47
+msgctxt "history.row.nothingLeft"
+msgid "Nothing left the canvas"
+msgstr "لم يغادر شيء اللوحة"
+
+#: src/i18n/en/shell.ts:48
+msgctxt "history.foot.idle"
+msgid "Point at a row to travel there."
+msgstr "أشر إلى صف للانتقال إليه."
+
+#. Preserve placeholders: {ahead}, {behind}
+#: src/i18n/en/shell.ts:49
+msgctxt "history.foot.position"
+msgid "{ahead} ahead · {behind} behind"
+msgstr "{ahead} للأمام · {behind} للخلف"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:50
+msgctxt "history.foot.undoesSteps"
+msgid "Undoes {count} step"
+msgid_plural "Undoes {count} steps"
+msgstr[0] "عدد الخطوات التي سيتم التراجع عنها: {count}"
+msgstr[1] "عدد الخطوات التي سيتم التراجع عنها: {count}"
+msgstr[2] "عدد الخطوات التي سيتم التراجع عنها: {count}"
+msgstr[3] "عدد الخطوات التي سيتم التراجع عنها: {count}"
+msgstr[4] "عدد الخطوات التي سيتم التراجع عنها: {count}"
+msgstr[5] "عدد الخطوات التي سيتم التراجع عنها: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:51
+msgctxt "history.foot.redoesSteps"
+msgid "Redoes {count} step"
+msgid_plural "Redoes {count} steps"
+msgstr[0] "عدد الخطوات التي ستتم إعادتها: {count}"
+msgstr[1] "عدد الخطوات التي ستتم إعادتها: {count}"
+msgstr[2] "عدد الخطوات التي ستتم إعادتها: {count}"
+msgstr[3] "عدد الخطوات التي ستتم إعادتها: {count}"
+msgstr[4] "عدد الخطوات التي ستتم إعادتها: {count}"
+msgstr[5] "عدد الخطوات التي ستتم إعادتها: {count}"
+
+#. Preserve placeholders: {acting}, {total}
+#: src/i18n/en/shell.ts:52
+msgctxt "history.foot.undoesSome"
+msgid "Undoes {acting} of {total}"
+msgstr "التراجع عن {acting} من {total}"
+
+#. Preserve placeholders: {acting}, {total}
+#: src/i18n/en/shell.ts:53
+msgctxt "history.foot.redoesSome"
+msgid "Redoes {acting} of {total}"
+msgstr "إعادة {acting} من {total}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:54
+msgctxt "history.foot.keptSaved"
+msgid "{count} saved item kept"
+msgid_plural "{count} saved items kept"
+msgstr[0] "عدد العناصر المحفوظة المحتفظ بها: {count}"
+msgstr[1] "عدد العناصر المحفوظة المحتفظ بها: {count}"
+msgstr[2] "عدد العناصر المحفوظة المحتفظ بها: {count}"
+msgstr[3] "عدد العناصر المحفوظة المحتفظ بها: {count}"
+msgstr[4] "عدد العناصر المحفوظة المحتفظ بها: {count}"
+msgstr[5] "عدد العناصر المحفوظة المحتفظ بها: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:55
+msgctxt "history.foot.alreadyApplied"
+msgid "{count} already applied"
+msgstr "{count} مطبّقة بالفعل"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:56
+msgctxt "history.foot.savedUpstream"
+msgid "{count} item saved upstream"
+msgid_plural "{count} items saved upstream"
+msgstr[0] "عدد العناصر المحفوظة في المصدر: {count}"
+msgstr[1] "عدد العناصر المحفوظة في المصدر: {count}"
+msgstr[2] "عدد العناصر المحفوظة في المصدر: {count}"
+msgstr[3] "عدد العناصر المحفوظة في المصدر: {count}"
+msgstr[4] "عدد العناصر المحفوظة في المصدر: {count}"
+msgstr[5] "عدد العناصر المحفوظة في المصدر: {count}"
+
+#: src/i18n/en/shell.ts:57
+msgctxt "history.foot.nothingToReverse"
+msgid "Nothing to reverse"
+msgstr "لا شيء لعكسه"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:58
+msgctxt "history.delta.nodesAdded"
+msgid "+{count} node"
+msgid_plural "+{count} nodes"
+msgstr[0] "+{count} عقدة"
+msgstr[1] "+{count} عقدة"
+msgstr[2] "+{count} عقدتان"
+msgstr[3] "+{count} عقد"
+msgstr[4] "+{count} عقدة"
+msgstr[5] "+{count} عقدة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:59
+msgctxt "history.delta.nodesRemoved"
+msgid "−{count} node"
+msgid_plural "−{count} nodes"
+msgstr[0] "−{count} عقدة"
+msgstr[1] "−{count} عقدة"
+msgstr[2] "−{count} عقدتان"
+msgstr[3] "−{count} عقد"
+msgstr[4] "−{count} عقدة"
+msgstr[5] "−{count} عقدة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:60
+msgctxt "history.delta.edgesAdded"
+msgid "+{count} edge"
+msgid_plural "+{count} edges"
+msgstr[0] "+{count} حافة"
+msgstr[1] "+{count} حافة"
+msgstr[2] "+{count} حافتان"
+msgstr[3] "+{count} حواف"
+msgstr[4] "+{count} حافة"
+msgstr[5] "+{count} حافة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:61
+msgctxt "history.delta.edgesRemoved"
+msgid "−{count} edge"
+msgid_plural "−{count} edges"
+msgstr[0] "−{count} حافة"
+msgstr[1] "−{count} حافة"
+msgstr[2] "−{count} حافتان"
+msgstr[3] "−{count} حواف"
+msgstr[4] "−{count} حافة"
+msgstr[5] "−{count} حافة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:62
+msgctxt "history.delta.shownNodes"
+msgid "{count} node back in view"
+msgid_plural "{count} nodes back in view"
+msgstr[0] "عدد العقد المعروضة مجددًا: {count}"
+msgstr[1] "عدد العقد المعروضة مجددًا: {count}"
+msgstr[2] "عدد العقد المعروضة مجددًا: {count}"
+msgstr[3] "عدد العقد المعروضة مجددًا: {count}"
+msgstr[4] "عدد العقد المعروضة مجددًا: {count}"
+msgstr[5] "عدد العقد المعروضة مجددًا: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:63
+msgctxt "history.delta.shown"
+msgid "{count} back in view"
+msgstr "{count} معروضة مجددًا"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:64
+msgctxt "history.delta.hiddenNodes"
+msgid "{count} node hidden"
+msgid_plural "{count} nodes hidden"
+msgstr[0] "عدد العقد المخفية: {count}"
+msgstr[1] "عدد العقد المخفية: {count}"
+msgstr[2] "عدد العقد المخفية: {count}"
+msgstr[3] "عدد العقد المخفية: {count}"
+msgstr[4] "عدد العقد المخفية: {count}"
+msgstr[5] "عدد العقد المخفية: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:65
+msgctxt "history.delta.hidden"
+msgid "{count} hidden"
+msgstr "{count} مخفية"
+
+#: src/i18n/en/shell.ts:66
+msgctxt "history.delta.groups"
+msgid "groups change"
+msgstr "تتغير المجموعات"
+
+#: src/i18n/en/shell.ts:67
+msgctxt "history.delta.none"
+msgid "nothing changes"
+msgstr "لا شيء يتغير"
+
+#: src/i18n/en/shell.ts:68
+msgctxt "history.time.now"
+msgid "now"
+msgstr "الآن"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:69
+msgctxt "history.time.minutes"
+msgid "{count}m"
+msgstr "{count} د"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:70
+msgctxt "history.time.hours"
+msgid "{count}h"
+msgstr "{count} س"
+
+#. Preserve placeholders: {hours}, {minutes}
+#: src/i18n/en/shell.ts:71
+msgctxt "history.time.hoursMinutes"
+msgid "{hours}h {minutes}m"
+msgstr "{hours} س {minutes} د"
+
+#: src/i18n/en/shell.ts:74
+msgctxt "jsonViewer.copy"
+msgid "Copy JSON"
+msgstr "نسخ JSON"
+
+#: src/i18n/en/shell.ts:75
+msgctxt "jsonViewer.copied"
+msgid "Copied!"
+msgstr "تم النسخ!"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:76
+msgctxt "jsonViewer.items"
+msgid "{count} item"
+msgid_plural "{count} items"
+msgstr[0] "{count} عنصر"
+msgstr[1] "{count} عنصر"
+msgstr[2] "{count} عنصران"
+msgstr[3] "{count} عناصر"
+msgstr[4] "{count} عنصرًا"
+msgstr[5] "{count} عنصر"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:77
+msgctxt "jsonViewer.properties"
+msgid "{count} property"
+msgid_plural "{count} properties"
+msgstr[0] "{count} خاصية"
+msgstr[1] "{count} خاصية"
+msgstr[2] "{count} خاصيتان"
+msgstr[3] "{count} خصائص"
+msgstr[4] "{count} خاصية"
+msgstr[5] "{count} خاصية"
+
+#: src/i18n/en/shell.ts:80
+msgctxt "modal.ok"
+msgid "Ok"
+msgstr "موافق"
+
+#: src/i18n/en/shell.ts:81
+msgctxt "modal.close.aria"
+msgid "Close"
+msgstr "إغلاق"
+
+#: src/i18n/en/shell.ts:82
+msgctxt "modal.editNode.heading"
+msgid "Editing node:"
+msgstr "تعديل العقدة:"
+
+#: src/i18n/en/shell.ts:83
+msgctxt "modal.editNode.submit"
+msgid "Edit Node"
+msgstr "تعديل العقدة"
+
+#: src/i18n/en/shell.ts:84
+msgctxt "modal.editEdge.heading"
+msgid "Editing edge:"
+msgstr "تعديل الحافة:"
+
+#: src/i18n/en/shell.ts:85
+msgctxt "modal.editEdge.submit"
+msgid "Edit Edge"
+msgstr "تعديل الحافة"
+
+#. Preserve placeholders: {from}, {to}
+#: src/i18n/en/shell.ts:86
+msgctxt "modal.editEdge.endpoints"
+msgid "{from} → {to}"
+msgstr "{from} → {to}"
+
+#: src/i18n/en/shell.ts:87
+msgctxt "modal.editEdge.labelField"
+msgid "Label"
+msgstr "التسمية"
+
+#: src/i18n/en/shell.ts:88
+msgctxt "modal.inspect.properties"
+msgid "Properties"
+msgstr "الخصائص"
+
+#: src/i18n/en/shell.ts:89
+msgctxt "modal.inspect.json"
+msgid "JSON"
+msgstr "JSON"
+
+#: src/i18n/en/shell.ts:92
+msgctxt "navigation.fit"
+msgid "Fit and center"
+msgstr "ملاءمة وتوسيط"
+
+#: src/i18n/en/shell.ts:93
+msgctxt "navigation.zoomIn"
+msgid "Zoom In"
+msgstr "تكبير"
+
+#: src/i18n/en/shell.ts:94
+msgctxt "navigation.zoomOut"
+msgid "Zoom Out"
+msgstr "تصغير"
+
+#: src/i18n/en/shell.ts:95
+msgctxt "navigation.fullscreen"
+msgid "Toggle Fullscreen"
+msgstr "تبديل ملء الشاشة"
+
+#: src/i18n/en/shell.ts:98
+msgctxt "notification.dismiss.aria"
+msgid "Dismiss"
+msgstr "تجاهل"
+
+#: src/i18n/en/shell.ts:101
+msgctxt "rail.select"
+msgid "Select"
+msgstr "تحديد"
+
+#: src/i18n/en/shell.ts:102
+msgctxt "rail.create"
+msgid "Create"
+msgstr "إنشاء"
+
+#: src/i18n/en/shell.ts:103
+msgctxt "rail.view"
+msgid "View"
+msgstr "عرض"
+
+#: src/i18n/en/shell.ts:104
+msgctxt "rail.physics"
+msgid "Physics"
+msgstr "الفيزياء"
+
+#: src/i18n/en/shell.ts:105
+msgctxt "rail.simplify"
+msgid "Simplify"
+msgstr "تبسيط"
+
+#: src/i18n/en/shell.ts:106
+msgctxt "rail.lasso"
+msgid "Lasso"
+msgstr "التحديد الحر"
+
+#: src/i18n/en/shell.ts:107
+msgctxt "rail.edge"
+msgid "Edge"
+msgstr "حافة"
+
+#. Preserve placeholders: {label}, {shortcut}
+#: src/i18n/en/shell.ts:108
+msgctxt "rail.button.title"
+msgid "{label} ({shortcut})"
+msgstr "{label} ({shortcut})"
+
+#. Preserve placeholders: {folded}, {groups}
+#: src/i18n/en/shell.ts:109
+msgctxt "rail.simplify.summary"
+msgid "Simplify: {groups}, {folded}"
+msgstr "تبسيط: {groups}، {folded}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:110
+msgctxt "rail.simplify.groups"
+msgid "{count} group"
+msgid_plural "{count} groups"
+msgstr[0] "{count} مجموعة"
+msgstr[1] "{count} مجموعة"
+msgstr[2] "{count} مجموعتان"
+msgstr[3] "{count} مجموعات"
+msgstr[4] "{count} مجموعة"
+msgstr[5] "{count} مجموعة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:111
+msgctxt "rail.simplify.folded"
+msgid "{count} node folded"
+msgid_plural "{count} nodes folded"
+msgstr[0] "عدد العقد المطوية: {count}"
+msgstr[1] "عدد العقد المطوية: {count}"
+msgstr[2] "عدد العقد المطوية: {count}"
+msgstr[3] "عدد العقد المطوية: {count}"
+msgstr[4] "عدد العقد المطوية: {count}"
+msgstr[5] "عدد العقد المطوية: {count}"
+
+#: src/i18n/en/shell.ts:114
+msgctxt "slidePanel.empty"
+msgid "- empty panel -"
+msgstr "- لوحة فارغة -"
+
+#: src/i18n/en/shell.ts:117
+msgctxt "search.placeholder"
+msgid "Search"
+msgstr "بحث"
+
+#: src/i18n/en/shell.ts:118
+msgctxt "search.hint.navigate"
+msgid "to navigate"
+msgstr "للتنقل"
+
+#: src/i18n/en/shell.ts:119
+msgctxt "search.hint.select"
+msgid "to select"
+msgstr "للتحديد"
+
+#: src/i18n/en/shell.ts:120
+msgctxt "search.hint.showAll"
+msgid "to show all"
+msgstr "لإظهار الكل"
+
+#: src/i18n/en/shell.ts:121
+msgctxt "search.hint.close"
+msgid "to close"
+msgstr "للإغلاق"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/shell.ts:122
+msgctxt "search.result.inGroup"
+msgid "in {group}"
+msgstr "في {group}"
+
+#: src/i18n/en/shell.ts:123
+msgctxt "search.summary.none"
+msgid "No results found"
+msgstr "لم يتم العثور على نتائج"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/shell.ts:124
+msgctxt "search.summary.top"
+msgid "Showing top {shown} of {count} results"
+msgstr "عرض أول {shown} من {count} نتيجة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:125
+msgctxt "search.summary.all"
+msgid "{count} result"
+msgid_plural "{count} results"
+msgstr[0] "{count} نتيجة"
+msgstr[1] "{count} نتيجة"
+msgstr[2] "{count} نتيجتان"
+msgstr[3] "{count} نتائج"
+msgstr[4] "{count} نتيجة"
+msgstr[5] "{count} نتيجة"
+
+#: src/i18n/en/shell.ts:126
+msgctxt "search.showAll"
+msgid "Show all on the canvas"
+msgstr "إظهار الكل على اللوحة"
+
+#: src/i18n/en/shell.ts:129
+msgctxt "toolPanel.select"
+msgid "Select"
+msgstr "تحديد"
+
+#: src/i18n/en/shell.ts:130
+msgctxt "toolPanel.create"
+msgid "Create"
+msgstr "إنشاء"
+
+#: src/i18n/en/shell.ts:131
+msgctxt "toolPanel.pointer"
+msgid "Pointer"
+msgstr "المؤشر"
+
+#: src/i18n/en/shell.ts:132
+msgctxt "toolPanel.lasso"
+msgid "Lasso"
+msgstr "التحديد الحر"
+
+#: src/i18n/en/shell.ts:133
+msgctxt "toolPanel.pathSelect"
+msgid "Path select"
+msgstr "تحديد المسار"
+
+#: src/i18n/en/shell.ts:134
+msgctxt "toolPanel.invertSelection"
+msgid "Invert selection"
+msgstr "عكس التحديد"
+
+#: src/i18n/en/shell.ts:135
+msgctxt "toolPanel.addNode"
+msgid "Add node"
+msgstr "إضافة عقدة"
+
+#: src/i18n/en/shell.ts:136
+msgctxt "toolPanel.addEdge"
+msgid "Add edge"
+msgstr "إضافة حافة"
+
+#: src/i18n/en/shell.ts:137
+msgctxt "toolPanel.addNote"
+msgid "Add note"
+msgstr "إضافة ملاحظة"
+
+#: src/i18n/en/shell.ts:138
+msgctxt "toolPanel.editNode"
+msgid "Edit node"
+msgstr "تعديل العقدة"
+
+#: src/i18n/en/shell.ts:139
+msgctxt "toolPanel.soon"
+msgid "SOON"
+msgstr "قريبًا"
+
+#. Preserve placeholders: {tool}
+#: src/i18n/en/shell.ts:140
+msgctxt "toolPanel.soon.title"
+msgid "{tool} — coming soon"
+msgstr "{tool} — قريبًا"
+
+#: src/i18n/en/shell.ts:141
+msgctxt "toolPanel.resize.aria"
+msgid "Resize the tool panel"
+msgstr "تغيير حجم لوحة الأدوات"
+
+#: src/i18n/en/shell.ts:144
+msgctxt "topBar.search"
+msgid "Search"
+msgstr "بحث"
+
+#: src/i18n/en/shell.ts:145
+msgctxt "topBar.search.aria"
+msgid "Search for a node"
+msgstr "البحث عن عقدة"
+
+#: src/i18n/en/shell.ts:146
+msgctxt "topBar.filter"
+msgid "Filter Graph"
+msgstr "تصفية الرسم البياني"
+
+#: src/i18n/en/shell.ts:147
+msgctxt "topBar.filter.aria"
+msgid "Filter the graph"
+msgstr "تصفية الرسم البياني"
+
+#: src/i18n/en/shell.ts:148
+msgctxt "topBar.filter.panelTitle"
+msgid "Graph Filters"
+msgstr "مرشحات الرسم البياني"
+
+#: src/i18n/en/shell.ts:149
+msgctxt "topBar.notes"
+msgid "Notes"
+msgstr "الملاحظات"
+
+#: src/i18n/en/shell.ts:150
+msgctxt "topBar.undo"
+msgid "Undo"
+msgstr "تراجع"
+
+#. Preserve placeholders: {shortcut}
+#: src/i18n/en/shell.ts:151
+msgctxt "topBar.undo.title"
+msgid "Undo ({shortcut})"
+msgstr "تراجع ({shortcut})"
+
+#. Preserve placeholders: {entry}, {shortcut}
+#: src/i18n/en/shell.ts:152
+msgctxt "topBar.undo.titleNamed"
+msgid "Undo — {entry} ({shortcut})"
+msgstr "تراجع — {entry} ({shortcut})"
+
+#. Preserve placeholders: {entry}
+#: src/i18n/en/shell.ts:153
+msgctxt "topBar.undo.ariaNamed"
+msgid "Undo {entry}"
+msgstr "التراجع عن {entry}"
+
+#: src/i18n/en/shell.ts:154
+msgctxt "topBar.redo"
+msgid "Redo"
+msgstr "إعادة"
+
+#. Preserve placeholders: {shortcut}
+#: src/i18n/en/shell.ts:155
+msgctxt "topBar.redo.title"
+msgid "Redo ({shortcut})"
+msgstr "إعادة ({shortcut})"
+
+#. Preserve placeholders: {entry}, {shortcut}
+#: src/i18n/en/shell.ts:156
+msgctxt "topBar.redo.titleNamed"
+msgid "Redo — {entry} ({shortcut})"
+msgstr "إعادة — {entry} ({shortcut})"
+
+#. Preserve placeholders: {entry}
+#: src/i18n/en/shell.ts:157
+msgctxt "topBar.redo.ariaNamed"
+msgid "Redo {entry}"
+msgstr "إعادة {entry}"
+
+#: src/i18n/en/shell.ts:158
+msgctxt "topBar.undoHistory.aria"
+msgid "Undo history"
+msgstr "سجل التراجع"
+
+#: src/i18n/en/shell.ts:159
+msgctxt "topBar.redoHistory.aria"
+msgid "Redo history"
+msgstr "سجل الإعادة"
+
+#. Preserve placeholders: {action}
+#: src/i18n/en/shell.ts:160
+msgctxt "topBar.action.more.aria"
+msgid "More: {action}"
+msgstr "المزيد: {action}"
+
+#: src/i18n/en/shell.ts:161
+msgctxt "topBar.promptSubmit"
+msgid "OK"
+msgstr "موافق"
+
+#: src/i18n/en/contextMenu.ts:6
+msgctxt "contextMenu.selectNeighbors"
+msgid "Select Neighbors"
+msgstr "تحديد الجيران"
+
+#: src/i18n/en/contextMenu.ts:7
+msgctxt "contextMenu.ungroup"
+msgid "Ungroup"
+msgstr "فك التجميع"
+
+#: src/i18n/en/contextMenu.ts:10
+msgctxt "contextMenu.node.pin"
+msgid "Pin Node"
+msgstr "تثبيت العقدة"
+
+#: src/i18n/en/contextMenu.ts:11
+msgctxt "contextMenu.node.unpin"
+msgid "Unpin Node"
+msgstr "إلغاء تثبيت العقدة"
+
+#: src/i18n/en/contextMenu.ts:12
+msgctxt "contextMenu.node.focus"
+msgid "Focus Node"
+msgstr "التركيز على العقدة"
+
+#: src/i18n/en/contextMenu.ts:13
+msgctxt "contextMenu.node.hide"
+msgid "Hide Node"
+msgstr "إخفاء العقدة"
+
+#: src/i18n/en/contextMenu.ts:14
+msgctxt "contextMenu.node.viewImage"
+msgid "View Image"
+msgstr "عرض الصورة"
+
+#: src/i18n/en/contextMenu.ts:15
+msgctxt "contextMenu.node.hideChildren"
+msgid "Hide Children"
+msgstr "إخفاء العقد الفرعية"
+
+#: src/i18n/en/contextMenu.ts:16
+msgctxt "contextMenu.node.connect"
+msgid "Connect to..."
+msgstr "ربط بـ…"
+
+#: src/i18n/en/contextMenu.ts:17
+msgctxt "contextMenu.node.connect.picker"
+msgid "Select the target node to link with"
+msgstr "حدد العقدة الهدف للربط بها"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/contextMenu.ts:18
+msgctxt "contextMenu.node.connect.pickerNode"
+msgid "\"{node}\""
+msgstr "«{node}»"
+
+#: src/i18n/en/contextMenu.ts:19
+msgctxt "contextMenu.node.expand"
+msgid "Expand Node"
+msgstr "توسيع العقدة"
+
+#: src/i18n/en/contextMenu.ts:20
+msgctxt "contextMenu.node.inspect"
+msgid "Inspect Properties"
+msgstr "فحص الخصائص"
+
+#: src/i18n/en/contextMenu.ts:21
+msgctxt "contextMenu.node.delete"
+msgid "Delete Node"
+msgstr "حذف العقدة"
+
+#: src/i18n/en/contextMenu.ts:24
+msgctxt "contextMenu.group.pin"
+msgid "Pin Group"
+msgstr "تثبيت المجموعة"
+
+#: src/i18n/en/contextMenu.ts:25
+msgctxt "contextMenu.group.unpin"
+msgid "Unpin Group"
+msgstr "إلغاء تثبيت المجموعة"
+
+#: src/i18n/en/contextMenu.ts:26
+msgctxt "contextMenu.group.focus"
+msgid "Focus Group"
+msgstr "التركيز على المجموعة"
+
+#: src/i18n/en/contextMenu.ts:27
+msgctxt "contextMenu.group.selectNeighbors.title"
+msgid "Select the nodes this group links to"
+msgstr "تحديد العقد المرتبطة بهذه المجموعة"
+
+#: src/i18n/en/contextMenu.ts:28
+msgctxt "contextMenu.group.open"
+msgid "Open group"
+msgstr "فتح المجموعة"
+
+#: src/i18n/en/contextMenu.ts:29
+msgctxt "contextMenu.group.open.title"
+msgid "Put the members back on the canvas"
+msgstr "إعادة الأعضاء إلى اللوحة"
+
+#: src/i18n/en/contextMenu.ts:30
+msgctxt "contextMenu.group.selectMembers"
+msgid "Select members"
+msgstr "تحديد الأعضاء"
+
+#: src/i18n/en/contextMenu.ts:31
+msgctxt "contextMenu.group.selectMembers.title"
+msgid "Select the nodes in this group"
+msgstr "تحديد العقد في هذه المجموعة"
+
+#: src/i18n/en/contextMenu.ts:32
+msgctxt "contextMenu.group.viewInTable"
+msgid "View members in table"
+msgstr "عرض الأعضاء في الجدول"
+
+#: src/i18n/en/contextMenu.ts:33
+msgctxt "contextMenu.group.viewInTable.title"
+msgid "List the members in the data dock, to filter and search them"
+msgstr "سرد الأعضاء في لوحة البيانات لتصفيتهم والبحث فيهم"
+
+#: src/i18n/en/contextMenu.ts:34
+msgctxt "contextMenu.group.rename"
+msgid "Rename group"
+msgstr "إعادة تسمية المجموعة"
+
+#: src/i18n/en/contextMenu.ts:35
+msgctxt "contextMenu.group.rename.title"
+msgid "Give this group a title"
+msgstr "إعطاء هذه المجموعة عنوانًا"
+
+#: src/i18n/en/contextMenu.ts:36
+msgctxt "contextMenu.group.ungroup.title"
+msgid "Draw the members as they were before this group"
+msgstr "رسم الأعضاء كما كانوا قبل هذه المجموعة"
+
+#: src/i18n/en/contextMenu.ts:37
+msgctxt "contextMenu.group.deleteMembers"
+msgid "Delete members"
+msgstr "حذف الأعضاء"
+
+#: src/i18n/en/contextMenu.ts:38
+msgctxt "contextMenu.group.deleteMembers.title"
+msgid "Delete every node in this group"
+msgstr "حذف كل عقدة في هذه المجموعة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:41
+msgctxt "contextMenu.selection.count"
+msgid "{count} selected"
+msgstr "{count} محددة"
+
+#: src/i18n/en/contextMenu.ts:42
+msgctxt "contextMenu.selection.pin"
+msgid "Pin Selected"
+msgstr "تثبيت المحدد"
+
+#: src/i18n/en/contextMenu.ts:43
+msgctxt "contextMenu.selection.unpin"
+msgid "Unpin Selected"
+msgstr "إلغاء تثبيت المحدد"
+
+#: src/i18n/en/contextMenu.ts:44
+msgctxt "contextMenu.selection.hide"
+msgid "Hide Selected"
+msgstr "إخفاء المحدد"
+
+#: src/i18n/en/contextMenu.ts:45
+msgctxt "contextMenu.selection.selectNeighbors.title"
+msgid "Select the nodes linked to the selection"
+msgstr "تحديد العقد المرتبطة بالتحديد"
+
+#: src/i18n/en/contextMenu.ts:46
+msgctxt "contextMenu.selection.group"
+msgid "Group selected nodes"
+msgstr "تجميع العقد المحددة"
+
+#: src/i18n/en/contextMenu.ts:47
+msgctxt "contextMenu.selection.group.title"
+msgid "Fold the selection into one group with a title"
+msgstr "طي التحديد في مجموعة واحدة بعنوان"
+
+#: src/i18n/en/contextMenu.ts:48
+msgctxt "contextMenu.selection.ungroup.title"
+msgid "Draw the members of these hand-made groups as they were"
+msgstr "رسم أعضاء هذه المجموعات اليدوية كما كانوا"
+
+#: src/i18n/en/contextMenu.ts:49
+msgctxt "contextMenu.selection.delete"
+msgid "Delete Selected"
+msgstr "حذف المحدد"
+
+#: src/i18n/en/contextMenu.ts:50
+msgctxt "contextMenu.selection.delete.title"
+msgid "Delete every selected node"
+msgstr "حذف كل عقدة محددة"
+
+#: src/i18n/en/contextMenu.ts:53
+msgctxt "contextMenu.membership.pullOut"
+msgid "Pull out of group"
+msgstr "إخراج من المجموعة"
+
+#: src/i18n/en/contextMenu.ts:54
+msgctxt "contextMenu.membership.pullOut.title"
+msgid "Keep these nodes out of their groups"
+msgstr "إبقاء هذه العقد خارج مجموعاتها"
+
+#: src/i18n/en/contextMenu.ts:55
+msgctxt "contextMenu.membership.putBack"
+msgid "Put back in group"
+msgstr "إعادة إلى المجموعة"
+
+#: src/i18n/en/contextMenu.ts:56
+msgctxt "contextMenu.membership.putBack.title"
+msgid "Let these nodes be grouped again"
+msgstr "السماح بتجميع هذه العقد مجددًا"
+
+#: src/i18n/en/contextMenu.ts:59
+msgctxt "contextMenu.edge.edit"
+msgid "Edit Edge"
+msgstr "تعديل الحافة"
+
+#: src/i18n/en/contextMenu.ts:60
+msgctxt "contextMenu.edge.delete"
+msgid "Delete Edge"
+msgstr "حذف الحافة"
+
+#: src/i18n/en/contextMenu.ts:63
+msgctxt "contextMenu.note.hide"
+msgid "Hide Note"
+msgstr "إخفاء الملاحظة"
+
+#: src/i18n/en/contextMenu.ts:64
+msgctxt "contextMenu.note.remove"
+msgid "Remove Note"
+msgstr "إزالة الملاحظة"
+
+#: src/i18n/en/contextMenu.ts:67
+msgctxt "contextMenu.canvas.pinAll"
+msgid "Pin All"
+msgstr "تثبيت الكل"
+
+#: src/i18n/en/contextMenu.ts:68
+msgctxt "contextMenu.canvas.unpinAll"
+msgid "Unpin All"
+msgstr "إلغاء تثبيت الكل"
+
+#: src/i18n/en/contextMenu.ts:69
+msgctxt "contextMenu.canvas.addNode"
+msgid "Add Node Here"
+msgstr "إضافة عقدة هنا"
+
+#: src/i18n/en/contextMenu.ts:70
+msgctxt "contextMenu.canvas.addNote"
+msgid "Add Note"
+msgstr "إضافة ملاحظة"
+
+#: src/i18n/en/contextMenu.ts:71
+msgctxt "contextMenu.canvas.releasePinned"
+msgid "Release pinned nodes"
+msgstr "تحرير العقد المثبتة"
+
+#: src/i18n/en/contextMenu.ts:72
+msgctxt "contextMenu.canvas.releasePinned.title"
+msgid "Unpin every pinned node so the layout can move them again"
+msgstr "إلغاء تثبيت كل العقد المثبتة لتتمكن خوارزمية التخطيط من تحريكها مجددًا"
+
+#: src/i18n/en/contextMenu.ts:75
+msgctxt "contextMenu.pivot"
+msgid "Pivot"
+msgstr "استكشاف"
+
+#: src/i18n/en/contextMenu.ts:76
+msgctxt "contextMenu.pivot.openPanel"
+msgid "Open pivot panel…"
+msgstr "فتح لوحة الاستكشاف…"
+
+#: src/i18n/en/contextMenu.ts:77
+msgctxt "contextMenu.pivot.openPanel.title"
+msgid "Read the counts, narrow, then run"
+msgstr "اقرأ الأعداد، ثم ضيّق النتائج وشغّل"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:78
+msgctxt "contextMenu.pivot.peek"
+msgid "~{count}"
+msgstr "~{count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:79
+msgctxt "contextMenu.pivot.peek.title"
+msgid "About {count} out there"
+msgstr "نحو {count} متاحة في المصدر"
+
+#. Preserve placeholders: {count}, {nodes}
+#: src/i18n/en/contextMenu.ts:80
+msgctxt "contextMenu.pivot.peek.titleAcross"
+msgid "About {count} across {nodes}"
+msgstr "نحو {count} عبر {nodes}"
+
+#: src/i18n/en/contextMenu.ts:81
+msgctxt "contextMenu.pivot.peek.failed.title"
+msgid "This pivot could not say what is out there"
+msgstr "تعذر على هذا الاستكشاف تحديد ما هو متاح"
+
+#: src/i18n/en/sidebar.ts:6
+msgctxt "sidebar.collapse.aria"
+msgid "Collapse sidebar"
+msgstr "طي الشريط الجانبي"
+
+#: src/i18n/en/sidebar.ts:7
+msgctxt "sidebar.expand.aria"
+msgid "Expand sidebar"
+msgstr "توسيع الشريط الجانبي"
+
+#: src/i18n/en/sidebar.ts:8
+msgctxt "sidebar.clearSelection"
+msgid "Clear selection"
+msgstr "مسح التحديد"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:11
+msgctxt "sidebar.header.representedEdges"
+msgid "Stands for {count} edge"
+msgid_plural "Stands for {count} edges"
+msgstr[0] "عدد الحواف الممثلة: {count}"
+msgstr[1] "عدد الحواف الممثلة: {count}"
+msgstr[2] "عدد الحواف الممثلة: {count}"
+msgstr[3] "عدد الحواف الممثلة: {count}"
+msgstr[4] "عدد الحواف الممثلة: {count}"
+msgstr[5] "عدد الحواف الممثلة: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:12
+msgctxt "sidebar.header.nodesSelected"
+msgid "{count} node selected"
+msgid_plural "{count} nodes selected"
+msgstr[0] "عدد العقد المحددة: {count}"
+msgstr[1] "عدد العقد المحددة: {count}"
+msgstr[2] "عدد العقد المحددة: {count}"
+msgstr[3] "عدد العقد المحددة: {count}"
+msgstr[4] "عدد العقد المحددة: {count}"
+msgstr[5] "عدد العقد المحددة: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:13
+msgctxt "sidebar.header.edgesSelected"
+msgid "{count} edge selected"
+msgid_plural "{count} edges selected"
+msgstr[0] "عدد الحواف المحددة: {count}"
+msgstr[1] "عدد الحواف المحددة: {count}"
+msgstr[2] "عدد الحواف المحددة: {count}"
+msgstr[3] "عدد الحواف المحددة: {count}"
+msgstr[4] "عدد الحواف المحددة: {count}"
+msgstr[5] "عدد الحواف المحددة: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:14
+msgctxt "sidebar.header.nodesTotal"
+msgid "Out of {count} total"
+msgstr "من إجمالي {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:15
+msgctxt "sidebar.header.edgesTotal"
+msgid "Out of {count} total"
+msgstr "من إجمالي {count}"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/sidebar.ts:16
+msgctxt "sidebar.header.showing"
+msgid "Showing {nodes} and {edges}"
+msgstr "عرض {nodes} و{edges}"
+
+#: src/i18n/en/sidebar.ts:19
+msgctxt "headerMap.untitled"
+msgid "Could not resolve title"
+msgstr "تعذر تحديد العنوان"
+
+#: src/i18n/en/sidebar.ts:20
+msgctxt "headerMap.nameFallback"
+msgid "Optional name or label"
+msgstr "اسم أو تسمية اختيارية"
+
+#: src/i18n/en/sidebar.ts:21
+msgctxt "headerMap.descriptionFallback"
+msgid "Optional subtitle or description"
+msgstr "عنوان فرعي أو وصف اختياري"
+
+#: src/i18n/en/sidebar.ts:24
+msgctxt "sidebar.bulk.pin"
+msgid "Pin"
+msgstr "تثبيت"
+
+#: src/i18n/en/sidebar.ts:25
+msgctxt "sidebar.bulk.unpin"
+msgid "Unpin"
+msgstr "إلغاء التثبيت"
+
+#: src/i18n/en/sidebar.ts:26
+msgctxt "sidebar.bulk.hide"
+msgid "Hide"
+msgstr "إخفاء"
+
+#: src/i18n/en/sidebar.ts:27
+msgctxt "sidebar.bulk.isolate"
+msgid "Isolate"
+msgstr "عزل"
+
+#: src/i18n/en/sidebar.ts:28
+msgctxt "sidebar.bulk.group"
+msgid "Group"
+msgstr "تجميع"
+
+#: src/i18n/en/sidebar.ts:29
+msgctxt "sidebar.bulk.ungroup"
+msgid "Ungroup"
+msgstr "فك التجميع"
+
+#: src/i18n/en/sidebar.ts:30
+msgctxt "sidebar.bulk.bulkEdit"
+msgid "Bulk edit"
+msgstr "تعديل جماعي"
+
+#: src/i18n/en/sidebar.ts:31
+msgctxt "sidebar.bulk.delete"
+msgid "Delete"
+msgstr "حذف"
+
+#. Preserve placeholders: {action}
+#: src/i18n/en/sidebar.ts:32
+msgctxt "sidebar.bulk.soon.title"
+msgid "{action} — coming soon"
+msgstr "{action} — قريبًا"
+
+#: src/i18n/en/sidebar.ts:35
+msgctxt "sidebar.properties.nodeHeading"
+msgid "Basic Node Properties"
+msgstr "خصائص العقدة الأساسية"
+
+#: src/i18n/en/sidebar.ts:36
+msgctxt "sidebar.properties.edgeHeading"
+msgid "Basic Edge Properties"
+msgstr "خصائص الحافة الأساسية"
+
+#: src/i18n/en/sidebar.ts:37
+msgctxt "sidebar.properties.nodesHeading"
+msgid "Aggregated Node Properties"
+msgstr "خصائص العقد المجمعة"
+
+#: src/i18n/en/sidebar.ts:38
+msgctxt "sidebar.properties.edgesHeading"
+msgid "Aggregated Edge Properties"
+msgstr "خصائص الحواف المجمعة"
+
+#: src/i18n/en/sidebar.ts:39
+msgctxt "sidebar.properties.keep.title"
+msgid "Keep only nodes with this value"
+msgstr "إبقاء العقد التي تحمل هذه القيمة فقط"
+
+#: src/i18n/en/sidebar.ts:40
+msgctxt "sidebar.properties.exclude.title"
+msgid "Exclude nodes with this value"
+msgstr "استبعاد العقد التي تحمل هذه القيمة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:43
+msgctxt "sidebar.facets.unique"
+msgid "{count} unique"
+msgstr "{count} فريدة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:44
+msgctxt "sidebar.facets.values"
+msgid "{count} value"
+msgid_plural "{count} values"
+msgstr[0] "{count} قيمة"
+msgstr[1] "{count} قيمة"
+msgstr[2] "{count} قيمتان"
+msgstr[3] "{count} قيم"
+msgstr[4] "{count} قيمة"
+msgstr[5] "{count} قيمة"
+
+#: src/i18n/en/sidebar.ts:45
+msgctxt "sidebar.facets.shared"
+msgid "shared"
+msgstr "مشتركة"
+
+#: src/i18n/en/sidebar.ts:46
+msgctxt "sidebar.facets.empty"
+msgid "— empty —"
+msgstr "— فارغ —"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:47
+msgctxt "sidebar.facets.allNodes"
+msgid "all {count} node"
+msgid_plural "all {count} nodes"
+msgstr[0] "جميع العقد وعددها {count}"
+msgstr[1] "جميع العقد وعددها {count}"
+msgstr[2] "جميع العقد وعددها {count}"
+msgstr[3] "جميع العقد وعددها {count}"
+msgstr[4] "جميع العقد وعددها {count}"
+msgstr[5] "جميع العقد وعددها {count}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/sidebar.ts:48
+msgctxt "sidebar.facets.someNodes"
+msgid "{count} of {total}"
+msgstr "{count} من {total}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:49
+msgctxt "sidebar.facets.percent"
+msgid "{count}%"
+msgstr "{count}%"
+
+#. Preserve placeholders: {count}, {percent}, {value}
+#: src/i18n/en/sidebar.ts:50
+msgctxt "sidebar.facets.segment.title"
+msgid "{value} — {count} ({percent}%)"
+msgstr "{value} — {count} ({percent}%)"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:51
+msgctxt "sidebar.facets.otherValues"
+msgid "{count} other value"
+msgid_plural "{count} other values"
+msgstr[0] "عدد القيم الأخرى: {count}"
+msgstr[1] "عدد القيم الأخرى: {count}"
+msgstr[2] "عدد القيم الأخرى: {count}"
+msgstr[3] "عدد القيم الأخرى: {count}"
+msgstr[4] "عدد القيم الأخرى: {count}"
+msgstr[5] "عدد القيم الأخرى: {count}"
+
+#. Preserve placeholders: {count}, {percent}, {values}
+#: src/i18n/en/sidebar.ts:52
+msgctxt "sidebar.facets.other.title"
+msgid "{values} — {count} ({percent}%)"
+msgstr "{values} — {count} ({percent}%)"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:53
+msgctxt "sidebar.facets.moreValues"
+msgid "+{count} more value"
+msgid_plural "+{count} more values"
+msgstr[0] "قيم إضافية: +{count}"
+msgstr[1] "قيم إضافية: +{count}"
+msgstr[2] "قيم إضافية: +{count}"
+msgstr[3] "قيم إضافية: +{count}"
+msgstr[4] "قيم إضافية: +{count}"
+msgstr[5] "قيم إضافية: +{count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:54
+msgctxt "sidebar.facets.moreChips"
+msgid "+{count} more"
+msgstr "+{count} أخرى"
+
+#: src/i18n/en/sidebar.ts:55
+msgctxt "sidebar.facets.noRepeats"
+msgid "no repeated values"
+msgstr "لا توجد قيم مكررة"
+
+#: src/i18n/en/sidebar.ts:56
+msgctxt "sidebar.facets.filterHint"
+msgid "Click to keep only · Alt-click to exclude"
+msgstr "انقر للإبقاء فقط · Alt مع النقر للاستبعاد"
+
+#: src/i18n/en/sidebar.ts:59
+msgctxt "propertyList.label"
+msgid "PROPERTIES"
+msgstr "الخصائص"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:60
+msgctxt "propertyList.fields"
+msgid "{count} field"
+msgid_plural "{count} fields"
+msgstr[0] "{count} حقل"
+msgstr[1] "{count} حقل"
+msgstr[2] "{count} حقلان"
+msgstr[3] "{count} حقول"
+msgstr[4] "{count} حقلًا"
+msgstr[5] "{count} حقل"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:61
+msgctxt "propertyList.items"
+msgid "{count} item"
+msgid_plural "{count} items"
+msgstr[0] "{count} عنصر"
+msgstr[1] "{count} عنصر"
+msgstr[2] "{count} عنصران"
+msgstr[3] "{count} عناصر"
+msgstr[4] "{count} عنصرًا"
+msgstr[5] "{count} عنصر"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:62
+msgctxt "propertyList.keys"
+msgid "{count} key"
+msgid_plural "{count} keys"
+msgstr[0] "{count} مفتاح"
+msgstr[1] "{count} مفتاح"
+msgstr[2] "{count} مفتاحان"
+msgstr[3] "{count} مفاتيح"
+msgstr[4] "{count} مفتاحًا"
+msgstr[5] "{count} مفتاح"
+
+#: src/i18n/en/sidebar.ts:63
+msgctxt "propertyList.copy.title"
+msgid "Copy"
+msgstr "نسخ"
+
+#: src/i18n/en/sidebar.ts:66
+msgctxt "sidebar.neighbors.tab.graph"
+msgid "Neighbor Graph"
+msgstr "رسم الجيران"
+
+#: src/i18n/en/sidebar.ts:67
+msgctxt "sidebar.neighbors.tab.stats"
+msgid "Stats"
+msgstr "الإحصاءات"
+
+#: src/i18n/en/sidebar.ts:68
+msgctxt "sidebar.neighbors.tab.list"
+msgid "List"
+msgstr "القائمة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:69
+msgctxt "sidebar.neighbors.connections"
+msgid "{count} connection"
+msgid_plural "{count} connections"
+msgstr[0] "{count} اتصال"
+msgstr[1] "{count} اتصال"
+msgstr[2] "{count} اتصالان"
+msgstr[3] "{count} اتصالات"
+msgstr[4] "{count} اتصالًا"
+msgstr[5] "{count} اتصال"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:70
+msgctxt "sidebar.neighbors.moreNode"
+msgid "{count} more"
+msgstr "{count} أخرى"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:71
+msgctxt "sidebar.neighbors.aggregate.count"
+msgid "+{count}"
+msgstr "+{count}"
+
+#: src/i18n/en/sidebar.ts:72
+msgctxt "sidebar.neighbors.aggregate.group"
+msgid "Group"
+msgstr "تجميع"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:73
+msgctxt "sidebar.neighbors.row.outgoing"
+msgid "Outgoing connection — {node}"
+msgstr "اتصال صادر — {node}"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:74
+msgctxt "sidebar.neighbors.row.incoming"
+msgid "Incoming connection — {node}"
+msgstr "اتصال وارد — {node}"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:75
+msgctxt "sidebar.neighbors.row.undirected"
+msgid "Connection — {node}"
+msgstr "اتصال — {node}"
+
+#: src/i18n/en/sidebar.ts:76
+msgctxt "sidebar.neighbors.stats.degree"
+msgid "Degree"
+msgstr "الدرجة"
+
+#: src/i18n/en/sidebar.ts:77
+msgctxt "sidebar.neighbors.stats.degree.title"
+msgid "Total connections"
+msgstr "إجمالي الاتصالات"
+
+#: src/i18n/en/sidebar.ts:78
+msgctxt "sidebar.neighbors.stats.outgoing.title"
+msgid "Outgoing edges"
+msgstr "الحواف الصادرة"
+
+#: src/i18n/en/sidebar.ts:79
+msgctxt "sidebar.neighbors.stats.incoming.title"
+msgid "Incoming edges"
+msgstr "الحواف الواردة"
+
+#: src/i18n/en/sidebar.ts:80
+msgctxt "sidebar.neighbors.stats.label"
+msgid "Label"
+msgstr "التسمية"
+
+#: src/i18n/en/sidebar.ts:81
+msgctxt "sidebar.neighbors.stats.select.title"
+msgid "Select nodes linked with this label"
+msgstr "تحديد العقد المرتبطة بهذه التسمية"
+
+#: src/i18n/en/sidebar.ts:82
+msgctxt "sidebar.neighbors.stats.exclude.title"
+msgid "Exclude nodes linked with this label"
+msgstr "استبعاد العقد المرتبطة بهذه التسمية"
+
+#: src/i18n/en/sidebar.ts:85
+msgctxt "sidebar.group.open"
+msgid "Open"
+msgstr "فتح"
+
+#: src/i18n/en/sidebar.ts:86
+msgctxt "sidebar.group.cancel"
+msgid "Cancel"
+msgstr "إلغاء"
+
+#: src/i18n/en/sidebar.ts:87
+msgctxt "sidebar.group.close"
+msgid "Close"
+msgstr "إغلاق"
+
+#: src/i18n/en/sidebar.ts:88
+msgctxt "sidebar.group.selectMembers"
+msgid "Select members"
+msgstr "تحديد الأعضاء"
+
+#: src/i18n/en/sidebar.ts:89
+msgctxt "sidebar.group.rename"
+msgid "Rename"
+msgstr "إعادة التسمية"
+
+#: src/i18n/en/sidebar.ts:90
+msgctxt "sidebar.group.ungroup"
+msgid "Ungroup"
+msgstr "فك التجميع"
+
+#: src/i18n/en/sidebar.ts:91
+msgctxt "sidebar.group.ungroup.title"
+msgid "Draw the members as they were before this group"
+msgstr "رسم الأعضاء كما كانوا قبل هذه المجموعة"
+
+#: src/i18n/en/sidebar.ts:92
+msgctxt "sidebar.group.viewInTable"
+msgid "View in table"
+msgstr "عرض في الجدول"
+
+#: src/i18n/en/sidebar.ts:93
+msgctxt "sidebar.group.viewInTable.title"
+msgid "List the members in the data dock, to filter and search them"
+msgstr "سرد الأعضاء في لوحة البيانات لتصفيتهم والبحث فيهم"
+
+#: src/i18n/en/sidebar.ts:94
+msgctxt "sidebar.group.pivot"
+msgid "Pivot ▸"
+msgstr "استكشاف ▸"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:95
+msgctxt "sidebar.group.delete"
+msgid "Delete {count}"
+msgstr "حذف {count}"
+
+#: src/i18n/en/sidebar.ts:96
+msgctxt "sidebar.group.edit"
+msgid "Edit"
+msgstr "تعديل"
+
+#: src/i18n/en/sidebar.ts:97
+msgctxt "sidebar.group.edit.title"
+msgid "A group has no data of its own to edit"
+msgstr "ليس للمجموعة بيانات خاصة بها لتعديلها"
+
+#: src/i18n/en/sidebar.ts:98
+msgctxt "sidebar.group.members"
+msgid "Members"
+msgstr "الأعضاء"
+
+#: src/i18n/en/sidebar.ts:99
+msgctxt "sidebar.group.pullOut"
+msgid "Pull out"
+msgstr "إخراج"
+
+#: src/i18n/en/sidebar.ts:100
+msgctxt "sidebar.group.pullOut.title"
+msgid "Keep this node out of the group"
+msgstr "إبقاء هذه العقدة خارج المجموعة"
+
+#. Preserve placeholders: {rule}
+#: src/i18n/en/sidebar.ts:103
+msgctxt "groupSummary.subtitle"
+msgid "Group · {rule}"
+msgstr "مجموعة · {rule}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/sidebar.ts:104
+msgctxt "groupSummary.match"
+msgid "{count} of {total} match"
+msgstr "{count} من {total} مطابقة"
+
+#. Preserve placeholders: {count}, {query}, {total}
+#: src/i18n/en/sidebar.ts:105
+msgctxt "groupSummary.matchQuery"
+msgid "{count} of {total} match \"{query}\""
+msgstr "{count} من {total} تطابق «{query}»"
+
+#: src/i18n/en/sidebar.ts:106
+msgctxt "groupSummary.members"
+msgid "Members"
+msgstr "الأعضاء"
+
+#: src/i18n/en/sidebar.ts:107
+msgctxt "groupSummary.linkedTo"
+msgid "Linked to"
+msgstr "مرتبط بـ"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:108
+msgctxt "groupSummary.more"
+msgid "{count} more"
+msgstr "{count} أخرى"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/sidebar.ts:111
+msgctxt "groupActions.openAsk"
+msgid "Put {group} on the canvas?"
+msgstr "وضع {group} على اللوحة؟"
+
+#: src/i18n/en/sidebar.ts:112
+msgctxt "groupActions.open"
+msgid "Open"
+msgstr "فتح"
+
+#: src/i18n/en/sidebar.ts:113
+msgctxt "groupActions.titleField.aria"
+msgid "Group title"
+msgstr "عنوان المجموعة"
+
+#: src/i18n/en/sidebar.ts:114
+msgctxt "groupActions.group.heading"
+msgid "Group nodes"
+msgstr "تجميع العقد"
+
+#: src/i18n/en/sidebar.ts:115
+msgctxt "groupActions.group.submit"
+msgid "Group"
+msgstr "تجميع"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:116
+msgctxt "groupActions.group.left"
+msgid "{count} of the selected node stays out: annotated, or an open cluster."
+msgid_plural "{count} of the selected nodes stay out: annotated, or an open cluster."
+msgstr[0] "عدد العقد المحددة التي ستبقى خارج المجموعة لأنها مشروحة أو عناقيد مفتوحة: {count}."
+msgstr[1] "عدد العقد المحددة التي ستبقى خارج المجموعة لأنها مشروحة أو عناقيد مفتوحة: {count}."
+msgstr[2] "عدد العقد المحددة التي ستبقى خارج المجموعة لأنها مشروحة أو عناقيد مفتوحة: {count}."
+msgstr[3] "عدد العقد المحددة التي ستبقى خارج المجموعة لأنها مشروحة أو عناقيد مفتوحة: {count}."
+msgstr[4] "عدد العقد المحددة التي ستبقى خارج المجموعة لأنها مشروحة أو عناقيد مفتوحة: {count}."
+msgstr[5] "عدد العقد المحددة التي ستبقى خارج المجموعة لأنها مشروحة أو عناقيد مفتوحة: {count}."
+
+#: src/i18n/en/sidebar.ts:120
+msgctxt "groupActions.rename.heading"
+msgid "Rename group"
+msgstr "إعادة تسمية المجموعة"
+
+#: src/i18n/en/sidebar.ts:121
+msgctxt "groupActions.rename.submit"
+msgid "Rename"
+msgstr "إعادة التسمية"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/sidebar.ts:122
+msgctxt "groupActions.tableScope"
+msgid "Members of {group}"
+msgstr "أعضاء {group}"
+
+#: src/i18n/en/sidebar.ts:125
+msgctxt "tooltip.pin"
+msgid "Pin Tooltip"
+msgstr "تثبيت التلميح"
+
+#: src/i18n/en/sidebar.ts:126
+msgctxt "tooltip.close"
+msgid "Close Tooltip"
+msgstr "إغلاق التلميح"
+
+#: src/i18n/en/sidebar.ts:127
+msgctxt "tooltip.focus"
+msgid "Focus Element in Graph"
+msgstr "التركيز على العنصر في الرسم البياني"
+
+#: src/i18n/en/sidebar.ts:128
+msgctxt "tooltip.select"
+msgid "Select Element in Graph"
+msgstr "تحديد العنصر في الرسم البياني"
+
+#: src/i18n/en/sidebar.ts:129
+msgctxt "tooltip.image.title"
+msgid "Click to view full size"
+msgstr "انقر للعرض بالحجم الكامل"
+
+#: src/i18n/en/sidebar.ts:130
+msgctxt "tooltip.groupHint"
+msgid "Double-click to open · Select for the member list"
+msgstr "انقر مرتين للفتح · حدد لعرض قائمة الأعضاء"
+
+#: src/i18n/en/sidebar.ts:133
+msgctxt "noteSidebar.empty"
+msgid "No notes yet"
+msgstr "لا توجد ملاحظات بعد"
+
+#: src/i18n/en/sidebar.ts:134
+msgctxt "noteSidebar.untitled"
+msgid "Untitled note"
+msgstr "ملاحظة بلا عنوان"
+
+#: src/i18n/en/sidebar.ts:135
+msgctxt "noteSidebar.hide.title"
+msgid "Hide note"
+msgstr "إخفاء الملاحظة"
+
+#: src/i18n/en/sidebar.ts:136
+msgctxt "noteSidebar.restore.title"
+msgid "Restore hidden note"
+msgstr "استعادة الملاحظة المخفية"
+
+#: src/i18n/en/sidebar.ts:137
+msgctxt "noteSidebar.remove.title"
+msgid "Remove note"
+msgstr "إزالة الملاحظة"
+
+#: src/i18n/en/sidebar.ts:138
+msgctxt "noteSidebar.add"
+msgid "Add Note"
+msgstr "إضافة ملاحظة"
+
+#: src/i18n/en/sidebar.ts:139
+msgctxt "noteSidebar.hideAll"
+msgid "Hide all"
+msgstr "إخفاء الكل"
+
+#: src/i18n/en/sidebar.ts:140
+msgctxt "noteSidebar.hideAll.title"
+msgid "Hide all notes"
+msgstr "إخفاء كل الملاحظات"
+
+#: src/i18n/en/sidebar.ts:141
+msgctxt "noteSidebar.hidden.heading"
+msgid "Hidden notes"
+msgstr "الملاحظات المخفية"
+
+#: src/i18n/en/sidebar.ts:142
+msgctxt "noteSidebar.showAll"
+msgid "Show all notes"
+msgstr "إظهار كل الملاحظات"
+
+#: src/i18n/en/sidebar.ts:143
+msgctxt "noteSidebar.showAll.title"
+msgid "Restore hidden notes"
+msgstr "استعادة الملاحظات المخفية"
+
+#: src/i18n/en/sidebar.ts:146
+msgctxt "nodePreview.imageUnavailable"
+msgid "Image unavailable"
+msgstr "الصورة غير متاحة"
+
+#: src/i18n/en/table.ts:6
+msgctxt "table.tab"
+msgid "Table"
+msgstr "الجدول"
+
+#: src/i18n/en/table.ts:7
+msgctxt "table.view.nodes"
+msgid "Nodes"
+msgstr "العقد"
+
+#: src/i18n/en/table.ts:8
+msgctxt "table.view.edges"
+msgid "Edges"
+msgstr "الحواف"
+
+#: src/i18n/en/table.ts:11
+msgctxt "table.column.label"
+msgid "Label"
+msgstr "التسمية"
+
+#: src/i18n/en/table.ts:12
+msgctxt "table.column.degree"
+msgid "Degree"
+msgstr "الدرجة"
+
+#: src/i18n/en/table.ts:13
+msgctxt "table.column.degreeIn"
+msgid "In"
+msgstr "وارد"
+
+#: src/i18n/en/table.ts:14
+msgctxt "table.column.degreeOut"
+msgid "Out"
+msgstr "صادر"
+
+#: src/i18n/en/table.ts:15
+msgctxt "table.column.visibility"
+msgid "Visibility"
+msgstr "الظهور"
+
+#: src/i18n/en/table.ts:16
+msgctxt "table.column.pinned"
+msgid "Pinned"
+msgstr "مثبت"
+
+#: src/i18n/en/table.ts:17
+msgctxt "table.column.children"
+msgid "Children"
+msgstr "العقد الفرعية"
+
+#: src/i18n/en/table.ts:18
+msgctxt "table.column.cluster"
+msgid "Cluster"
+msgstr "عنقود"
+
+#: src/i18n/en/table.ts:19
+msgctxt "table.column.group"
+msgid "Group"
+msgstr "تجميع"
+
+#: src/i18n/en/table.ts:20
+msgctxt "table.column.source"
+msgid "Source"
+msgstr "المصدر"
+
+#: src/i18n/en/table.ts:21
+msgctxt "table.column.target"
+msgid "Target"
+msgstr "الهدف"
+
+#. Preserve placeholders: {column}
+#: src/i18n/en/table.ts:22
+msgctxt "table.column.sort.title"
+msgid "Sort by {column}"
+msgstr "ترتيب حسب {column}"
+
+#: src/i18n/en/table.ts:25
+msgctxt "table.visibility.visible"
+msgid "visible"
+msgstr "ظاهر"
+
+#: src/i18n/en/table.ts:26
+msgctxt "table.visibility.filtered"
+msgid "filtered"
+msgstr "مصفّى"
+
+#: src/i18n/en/table.ts:27
+msgctxt "table.visibility.excluded"
+msgid "excluded"
+msgstr "مستبعد"
+
+#: src/i18n/en/table.ts:28
+msgctxt "table.visibility.endpoint"
+msgid "endpoint"
+msgstr "نقطة نهاية"
+
+#: src/i18n/en/table.ts:29
+msgctxt "table.visibility.nested"
+msgid "nested"
+msgstr "متداخل"
+
+#: src/i18n/en/table.ts:30
+msgctxt "table.visibility.grouped"
+msgid "grouped"
+msgstr "مجمّع"
+
+#: src/i18n/en/table.ts:33
+msgctxt "table.value.true"
+msgid "true"
+msgstr "صحيح"
+
+#: src/i18n/en/table.ts:34
+msgctxt "table.value.false"
+msgid "false"
+msgstr "خطأ"
+
+#. Preserve placeholders: {column}
+#: src/i18n/en/table.ts:37
+msgctxt "table.filter.title"
+msgid "Narrow the rows by {column}"
+msgstr "تضييق الصفوف حسب {column}"
+
+#: src/i18n/en/table.ts:38
+msgctxt "table.filter.placeholder"
+msgid "Filter rows…"
+msgstr "تصفية الصفوف…"
+
+#: src/i18n/en/table.ts:39
+msgctxt "table.filter.all"
+msgid "All"
+msgstr "الكل"
+
+#: src/i18n/en/table.ts:40
+msgctxt "table.filter.min.placeholder"
+msgid "Min"
+msgstr "الأدنى"
+
+#: src/i18n/en/table.ts:41
+msgctxt "table.filter.max.placeholder"
+msgid "Max"
+msgstr "الأقصى"
+
+#: src/i18n/en/table.ts:44
+msgctxt "table.empty.filtered"
+msgid "No rows match the column filters."
+msgstr "لا توجد صفوف تطابق مرشحات الأعمدة."
+
+#. Preserve placeholders: {scope}
+#: src/i18n/en/table.ts:45
+msgctxt "table.empty.scope"
+msgid "{scope}: none left."
+msgstr "{scope}: لم يتبق شيء."
+
+#: src/i18n/en/table.ts:46
+msgctxt "table.empty.nodes"
+msgid "This graph has no nodes."
+msgstr "لا يحتوي هذا الرسم البياني على عقد."
+
+#: src/i18n/en/table.ts:47
+msgctxt "table.empty.edges"
+msgid "This graph has no edges."
+msgstr "لا يحتوي هذا الرسم البياني على حواف."
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/table.ts:50
+msgctxt "table.summary.someNodes"
+msgid "{shown} of {count} node"
+msgid_plural "{shown} of {count} nodes"
+msgstr[0] "العقد المعروضة: {shown} من {count}"
+msgstr[1] "العقد المعروضة: {shown} من {count}"
+msgstr[2] "العقد المعروضة: {shown} من {count}"
+msgstr[3] "العقد المعروضة: {shown} من {count}"
+msgstr[4] "العقد المعروضة: {shown} من {count}"
+msgstr[5] "العقد المعروضة: {shown} من {count}"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/table.ts:51
+msgctxt "table.summary.someEdges"
+msgid "{shown} of {count} edge"
+msgid_plural "{shown} of {count} edges"
+msgstr[0] "الحواف المعروضة: {shown} من {count}"
+msgstr[1] "الحواف المعروضة: {shown} من {count}"
+msgstr[2] "الحواف المعروضة: {shown} من {count}"
+msgstr[3] "الحواف المعروضة: {shown} من {count}"
+msgstr[4] "الحواف المعروضة: {shown} من {count}"
+msgstr[5] "الحواف المعروضة: {shown} من {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:52
+msgctxt "table.summary.hidden"
+msgid "{count} hidden"
+msgstr "{count} مخفية"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:53
+msgctxt "table.summary.hiddenNodes.title"
+msgid "{count} node hidden on the canvas by this table's column filters"
+msgid_plural "{count} nodes hidden on the canvas by this table's column filters"
+msgstr[0] "عدد العقد المخفية على اللوحة بواسطة مرشحات أعمدة هذا الجدول: {count}"
+msgstr[1] "عدد العقد المخفية على اللوحة بواسطة مرشحات أعمدة هذا الجدول: {count}"
+msgstr[2] "عدد العقد المخفية على اللوحة بواسطة مرشحات أعمدة هذا الجدول: {count}"
+msgstr[3] "عدد العقد المخفية على اللوحة بواسطة مرشحات أعمدة هذا الجدول: {count}"
+msgstr[4] "عدد العقد المخفية على اللوحة بواسطة مرشحات أعمدة هذا الجدول: {count}"
+msgstr[5] "عدد العقد المخفية على اللوحة بواسطة مرشحات أعمدة هذا الجدول: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:57
+msgctxt "table.summary.hiddenEdges.title"
+msgid "{count} relation hidden on the canvas by this table's column filters"
+msgid_plural "{count} relations hidden on the canvas by this table's column filters"
+msgstr[0] "عدد العلاقات المخفية على اللوحة بواسطة مرشحات أعمدة هذا الجدول: {count}"
+msgstr[1] "عدد العلاقات المخفية على اللوحة بواسطة مرشحات أعمدة هذا الجدول: {count}"
+msgstr[2] "عدد العلاقات المخفية على اللوحة بواسطة مرشحات أعمدة هذا الجدول: {count}"
+msgstr[3] "عدد العلاقات المخفية على اللوحة بواسطة مرشحات أعمدة هذا الجدول: {count}"
+msgstr[4] "عدد العلاقات المخفية على اللوحة بواسطة مرشحات أعمدة هذا الجدول: {count}"
+msgstr[5] "عدد العلاقات المخفية على اللوحة بواسطة مرشحات أعمدة هذا الجدول: {count}"
+
+#: src/i18n/en/table.ts:63
+msgctxt "table.selectAll"
+msgid "Select all"
+msgstr "تحديد الكل"
+
+#: src/i18n/en/table.ts:64
+msgctxt "table.selectAll.title"
+msgid "Select every row currently listed"
+msgstr "تحديد كل صف معروض حاليًا"
+
+#. Preserve placeholders: {format}
+#: src/i18n/en/table.ts:65
+msgctxt "table.export.title"
+msgid "Export the rows and columns currently shown as {format}"
+msgstr "تصدير الصفوف والأعمدة المعروضة حاليًا بصيغة {format}"
+
+#: src/i18n/en/table.ts:66
+msgctxt "table.export.blocked"
+msgid "Export blocked"
+msgstr "التصدير محظور"
+
+#: src/i18n/en/table.ts:67
+msgctxt "table.export.blocked.message"
+msgid "This page will not let the file download. Try the example outside its frame."
+msgstr "لا تسمح هذه الصفحة بتنزيل الملف. جرّب المثال خارج الإطار."
+
+#: src/i18n/en/table.ts:68
+msgctxt "table.columns"
+msgid "Columns"
+msgstr "الأعمدة"
+
+#: src/i18n/en/table.ts:69
+msgctxt "table.columns.title"
+msgid "Choose which columns to show"
+msgstr "اختيار الأعمدة المراد عرضها"
+
+#: src/i18n/en/table.ts:70
+msgctxt "table.scope.clear.title"
+msgid "List every node again"
+msgstr "سرد كل العقد مجددًا"
+
+#: src/i18n/en/table.ts:71
+msgctxt "table.nested"
+msgid "Nested nodes"
+msgstr "العقد المتداخلة"
+
+#: src/i18n/en/table.ts:72
+msgctxt "table.nested.title"
+msgid "List the nodes inside clusters alongside the graph's own"
+msgstr "سرد العقد داخل العناقيد إلى جانب عقد الرسم البياني نفسه"
+
+#: src/i18n/en/table.ts:75
+msgctxt "table.apply"
+msgid "Apply to graph"
+msgstr "تطبيق على الرسم البياني"
+
+#: src/i18n/en/table.ts:76
+msgctxt "table.apply.clear"
+msgid "Clear"
+msgstr "مسح"
+
+#: src/i18n/en/table.ts:77
+msgctxt "table.apply.disabled.title"
+msgid "Narrow a column first, then apply it to the graph"
+msgstr "ضيّق أحد الأعمدة أولًا ثم طبّق على الرسم البياني"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:78
+msgctxt "table.apply.nodes.title"
+msgid "Hide the {count} node the column filters leave out"
+msgid_plural "Hide the {count} nodes the column filters leave out"
+msgstr[0] "إخفاء العقد المستبعدة بمرشحات الأعمدة وعددها {count}"
+msgstr[1] "إخفاء العقد المستبعدة بمرشحات الأعمدة وعددها {count}"
+msgstr[2] "إخفاء العقد المستبعدة بمرشحات الأعمدة وعددها {count}"
+msgstr[3] "إخفاء العقد المستبعدة بمرشحات الأعمدة وعددها {count}"
+msgstr[4] "إخفاء العقد المستبعدة بمرشحات الأعمدة وعددها {count}"
+msgstr[5] "إخفاء العقد المستبعدة بمرشحات الأعمدة وعددها {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:82
+msgctxt "table.apply.edges.title"
+msgid "Hide the {count} relation the column filters leave out"
+msgid_plural "Hide the {count} relations the column filters leave out"
+msgstr[0] "إخفاء العلاقات المستبعدة بمرشحات الأعمدة وعددها {count}"
+msgstr[1] "إخفاء العلاقات المستبعدة بمرشحات الأعمدة وعددها {count}"
+msgstr[2] "إخفاء العلاقات المستبعدة بمرشحات الأعمدة وعددها {count}"
+msgstr[3] "إخفاء العلاقات المستبعدة بمرشحات الأعمدة وعددها {count}"
+msgstr[4] "إخفاء العلاقات المستبعدة بمرشحات الأعمدة وعددها {count}"
+msgstr[5] "إخفاء العلاقات المستبعدة بمرشحات الأعمدة وعددها {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:86
+msgctxt "table.apply.clearNodes.title"
+msgid "Stop filtering the graph from this table — {count} node hidden"
+msgid_plural "Stop filtering the graph from this table — {count} nodes hidden"
+msgstr[0] "إيقاف تصفية الرسم البياني من هذا الجدول — عدد العقد المخفية: {count}"
+msgstr[1] "إيقاف تصفية الرسم البياني من هذا الجدول — عدد العقد المخفية: {count}"
+msgstr[2] "إيقاف تصفية الرسم البياني من هذا الجدول — عدد العقد المخفية: {count}"
+msgstr[3] "إيقاف تصفية الرسم البياني من هذا الجدول — عدد العقد المخفية: {count}"
+msgstr[4] "إيقاف تصفية الرسم البياني من هذا الجدول — عدد العقد المخفية: {count}"
+msgstr[5] "إيقاف تصفية الرسم البياني من هذا الجدول — عدد العقد المخفية: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:90
+msgctxt "table.apply.clearEdges.title"
+msgid "Stop filtering the graph from this table — {count} relation hidden"
+msgid_plural "Stop filtering the graph from this table — {count} relations hidden"
+msgstr[0] "إيقاف تصفية الرسم البياني من هذا الجدول — عدد العلاقات المخفية: {count}"
+msgstr[1] "إيقاف تصفية الرسم البياني من هذا الجدول — عدد العلاقات المخفية: {count}"
+msgstr[2] "إيقاف تصفية الرسم البياني من هذا الجدول — عدد العلاقات المخفية: {count}"
+msgstr[3] "إيقاف تصفية الرسم البياني من هذا الجدول — عدد العلاقات المخفية: {count}"
+msgstr[4] "إيقاف تصفية الرسم البياني من هذا الجدول — عدد العلاقات المخفية: {count}"
+msgstr[5] "إيقاف تصفية الرسم البياني من هذا الجدول — عدد العلاقات المخفية: {count}"
+
+#: src/i18n/en/table.ts:94
+msgctxt "table.graphFilter.label"
+msgid "From the table"
+msgstr "من الجدول"
+
+#: src/i18n/en/table.ts:97
+msgctxt "dock.resize.aria"
+msgid "Resize the dock"
+msgstr "تغيير حجم لوحة البيانات"
+
+#: src/i18n/en/table.ts:98
+msgctxt "dock.expand.title"
+msgid "Expand the dock"
+msgstr "توسيع لوحة البيانات"
+
+#: src/i18n/en/table.ts:99
+msgctxt "dock.collapse.title"
+msgid "Collapse the dock"
+msgstr "طي لوحة البيانات"
+
+#: src/i18n/en/panels.ts:6
+msgctxt "filter.attributes"
+msgid "Attributes"
+msgstr "السمات"
+
+#: src/i18n/en/panels.ts:7
+msgctxt "filter.reset"
+msgid "Reset"
+msgstr "إعادة ضبط"
+
+#: src/i18n/en/panels.ts:8
+msgctxt "filter.reset.title"
+msgid "Clear all attribute filters"
+msgstr "مسح كل مرشحات السمات"
+
+#: src/i18n/en/panels.ts:9
+msgctxt "filter.value.true"
+msgid "true"
+msgstr "صحيح"
+
+#: src/i18n/en/panels.ts:10
+msgctxt "filter.value.false"
+msgid "false"
+msgstr "خطأ"
+
+#: src/i18n/en/panels.ts:11
+msgctxt "filter.invalidPattern"
+msgid "Invalid pattern"
+msgstr "نمط غير صالح"
+
+#: src/i18n/en/panels.ts:12
+msgctxt "filter.layers"
+msgid "Relationships"
+msgstr "العلاقات"
+
+#: src/i18n/en/panels.ts:13
+msgctxt "filter.layers.showAll"
+msgid "Show all"
+msgstr "إظهار الكل"
+
+#: src/i18n/en/panels.ts:14
+msgctxt "filter.layers.showAll.title"
+msgid "Show every relationship layer"
+msgstr "إظهار كل طبقات العلاقات"
+
+#. Preserve placeholders: {layer}
+#: src/i18n/en/panels.ts:15
+msgctxt "filter.layer.hide.title"
+msgid "Hide {layer}"
+msgstr "إخفاء {layer}"
+
+#. Preserve placeholders: {layer}
+#: src/i18n/en/panels.ts:16
+msgctxt "filter.layer.show.title"
+msgid "Show {layer}"
+msgstr "إظهار {layer}"
+
+#: src/i18n/en/panels.ts:17
+msgctxt "filter.fromTable"
+msgid "From the table"
+msgstr "من الجدول"
+
+#: src/i18n/en/panels.ts:18
+msgctxt "filter.fromTable.clear"
+msgid "Clear"
+msgstr "مسح"
+
+#: src/i18n/en/panels.ts:19
+msgctxt "filter.fromTable.clearNodes.title"
+msgid "Stop hiding the nodes the table's column filters leave out"
+msgstr "إيقاف إخفاء العقد التي تستبعدها مرشحات أعمدة الجدول"
+
+#: src/i18n/en/panels.ts:20
+msgctxt "filter.fromTable.clearEdges.title"
+msgid "Stop hiding the relations the table's column filters leave out"
+msgstr "إيقاف إخفاء العلاقات التي تستبعدها مرشحات أعمدة الجدول"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:21
+msgctxt "filter.fromTable.nodesHidden"
+msgid "{count} node hidden"
+msgid_plural "{count} nodes hidden"
+msgstr[0] "عدد العقد المخفية: {count}"
+msgstr[1] "عدد العقد المخفية: {count}"
+msgstr[2] "عدد العقد المخفية: {count}"
+msgstr[3] "عدد العقد المخفية: {count}"
+msgstr[4] "عدد العقد المخفية: {count}"
+msgstr[5] "عدد العقد المخفية: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:22
+msgctxt "filter.fromTable.edgesHidden"
+msgid "{count} relation hidden"
+msgid_plural "{count} relations hidden"
+msgstr[0] "عدد العلاقات المخفية: {count}"
+msgstr[1] "عدد العلاقات المخفية: {count}"
+msgstr[2] "عدد العلاقات المخفية: {count}"
+msgstr[3] "عدد العلاقات المخفية: {count}"
+msgstr[4] "عدد العلاقات المخفية: {count}"
+msgstr[5] "عدد العلاقات المخفية: {count}"
+
+#: src/i18n/en/panels.ts:23
+msgctxt "filter.hiddenNodes"
+msgid "Hidden nodes"
+msgstr "العقد المخفية"
+
+#: src/i18n/en/panels.ts:24
+msgctxt "filter.hiddenNodes.showAll"
+msgid "Show all"
+msgstr "إظهار الكل"
+
+#: src/i18n/en/panels.ts:25
+msgctxt "filter.hiddenNodes.showAll.title"
+msgid "Restore manually hidden nodes"
+msgstr "استعادة العقد المخفية يدويًا"
+
+#: src/i18n/en/panels.ts:26
+msgctxt "filter.hiddenNode.show"
+msgid "Show node"
+msgstr "إظهار العقدة"
+
+#: src/i18n/en/panels.ts:27
+msgctxt "filter.hiddenNode.show.title"
+msgid "Restore manually hidden node"
+msgstr "استعادة العقدة المخفية يدويًا"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/panels.ts:28
+msgctxt "filter.hiddenNode.inspect.aria"
+msgid "Inspect {node}"
+msgstr "فحص {node}"
+
+#: src/i18n/en/panels.ts:32
+msgctxt "filter.button.active"
+msgid "active filter"
+msgid_plural "active filters"
+msgstr[0] "مرشحات نشطة"
+msgstr[1] "مرشحات نشطة"
+msgstr[2] "مرشحات نشطة"
+msgstr[3] "مرشحات نشطة"
+msgstr[4] "مرشحات نشطة"
+msgstr[5] "مرشحات نشطة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:33
+msgctxt "filter.button.hidden"
+msgid "{count} hidden"
+msgstr "{count} مخفية"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:34
+msgctxt "filter.button.hiddenEdges"
+msgid "{count} edge hidden"
+msgid_plural "{count} edges hidden"
+msgstr[0] "عدد الحواف المخفية: {count}"
+msgstr[1] "عدد الحواف المخفية: {count}"
+msgstr[2] "عدد الحواف المخفية: {count}"
+msgstr[3] "عدد الحواف المخفية: {count}"
+msgstr[4] "عدد الحواف المخفية: {count}"
+msgstr[5] "عدد الحواف المخفية: {count}"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/panels.ts:35
+msgctxt "filter.button.hiddenNodesAndEdges"
+msgid "{nodes}, {edges} hidden"
+msgstr "{nodes}، {edges} مخفية"
+
+#: src/i18n/en/panels.ts:38
+msgctxt "form.pattern.placeholder"
+msgid "pattern…"
+msgstr "نمط…"
+
+#: src/i18n/en/panels.ts:39
+msgctxt "form.min.placeholder"
+msgid "Min"
+msgstr "الأدنى"
+
+#: src/i18n/en/panels.ts:40
+msgctxt "form.max.placeholder"
+msgid "Max"
+msgstr "الأقصى"
+
+#. Preserve placeholders: {field}
+#: src/i18n/en/panels.ts:41
+msgctxt "form.negate.aria"
+msgid "How {field} filters"
+msgstr "كيفية التصفية حسب {field}"
+
+#: src/i18n/en/panels.ts:42
+msgctxt "form.negate.is"
+msgid "is"
+msgstr "يطابق"
+
+#: src/i18n/en/panels.ts:43
+msgctxt "form.negate.is.title"
+msgid "Keep what matches"
+msgstr "إبقاء ما يطابق"
+
+#: src/i18n/en/panels.ts:44
+msgctxt "form.negate.not"
+msgid "is not"
+msgstr "لا يطابق"
+
+#: src/i18n/en/panels.ts:45
+msgctxt "form.negate.not.title"
+msgid "Keep what does not match, and what has no value"
+msgstr "إبقاء ما لا يطابق وما ليس له قيمة"
+
+#: src/i18n/en/panels.ts:46
+msgctxt "picker.placeholder"
+msgid "Select..."
+msgstr "تحديد…"
+
+#: src/i18n/en/panels.ts:47
+msgctxt "picker.search.placeholder"
+msgid "Search..."
+msgstr "بحث…"
+
+#: src/i18n/en/panels.ts:48
+msgctxt "picker.empty"
+msgid "No options available"
+msgstr "لا توجد خيارات متاحة"
+
+#. Preserve placeholders: {option}
+#: src/i18n/en/panels.ts:49
+msgctxt "picker.remove.aria"
+msgid "Remove {option}"
+msgstr "إزالة {option}"
+
+#: src/i18n/en/panels.ts:52
+msgctxt "legend.title"
+msgid "Legend"
+msgstr "وسيلة الإيضاح"
+
+#: src/i18n/en/panels.ts:53
+msgctxt "legend.title.type"
+msgid "Type"
+msgstr "النوع"
+
+#: src/i18n/en/panels.ts:54
+msgctxt "legend.showAll.title"
+msgid "Show every category"
+msgstr "إظهار كل الفئات"
+
+#: src/i18n/en/panels.ts:55
+msgctxt "legend.invert.title"
+msgid "Invert which categories are shown"
+msgstr "عكس الفئات المعروضة"
+
+#: src/i18n/en/panels.ts:56
+msgctxt "legend.expand.title"
+msgid "Expand this section"
+msgstr "توسيع هذا القسم"
+
+#: src/i18n/en/panels.ts:57
+msgctxt "legend.collapse.title"
+msgid "Collapse this section"
+msgstr "طي هذا القسم"
+
+#: src/i18n/en/panels.ts:58
+msgctxt "legend.expandAll.title"
+msgid "Expand this section (alt-click for every section)"
+msgstr "توسيع هذا القسم (Alt مع النقر لكل الأقسام)"
+
+#: src/i18n/en/panels.ts:59
+msgctxt "legend.collapseAll.title"
+msgid "Collapse this section (alt-click for every section)"
+msgstr "طي هذا القسم (Alt مع النقر لكل الأقسام)"
+
+#. Preserve placeholders: {category}
+#: src/i18n/en/panels.ts:60
+msgctxt "legend.entry.show.title"
+msgid "Show {category}"
+msgstr "إظهار {category}"
+
+#. Preserve placeholders: {category}
+#: src/i18n/en/panels.ts:61
+msgctxt "legend.entry.hide.title"
+msgid "Hide {category} (alt-click to show only this one)"
+msgstr "إخفاء {category} (Alt مع النقر لإظهار هذه فقط)"
+
+#: src/i18n/en/panels.ts:62
+msgctxt "legend.entry.lastShown.title"
+msgid "The last shown category can't be hidden while the legend drives the filter panel's facet."
+msgstr "لا يمكن إخفاء آخر فئة ظاهرة ما دامت وسيلة الإيضاح تتحكم في سمة لوحة التصفية."
+
+#: src/i18n/en/panels.ts:65
+msgctxt "physicsFlyout.title"
+msgid "Physics"
+msgstr "الفيزياء"
+
+#: src/i18n/en/panels.ts:66
+msgctxt "physicsFlyout.section"
+msgid "LAYOUT & SIMULATION"
+msgstr "التخطيط والمحاكاة"
+
+#: src/i18n/en/panels.ts:67
+msgctxt "physicsFlyout.layout.force"
+msgid "Force"
+msgstr "القوى"
+
+#: src/i18n/en/panels.ts:68
+msgctxt "physicsFlyout.layout.force.title"
+msgid "Force — positions nodes freely using the physics simulation."
+msgstr "القوى — تضع العقد بحرية باستخدام المحاكاة الفيزيائية."
+
+#: src/i18n/en/panels.ts:69
+msgctxt "physicsFlyout.layout.treeV"
+msgid "Vertical"
+msgstr "عمودي"
+
+#: src/i18n/en/panels.ts:70
+msgctxt "physicsFlyout.layout.treeV.title"
+msgid "Tree — hierarchical layout flowing from top to bottom."
+msgstr "شجرة — تخطيط هرمي من الأعلى إلى الأسفل."
+
+#: src/i18n/en/panels.ts:71
+msgctxt "physicsFlyout.layout.treeH"
+msgid "Horizontal"
+msgstr "أفقي"
+
+#: src/i18n/en/panels.ts:72
+msgctxt "physicsFlyout.layout.treeH.title"
+msgid "Tree — hierarchical layout flowing from left to right."
+msgstr "شجرة — تخطيط هرمي من اليسار إلى اليمين."
+
+#: src/i18n/en/panels.ts:73
+msgctxt "physicsFlyout.layout.treeR"
+msgid "Radial"
+msgstr "شعاعي"
+
+#: src/i18n/en/panels.ts:74
+msgctxt "physicsFlyout.layout.treeR.title"
+msgid "Tree — hierarchical layout radiating out from a central root."
+msgstr "شجرة — تخطيط هرمي ينتشر من جذر مركزي."
+
+#: src/i18n/en/panels.ts:75
+msgctxt "physicsFlyout.root"
+msgid "Root"
+msgstr "الجذر"
+
+#: src/i18n/en/panels.ts:76
+msgctxt "physicsFlyout.root.selected"
+msgid "Selected node"
+msgstr "العقدة المحددة"
+
+#: src/i18n/en/panels.ts:77
+msgctxt "physicsFlyout.root.selected.description"
+msgid "Hangs the tree from the node you have selected, following edges either way round."
+msgstr "تجعل العقدة المحددة جذرًا للشجرة وتتبع الحواف في كلا الاتجاهين."
+
+#: src/i18n/en/panels.ts:78
+msgctxt "physicsFlyout.root.firstSource"
+msgid "First source"
+msgstr "أول مصدر"
+
+#: src/i18n/en/panels.ts:79
+msgctxt "physicsFlyout.root.firstSource.description"
+msgid "The first node nothing points at."
+msgstr "أول عقدة لا يشير إليها شيء."
+
+#: src/i18n/en/panels.ts:80
+msgctxt "physicsFlyout.root.widestReach"
+msgid "Widest reach"
+msgstr "أوسع وصول"
+
+#: src/i18n/en/panels.ts:81
+msgctxt "physicsFlyout.root.widestReach.description"
+msgid "Reaches the most other nodes."
+msgstr "تصل إلى أكبر عدد من العقد الأخرى."
+
+#: src/i18n/en/panels.ts:82
+msgctxt "physicsFlyout.root.shallowest"
+msgid "Shallowest"
+msgstr "الأقل عمقًا"
+
+#: src/i18n/en/panels.ts:83
+msgctxt "physicsFlyout.root.shallowest.description"
+msgid "Makes the tree as shallow as it can be."
+msgstr "تجعل الشجرة أقل عمقًا قدر الإمكان."
+
+#: src/i18n/en/panels.ts:84
+msgctxt "physicsFlyout.root.selectFirst"
+msgid "Select a node first."
+msgstr "حدد عقدة أولًا."
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/panels.ts:85
+msgctxt "physicsFlyout.root.pinned.title"
+msgid "The tree is hung from \"{node}\". Pick again to change it."
+msgstr "جذر الشجرة هو «{node}». اختر مجددًا لتغييره."
+
+#. Preserve placeholders: {description}, {label}
+#: src/i18n/en/panels.ts:86
+msgctxt "physicsFlyout.root.finder.title"
+msgid "{label}: {description}"
+msgstr "{label}: {description}"
+
+#: src/i18n/en/panels.ts:87
+msgctxt "physicsFlyout.spacing"
+msgid "Spacing"
+msgstr "التباعد"
+
+#: src/i18n/en/panels.ts:88
+msgctxt "physicsFlyout.spacing.auto"
+msgid "Auto"
+msgstr "تلقائي"
+
+#: src/i18n/en/panels.ts:89
+msgctxt "physicsFlyout.spacing.auto.title"
+msgid "Let the tree work out its own distances from the size of the nodes and the shape of the tree — and keep working them out as the graph changes."
+msgstr "تترك للشجرة حساب المسافات من حجم العقد وشكل الشجرة وتحديثها مع تغير الرسم البياني."
+
+#: src/i18n/en/panels.ts:90
+msgctxt "physicsFlyout.spacing.level"
+msgid "Level distance"
+msgstr "المسافة بين المستويات"
+
+#: src/i18n/en/panels.ts:91
+msgctxt "physicsFlyout.spacing.level.title"
+msgid "How far apart consecutive levels of the tree sit — the gap between rings, in the radial layout."
+msgstr "المسافة بين مستويات الشجرة المتتالية — وبين الحلقات في التخطيط الشعاعي."
+
+#: src/i18n/en/panels.ts:92
+msgctxt "physicsFlyout.spacing.sibling"
+msgid "Sibling distance"
+msgstr "المسافة بين العقد الشقيقة"
+
+#: src/i18n/en/panels.ts:93
+msgctxt "physicsFlyout.spacing.sibling.title"
+msgid "How far apart nodes on the same level sit. The radial layout spreads a level over the whole circle, so it ignores this one."
+msgstr "المسافة بين العقد في المستوى نفسه. يتجاهل التخطيط الشعاعي هذه القيمة لأنه يوزع المستوى على الدائرة كلها."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:94
+msgctxt "physicsFlyout.spacing.value"
+msgid "{count}×"
+msgstr "{count}×"
+
+#: src/i18n/en/panels.ts:95
+msgctxt "physicsFlyout.simulation"
+msgid "Simulation"
+msgstr "المحاكاة"
+
+#: src/i18n/en/panels.ts:96
+msgctxt "physicsFlyout.pause.title"
+msgid "Pause physics"
+msgstr "إيقاف الفيزياء مؤقتًا"
+
+#: src/i18n/en/panels.ts:97
+msgctxt "physicsFlyout.resume.title"
+msgid "Resume physics"
+msgstr "استئناف الفيزياء"
+
+#: src/i18n/en/panels.ts:98
+msgctxt "physicsFlyout.preset.auto"
+msgid "Auto"
+msgstr "تلقائي"
+
+#: src/i18n/en/panels.ts:99
+msgctxt "physicsFlyout.preset.auto.title"
+msgid "Let the layout tune itself from the number of nodes, their size and the canvas — and keep tuning as the graph changes."
+msgstr "تترك للتخطيط ضبط نفسه حسب عدد العقد وحجمها واللوحة، ومواصلة الضبط مع تغير الرسم البياني."
+
+#: src/i18n/en/panels.ts:100
+msgctxt "physicsFlyout.preset.tight"
+msgid "Tight"
+msgstr "متقارب"
+
+#: src/i18n/en/panels.ts:101
+msgctxt "physicsFlyout.preset.tight.title"
+msgid "Compact layout with nodes packed closely together."
+msgstr "تخطيط مدمج بعقد متقاربة."
+
+#: src/i18n/en/panels.ts:102
+msgctxt "physicsFlyout.preset.loose"
+msgid "Loose"
+msgstr "متباعد"
+
+#: src/i18n/en/panels.ts:103
+msgctxt "physicsFlyout.preset.loose.title"
+msgid "Spacious layout with nodes spread further apart."
+msgstr "تخطيط واسع بعقد متباعدة."
+
+#: src/i18n/en/panels.ts:104
+msgctxt "physicsFlyout.knob.repulsion"
+msgid "Repulsion"
+msgstr "التنافر"
+
+#: src/i18n/en/panels.ts:105
+msgctxt "physicsFlyout.knob.repulsion.title"
+msgid "How strongly nodes push each other apart. Higher values spread the graph out."
+msgstr "مدى قوة تنافر العقد. القيم الأعلى توسع الرسم البياني."
+
+#: src/i18n/en/panels.ts:106
+msgctxt "physicsFlyout.knob.linkDistance"
+msgid "Link distance"
+msgstr "مسافة الاتصال"
+
+#: src/i18n/en/panels.ts:107
+msgctxt "physicsFlyout.knob.linkDistance.title"
+msgid "The resting length of edges, in pixels. Higher values place connected nodes further apart."
+msgstr "طول الحواف في حالة السكون بالبكسل. القيم الأعلى تباعد بين العقد المتصلة."
+
+#: src/i18n/en/panels.ts:108
+msgctxt "physicsFlyout.knob.collisionRadius"
+msgid "Collision radius"
+msgstr "نصف قطر التصادم"
+
+#: src/i18n/en/panels.ts:109
+msgctxt "physicsFlyout.knob.collisionRadius.title"
+msgid "The clear space kept around each node to prevent overlap. Higher values keep nodes further apart."
+msgstr "المساحة الخالية حول كل عقدة لمنع التداخل. القيم الأعلى تباعد بين العقد."
+
+#: src/i18n/en/panels.ts:110
+msgctxt "physicsFlyout.knob.friction"
+msgid "Friction"
+msgstr "الاحتكاك"
+
+#: src/i18n/en/panels.ts:111
+msgctxt "physicsFlyout.knob.friction.title"
+msgid "How quickly node motion is damped. Higher values calm the layout and settle it faster."
+msgstr "سرعة تخميد حركة العقد. القيم الأعلى تهدئ التخطيط وتسرّع استقراره."
+
+#: src/i18n/en/panels.ts:112
+msgctxt "physicsFlyout.knob.centering"
+msgid "Centering"
+msgstr "التوسيط"
+
+#: src/i18n/en/panels.ts:113
+msgctxt "physicsFlyout.knob.centering.title"
+msgid "How strongly the graph is pulled toward the middle of the canvas. Higher values keep disconnected parts in frame."
+msgstr "قوة جذب الرسم البياني نحو وسط اللوحة. القيم الأعلى تبقي الأجزاء المنفصلة داخل الإطار."
+
+#: src/i18n/en/panels.ts:114
+msgctxt "physicsFlyout.knob.settleTime"
+msgid "Settle time"
+msgstr "وقت الاستقرار"
+
+#: src/i18n/en/panels.ts:115
+msgctxt "physicsFlyout.knob.settleTime.title"
+msgid "How long the layout is given to settle, in seconds. Higher values let large graphs unfold further before they stop."
+msgstr "الوقت المتاح لاستقرار التخطيط بالثواني. القيم الأعلى تسمح للرسوم الكبيرة بالانتشار أكثر قبل التوقف."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:116
+msgctxt "physicsFlyout.knob.seconds"
+msgid "{count}s"
+msgstr "{count} ث"
+
+#: src/i18n/en/panels.ts:119
+msgctxt "viewFlyout.title"
+msgid "View"
+msgstr "عرض"
+
+#: src/i18n/en/panels.ts:120
+msgctxt "viewFlyout.section"
+msgid "GRID & CANVAS"
+msgstr "الشبكة واللوحة"
+
+#: src/i18n/en/panels.ts:121
+msgctxt "viewFlyout.background"
+msgid "Background"
+msgstr "الخلفية"
+
+#: src/i18n/en/panels.ts:122
+msgctxt "viewFlyout.background.grid"
+msgid "Grid"
+msgstr "شبكة"
+
+#: src/i18n/en/panels.ts:123
+msgctxt "viewFlyout.background.grid.title"
+msgid "Rule the canvas with grid lines."
+msgstr "رسم خطوط شبكة على اللوحة."
+
+#: src/i18n/en/panels.ts:124
+msgctxt "viewFlyout.background.dots"
+msgid "Dots"
+msgstr "نقاط"
+
+#: src/i18n/en/panels.ts:125
+msgctxt "viewFlyout.background.dots.title"
+msgid "Mark the grid with dots instead of lines."
+msgstr "تمثيل الشبكة بنقاط بدلًا من الخطوط."
+
+#: src/i18n/en/panels.ts:126
+msgctxt "viewFlyout.background.none"
+msgid "None"
+msgstr "بلا"
+
+#: src/i18n/en/panels.ts:127
+msgctxt "viewFlyout.background.none.title"
+msgid "Leave the canvas plain."
+msgstr "ترك اللوحة بلا خلفية."
+
+#: src/i18n/en/panels.ts:128
+msgctxt "viewFlyout.background.image"
+msgid "Image"
+msgstr "صورة"
+
+#: src/i18n/en/panels.ts:129
+msgctxt "viewFlyout.background.image.title"
+msgid "Paint an image behind the graph."
+msgstr "عرض صورة خلف الرسم البياني."
+
+#: src/i18n/en/panels.ts:130
+msgctxt "viewFlyout.canvasColour"
+msgid "Canvas colour"
+msgstr "لون اللوحة"
+
+#: src/i18n/en/panels.ts:131
+msgctxt "viewFlyout.canvasColour.custom.title"
+msgid "Custom canvas colour"
+msgstr "لون مخصص للوحة"
+
+#: src/i18n/en/panels.ts:132
+msgctxt "viewFlyout.gridColour"
+msgid "Grid colour"
+msgstr "لون الشبكة"
+
+#: src/i18n/en/panels.ts:133
+msgctxt "viewFlyout.gridColour.custom.title"
+msgid "Custom grid colour"
+msgstr "لون مخصص للشبكة"
+
+#: src/i18n/en/panels.ts:134
+msgctxt "viewFlyout.colour.default"
+msgid "Theme default"
+msgstr "افتراضي السمة"
+
+#: src/i18n/en/panels.ts:135
+msgctxt "viewFlyout.colour.white"
+msgid "White"
+msgstr "أبيض"
+
+#: src/i18n/en/panels.ts:136
+msgctxt "viewFlyout.colour.lightGrey"
+msgid "Light grey"
+msgstr "رمادي فاتح"
+
+#: src/i18n/en/panels.ts:137
+msgctxt "viewFlyout.colour.darkGrey"
+msgid "Dark grey"
+msgstr "رمادي داكن"
+
+#: src/i18n/en/panels.ts:138
+msgctxt "viewFlyout.colour.black"
+msgid "Black"
+msgstr "أسود"
+
+#: src/i18n/en/panels.ts:139
+msgctxt "viewFlyout.highlightGrid"
+msgid "Highlight grid"
+msgstr "إبراز الشبكة"
+
+#: src/i18n/en/panels.ts:140
+msgctxt "viewFlyout.highlightGrid.title"
+msgid "Make the background grid lines more visible."
+msgstr "جعل خطوط شبكة الخلفية أكثر وضوحًا."
+
+#: src/i18n/en/panels.ts:141
+msgctxt "viewFlyout.image.url.placeholder"
+msgid "Image URL..."
+msgstr "رابط الصورة…"
+
+#: src/i18n/en/panels.ts:142
+msgctxt "viewFlyout.image.browse"
+msgid "Browse"
+msgstr "استعراض"
+
+#: src/i18n/en/panels.ts:143
+msgctxt "viewFlyout.image.browse.title"
+msgid "Pick an image file from this device."
+msgstr "اختيار ملف صورة من هذا الجهاز."
+
+#: src/i18n/en/panels.ts:144
+msgctxt "viewFlyout.image.fit.cover"
+msgid "Cover"
+msgstr "تغطية"
+
+#: src/i18n/en/panels.ts:145
+msgctxt "viewFlyout.image.fit.cover.title"
+msgid "Scale the image to fill the canvas, cropping whatever overflows."
+msgstr "تحجيم الصورة لملء اللوحة وقص ما يتجاوزها."
+
+#: src/i18n/en/panels.ts:146
+msgctxt "viewFlyout.image.fit.contain"
+msgid "Contain"
+msgstr "احتواء"
+
+#: src/i18n/en/panels.ts:147
+msgctxt "viewFlyout.image.fit.contain.title"
+msgid "Scale the image until all of it fits on the canvas."
+msgstr "تحجيم الصورة حتى تظهر كاملة على اللوحة."
+
+#: src/i18n/en/panels.ts:148
+msgctxt "viewFlyout.image.fit.tile"
+msgid "Tile"
+msgstr "تكرار"
+
+#: src/i18n/en/panels.ts:149
+msgctxt "viewFlyout.image.fit.tile.title"
+msgid "Keep the image at its own size and repeat it across the canvas."
+msgstr "إبقاء الصورة بحجمها الأصلي وتكرارها على اللوحة."
+
+#: src/i18n/en/panels.ts:150
+msgctxt "viewFlyout.image.remove"
+msgid "Remove image"
+msgstr "إزالة الصورة"
+
+#: src/i18n/en/panels.ts:151
+msgctxt "viewFlyout.snap"
+msgid "Snap to grid"
+msgstr "محاذاة للشبكة"
+
+#: src/i18n/en/panels.ts:152
+msgctxt "viewFlyout.snap.title"
+msgid "Align nodes to the grid while you drag them."
+msgstr "محاذاة العقد للشبكة أثناء سحبها."
+
+#: src/i18n/en/panels.ts:153
+msgctxt "viewFlyout.freeze"
+msgid "Freeze on drag"
+msgstr "تثبيت بعد السحب"
+
+#: src/i18n/en/panels.ts:154
+msgctxt "viewFlyout.freeze.title"
+msgid "Keep nodes pinned where you drop them instead of letting physics move them again."
+msgstr "إبقاء العقد مثبتة حيث تفلتها بدلًا من تحريكها مجددًا بالفيزياء."
+
+#: src/i18n/en/panels.ts:155
+msgctxt "viewFlyout.fit"
+msgid "Fit on expand/collapse"
+msgstr "ملاءمة عند التوسيع والطي"
+
+#: src/i18n/en/panels.ts:156
+msgctxt "viewFlyout.fit.title"
+msgid "Zoom and re-center to fit the graph when clusters or groups are expanded or collapsed."
+msgstr "التكبير وإعادة التوسيط لملاءمة الرسم البياني عند توسيع العناقيد أو المجموعات أو طيها."
+
+#: src/i18n/en/panels.ts:157
+msgctxt "viewFlyout.orphans"
+msgid "Hide unconnected"
+msgstr "إخفاء غير المتصل"
+
+#: src/i18n/en/panels.ts:158
+msgctxt "viewFlyout.orphans.title"
+msgid "Hide nodes that have no visible relation left. Unlike hiding a relationship layer, this moves the graph."
+msgstr "إخفاء العقد التي لم تبق لها علاقة ظاهرة. بخلاف إخفاء طبقة علاقات، يؤدي هذا إلى تحريك الرسم البياني."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:159
+msgctxt "viewFlyout.orphans.note.title"
+msgid "{count} unconnected node hidden"
+msgid_plural "{count} unconnected nodes hidden"
+msgstr[0] "عدد العقد غير المتصلة المخفية: {count}"
+msgstr[1] "عدد العقد غير المتصلة المخفية: {count}"
+msgstr[2] "عدد العقد غير المتصلة المخفية: {count}"
+msgstr[3] "عدد العقد غير المتصلة المخفية: {count}"
+msgstr[4] "عدد العقد غير المتصلة المخفية: {count}"
+msgstr[5] "عدد العقد غير المتصلة المخفية: {count}"
+
+#: src/i18n/en/panels.ts:162
+msgctxt "simplifyFlyout.title"
+msgid "Simplify"
+msgstr "تبسيط"
+
+#: src/i18n/en/panels.ts:163
+msgctxt "simplifyFlyout.onCanvas"
+msgid "On the canvas"
+msgstr "على اللوحة"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/panels.ts:164
+msgctxt "simplifyFlyout.shown"
+msgid "{shown} of {count} node"
+msgid_plural "{shown} of {count} nodes"
+msgstr[0] "العقد المعروضة: {shown} من {count}"
+msgstr[1] "العقد المعروضة: {shown} من {count}"
+msgstr[2] "العقد المعروضة: {shown} من {count}"
+msgstr[3] "العقد المعروضة: {shown} من {count}"
+msgstr[4] "العقد المعروضة: {shown} من {count}"
+msgstr[5] "العقد المعروضة: {shown} من {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:165
+msgctxt "simplifyFlyout.groups"
+msgid "{count} group"
+msgid_plural "{count} groups"
+msgstr[0] "{count} مجموعة"
+msgstr[1] "{count} مجموعة"
+msgstr[2] "{count} مجموعتان"
+msgstr[3] "{count} مجموعات"
+msgstr[4] "{count} مجموعة"
+msgstr[5] "{count} مجموعة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:166
+msgctxt "simplifyFlyout.folded"
+msgid "{count} folded"
+msgstr "{count} مطوية"
+
+#: src/i18n/en/panels.ts:167
+msgctxt "simplifyFlyout.rule.app"
+msgid "app"
+msgstr "التطبيق"
+
+#: src/i18n/en/panels.ts:168
+msgctxt "simplifyFlyout.smaller.aria"
+msgid "Smaller"
+msgstr "أصغر"
+
+#: src/i18n/en/panels.ts:169
+msgctxt "simplifyFlyout.larger.aria"
+msgid "Larger"
+msgstr "أكبر"
+
+#: src/i18n/en/panels.ts:170
+msgctxt "simplifyFlyout.slider.fine"
+msgid "Fine"
+msgstr "دقيق"
+
+#: src/i18n/en/panels.ts:171
+msgctxt "simplifyFlyout.slider.coarse"
+msgid "Coarse"
+msgstr "خشن"
+
+#: src/i18n/en/panels.ts:172
+msgctxt "simplifyFlyout.result.failed"
+msgid "This rule failed"
+msgstr "فشلت هذه القاعدة"
+
+#: src/i18n/en/panels.ts:173
+msgctxt "simplifyFlyout.result.grouping"
+msgid "Grouping…"
+msgstr "جارٍ التجميع…"
+
+#: src/i18n/en/panels.ts:174
+msgctxt "simplifyFlyout.result.nothing"
+msgid "Nothing to fold"
+msgstr "لا شيء لطيه"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:175
+msgctxt "simplifyFlyout.result.nothingAt"
+msgid "Nothing to fold at {count} or more"
+msgstr "لا شيء لطيه عند {count} أو أكثر"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:176
+msgctxt "simplifyFlyout.result.nothingByDegree"
+msgid "Every node has {count} link or more"
+msgid_plural "Every node has {count} links or more"
+msgstr[0] "عدد اتصالات كل عقدة لا يقل عن {count}"
+msgstr[1] "عدد اتصالات كل عقدة لا يقل عن {count}"
+msgstr[2] "عدد اتصالات كل عقدة لا يقل عن {count}"
+msgstr[3] "عدد اتصالات كل عقدة لا يقل عن {count}"
+msgstr[4] "عدد اتصالات كل عقدة لا يقل عن {count}"
+msgstr[5] "عدد اتصالات كل عقدة لا يقل عن {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:177
+msgctxt "simplifyFlyout.result.nothingByCore"
+msgid "Every node is in the {count}-core"
+msgstr "كل عقدة ضمن النواة ذات الدرجة {count}"
+
+#: src/i18n/en/pivot.ts:6
+msgctxt "pivot.retry"
+msgid "Retry"
+msgstr "إعادة المحاولة"
+
+#: src/i18n/en/pivot.ts:7
+msgctxt "pivot.cancel"
+msgid "Cancel"
+msgstr "إلغاء"
+
+#: src/i18n/en/pivot.ts:8
+msgctxt "pivot.close"
+msgid "Close"
+msgstr "إغلاق"
+
+#: src/i18n/en/pivot.ts:9
+msgctxt "pivot.dismiss"
+msgid "Dismiss"
+msgstr "تجاهل"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:10
+msgctxt "pivot.more"
+msgid "…and {count} more"
+msgstr "…و{count} أخرى"
+
+#: src/i18n/en/pivot.ts:13
+msgctxt "pivot.mode.label"
+msgid "Pivot"
+msgstr "استكشاف"
+
+#: src/i18n/en/pivot.ts:14
+msgctxt "pivot.mode.pickOrigin"
+msgid "Pick origin"
+msgstr "اختيار نقطة الأصل"
+
+#: src/i18n/en/pivot.ts:15
+msgctxt "pivot.mode.lassoOrigin"
+msgid "Lasso origin"
+msgstr "تحديد الأصل تحديدًا حرًا"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:18
+msgctxt "pivot.toast.fetchFailed"
+msgid "Couldn't fetch {pivot}"
+msgstr "تعذر جلب {pivot}"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:19
+msgctxt "pivot.toast.refused.title"
+msgid "{pivot} returned too much"
+msgstr "أعاد {pivot} نتائج أكثر من المسموح"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:20
+msgctxt "pivot.toast.refused.message"
+msgid "{count} candidate, over the {limit} limit. Nothing was ingested — narrow and run again."
+msgid_plural "{count} candidates, over the {limit} limit. Nothing was ingested — narrow and run again."
+msgstr[0] "عدد المرشحين {count} يتجاوز الحد {limit}. لم يُستورد شيء — ضيّق النتائج وشغّل مجددًا."
+msgstr[1] "عدد المرشحين {count} يتجاوز الحد {limit}. لم يُستورد شيء — ضيّق النتائج وشغّل مجددًا."
+msgstr[2] "عدد المرشحين {count} يتجاوز الحد {limit}. لم يُستورد شيء — ضيّق النتائج وشغّل مجددًا."
+msgstr[3] "عدد المرشحين {count} يتجاوز الحد {limit}. لم يُستورد شيء — ضيّق النتائج وشغّل مجددًا."
+msgstr[4] "عدد المرشحين {count} يتجاوز الحد {limit}. لم يُستورد شيء — ضيّق النتائج وشغّل مجددًا."
+msgstr[5] "عدد المرشحين {count} يتجاوز الحد {limit}. لم يُستورد شيء — ضيّق النتائج وشغّل مجددًا."
+
+#: src/i18n/en/pivot.ts:26
+msgctxt "pivot.save.promptTitle"
+msgid "Save"
+msgstr "حفظ"
+
+#: src/i18n/en/pivot.ts:27
+msgctxt "pivot.save.promptSubmit"
+msgid "Save"
+msgstr "حفظ"
+
+#: src/i18n/en/pivot.ts:28
+msgctxt "pivot.save.saving"
+msgid "Saving…"
+msgstr "جارٍ الحفظ…"
+
+#. Preserve placeholders: {elements}
+#: src/i18n/en/pivot.ts:29
+msgctxt "pivot.save.saved"
+msgid "Saved {elements}"
+msgstr "تم حفظ {elements}"
+
+#. Preserve placeholders: {elements}
+#: src/i18n/en/pivot.ts:30
+msgctxt "pivot.save.failed"
+msgid "Couldn't save {elements}"
+msgstr "تعذر حفظ {elements}"
+
+#: src/i18n/en/pivot.ts:31
+msgctxt "pivot.save.failedDetail"
+msgid "Nothing was written, and nothing left the canvas."
+msgstr "لم تُكتب أي بيانات ولم يغادر شيء اللوحة."
+
+#. Preserve placeholders: {saved}, {total}
+#: src/i18n/en/pivot.ts:32
+msgctxt "pivot.save.partial"
+msgid "Saved {saved} of {total}"
+msgstr "تم حفظ {saved} من {total}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:33
+msgctxt "pivot.save.partialDetail"
+msgid "{count} still unsaved."
+msgstr "{count} لم تُحفظ بعد."
+
+#: src/i18n/en/pivot.ts:34
+msgctxt "pivot.save.nothing"
+msgid "nothing"
+msgstr "لا شيء"
+
+#: src/i18n/en/pivot.ts:37
+msgctxt "pivot.ingest.failed"
+msgid "Ingest failed"
+msgstr "فشل الاستيراد"
+
+#: src/i18n/en/pivot.ts:38
+msgctxt "pivot.ingest.cancelled"
+msgid "Ingest cancelled"
+msgstr "أُلغي الاستيراد"
+
+#: src/i18n/en/pivot.ts:39
+msgctxt "pivot.ingest.nothing"
+msgid "Nothing was ingested"
+msgstr "لم يُستورد شيء"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:40
+msgctxt "pivot.ingest.nodes"
+msgid "Ingested {count} node"
+msgid_plural "Ingested {count} nodes"
+msgstr[0] "عدد العقد المستوردة: {count}"
+msgstr[1] "عدد العقد المستوردة: {count}"
+msgstr[2] "عدد العقد المستوردة: {count}"
+msgstr[3] "عدد العقد المستوردة: {count}"
+msgstr[4] "عدد العقد المستوردة: {count}"
+msgstr[5] "عدد العقد المستوردة: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:41
+msgctxt "pivot.ingest.edges"
+msgid "Ingested {count} edge"
+msgid_plural "Ingested {count} edges"
+msgstr[0] "عدد الحواف المستوردة: {count}"
+msgstr[1] "عدد الحواف المستوردة: {count}"
+msgstr[2] "عدد الحواف المستوردة: {count}"
+msgstr[3] "عدد الحواف المستوردة: {count}"
+msgstr[4] "عدد الحواف المستوردة: {count}"
+msgstr[5] "عدد الحواف المستوردة: {count}"
+
+#. Preserve placeholders: {count}, {landed}
+#: src/i18n/en/pivot.ts:42
+msgctxt "pivot.ingest.someNodes"
+msgid "Ingested {landed} of {count} node"
+msgid_plural "Ingested {landed} of {count} nodes"
+msgstr[0] "العقد المستوردة: {landed} من {count}"
+msgstr[1] "العقد المستوردة: {landed} من {count}"
+msgstr[2] "العقد المستوردة: {landed} من {count}"
+msgstr[3] "العقد المستوردة: {landed} من {count}"
+msgstr[4] "العقد المستوردة: {landed} من {count}"
+msgstr[5] "العقد المستوردة: {landed} من {count}"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/pivot.ts:44
+msgctxt "pivot.ingest.nodesAndEdges"
+msgid "Ingested {nodes}, {edges}"
+msgstr "تم استيراد {nodes}، {edges}"
+
+#. Preserve placeholders: {count}, {landed}
+#: src/i18n/en/pivot.ts:45
+msgctxt "pivot.ingest.nodesOfAsked"
+msgid "{landed} of {count} node"
+msgid_plural "{landed} of {count} nodes"
+msgstr[0] "العقد: {landed} من {count}"
+msgstr[1] "العقد: {landed} من {count}"
+msgstr[2] "العقد: {landed} من {count}"
+msgstr[3] "العقد: {landed} من {count}"
+msgstr[4] "العقد: {landed} من {count}"
+msgstr[5] "العقد: {landed} من {count}"
+
+#: src/i18n/en/pivot.ts:48
+msgctxt "pivot.panel.filter.placeholder"
+msgid "Filter pivots"
+msgstr "تصفية الاستكشافات"
+
+#: src/i18n/en/pivot.ts:49
+msgctxt "pivot.panel.filter.aria"
+msgid "Filter pivots"
+msgstr "تصفية الاستكشافات"
+
+#: src/i18n/en/pivot.ts:50
+msgctxt "pivot.panel.filter.clear.title"
+msgid "Clear the filter"
+msgstr "مسح المرشح"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:51
+msgctxt "pivot.panel.hits.selected"
+msgid "Showing your {count} selected"
+msgstr "عرض العناصر المحددة وعددها {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:52
+msgctxt "pivot.panel.hits.matching"
+msgid "{count} match"
+msgstr "{count} مطابقة"
+
+#: src/i18n/en/pivot.ts:53
+msgctxt "pivot.panel.selectNone"
+msgid "Select none"
+msgstr "إلغاء تحديد الكل"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:54
+msgctxt "pivot.panel.deselect"
+msgid "Deselect {count}"
+msgstr "إلغاء تحديد {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:55
+msgctxt "pivot.panel.selectMatching"
+msgid "Select {count} matching"
+msgstr "تحديد {count} مطابقة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:56
+msgctxt "pivot.panel.selectAll"
+msgid "Select all {count}"
+msgstr "تحديد الكل وعددها {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:57
+msgctxt "pivot.panel.tray.selected"
+msgid "{count} selected"
+msgstr "{count} محددة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:58
+msgctxt "pivot.panel.tray.hidden"
+msgid "{count} hidden"
+msgstr "{count} مخفية"
+
+#: src/i18n/en/pivot.ts:59
+msgctxt "pivot.panel.tray.none"
+msgid "Nothing selected"
+msgstr "لم يُحدد شيء"
+
+#: src/i18n/en/pivot.ts:60
+msgctxt "pivot.panel.tray.reveal.title"
+msgid "Show only what is selected"
+msgstr "إظهار المحدد فقط"
+
+#: src/i18n/en/pivot.ts:61
+msgctxt "pivot.panel.tray.unreveal.title"
+msgid "Back to the filtered list"
+msgstr "العودة إلى القائمة المصفاة"
+
+#: src/i18n/en/pivot.ts:62
+msgctxt "pivot.panel.tray.clear"
+msgid "Clear"
+msgstr "مسح"
+
+#: src/i18n/en/pivot.ts:63
+msgctxt "pivot.panel.tray.clear.title"
+msgid "Clear the selection"
+msgstr "مسح التحديد"
+
+#: src/i18n/en/pivot.ts:64
+msgctxt "pivot.panel.tray.run"
+msgid "Run"
+msgstr "تشغيل"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:65
+msgctxt "pivot.panel.tray.runCount"
+msgid "Run {count}"
+msgstr "تشغيل {count}"
+
+#: src/i18n/en/pivot.ts:66
+msgctxt "pivot.panel.tray.run.title"
+msgid "Run every selected pivot"
+msgstr "تشغيل كل الاستكشافات المحددة"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:67
+msgctxt "pivot.panel.tray.caution"
+msgid "{count} pivot is over {limit} — this asks every one of them at once."
+msgid_plural "{count} pivots is over {limit} — this asks every one of them at once."
+msgstr[0] "عدد الاستكشافات {count} يتجاوز {limit} — سيطلب هذا نتائجها كلها دفعة واحدة."
+msgstr[1] "عدد الاستكشافات {count} يتجاوز {limit} — سيطلب هذا نتائجها كلها دفعة واحدة."
+msgstr[2] "عدد الاستكشافات {count} يتجاوز {limit} — سيطلب هذا نتائجها كلها دفعة واحدة."
+msgstr[3] "عدد الاستكشافات {count} يتجاوز {limit} — سيطلب هذا نتائجها كلها دفعة واحدة."
+msgstr[4] "عدد الاستكشافات {count} يتجاوز {limit} — سيطلب هذا نتائجها كلها دفعة واحدة."
+msgstr[5] "عدد الاستكشافات {count} يتجاوز {limit} — سيطلب هذا نتائجها كلها دفعة واحدة."
+
+#. Preserve placeholders: {query}
+#: src/i18n/en/pivot.ts:71
+msgctxt "pivot.panel.noMatch"
+msgid "No pivot matches “{query}”."
+msgstr "لا يوجد استكشاف يطابق «{query}»."
+
+#: src/i18n/en/pivot.ts:72
+msgctxt "pivot.panel.noMatch.reveal"
+msgid "Nothing selected."
+msgstr "لم يُحدد شيء."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:73
+msgctxt "pivot.panel.originless"
+msgid "Without an origin ({count})"
+msgstr "بلا نقطة أصل ({count})"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:76
+msgctxt "pivot.panel.unsaved"
+msgid "{count} unsaved"
+msgstr "{count} غير محفوظة"
+
+#: src/i18n/en/pivot.ts:77
+msgctxt "pivot.panel.unsaved.title"
+msgid "Brought in by a pivot this session, and not written back"
+msgstr "جُلبت باستكشاف في هذه الجلسة ولم تُكتب إلى المصدر"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/pivot.ts:78
+msgctxt "pivot.panel.unsaved.titleCounts"
+msgid "{nodes} and {edges} this session's pivots brought in and have not written back"
+msgstr "{nodes} و{edges} جلبتها استكشافات هذه الجلسة ولم تُكتب إلى المصدر"
+
+#: src/i18n/en/pivot.ts:79
+msgctxt "pivot.panel.save"
+msgid "Save"
+msgstr "حفظ"
+
+#: src/i18n/en/pivot.ts:80
+msgctxt "pivot.panel.save.saving"
+msgid "Saving…"
+msgstr "جارٍ الحفظ…"
+
+#: src/i18n/en/pivot.ts:81
+msgctxt "pivot.panel.save.title"
+msgid "Write these back to the source system"
+msgstr "كتابة هذه النتائج إلى نظام المصدر"
+
+#: src/i18n/en/pivot.ts:84
+msgctxt "pivot.panel.origin"
+msgid "Origin"
+msgstr "نقطة الأصل"
+
+#: src/i18n/en/pivot.ts:85
+msgctxt "pivot.panel.origin.empty"
+msgid "Nothing picked — click a node on the canvas to see what can be run on it"
+msgstr "لم يُختر شيء — انقر عقدة على اللوحة لرؤية ما يمكن تشغيله عليها"
+
+#: src/i18n/en/pivot.ts:86
+msgctxt "pivot.panel.origin.emptyOriginless"
+msgid "Nothing picked — click a node on the canvas, or run one of the pivots below"
+msgstr "لم يُختر شيء — انقر عقدة على اللوحة أو شغّل أحد الاستكشافات أدناه"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:87
+msgctxt "pivot.panel.origin.more"
+msgid "+{count}"
+msgstr "+{count}"
+
+#: src/i18n/en/pivot.ts:88
+msgctxt "pivot.panel.origin.clear"
+msgid "Clear"
+msgstr "مسح"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:89
+msgctxt "pivot.panel.heading"
+msgid "{count} pivot applies"
+msgid_plural "{count} pivots apply"
+msgstr[0] "عدد الاستكشافات القابلة للتطبيق: {count}"
+msgstr[1] "عدد الاستكشافات القابلة للتطبيق: {count}"
+msgstr[2] "عدد الاستكشافات القابلة للتطبيق: {count}"
+msgstr[3] "عدد الاستكشافات القابلة للتطبيق: {count}"
+msgstr[4] "عدد الاستكشافات القابلة للتطبيق: {count}"
+msgstr[5] "عدد الاستكشافات القابلة للتطبيق: {count}"
+
+#: src/i18n/en/pivot.ts:90
+msgctxt "pivot.panel.heading.none"
+msgid "No pivots apply to this origin"
+msgstr "لا تنطبق استكشافات على نقطة الأصل هذه"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:93
+msgctxt "pivot.entry.select.aria"
+msgid "Select {pivot}"
+msgstr "تحديد {pivot}"
+
+#: src/i18n/en/pivot.ts:94
+msgctxt "pivot.entry.fetching"
+msgid "Fetching…"
+msgstr "جارٍ الجلب…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:95
+msgctxt "pivot.entry.fetchingCount"
+msgid "Fetching ~{count}…"
+msgstr "جارٍ جلب نحو {count}…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:96
+msgctxt "pivot.entry.ingested"
+msgid "{count} ingested"
+msgstr "{count} مستوردة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:97
+msgctxt "pivot.entry.declared"
+msgid "~{count} declared"
+msgstr "نحو {count} معلنة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:98
+msgctxt "pivot.entry.count"
+msgid "~{count}"
+msgstr "~{count}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/pivot.ts:99
+msgctxt "pivot.entry.countAcross"
+msgid "~{total} across {count} node"
+msgid_plural "~{total} across {count} nodes"
+msgstr[0] "نحو {total} عبر عقد عددها {count}"
+msgstr[1] "نحو {total} عبر عقد عددها {count}"
+msgstr[2] "نحو {total} عبر عقد عددها {count}"
+msgstr[3] "نحو {total} عبر عقد عددها {count}"
+msgstr[4] "نحو {total} عبر عقد عددها {count}"
+msgstr[5] "نحو {total} عبر عقد عددها {count}"
+
+#. Preserve placeholders: {count}, {taken}
+#: src/i18n/en/pivot.ts:100
+msgctxt "pivot.entry.scope"
+msgid "Applies to {taken} of the {count} picked"
+msgstr "ينطبق على {taken} من {count} مختارة"
+
+#. Preserve placeholders: {count}, {label}
+#: src/i18n/en/pivot.ts:102
+msgctxt "pivot.entry.breakdownItem"
+msgid "{count} {label}"
+msgstr "{count} {label}"
+
+#: src/i18n/en/pivot.ts:103
+msgctxt "pivot.entry.error"
+msgid "Couldn't reach the source."
+msgstr "تعذر الوصول إلى المصدر."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:104
+msgctxt "pivot.entry.gate.over"
+msgid "Over the cap of {count} — narrow further to fetch"
+msgstr "تجاوز الحد {count} — ضيّق النتائج أكثر لجلبها"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:105
+msgctxt "pivot.entry.gate.within"
+msgid "Within the cap of {count}"
+msgstr "ضمن الحد {count}"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:106
+msgctxt "pivot.entry.gate.refused"
+msgid "The source returned {count} candidate, over the {limit} limit. Nothing was staged — narrow and run again."
+msgid_plural "The source returned {count} candidates, over the {limit} limit. Nothing was staged — narrow and run again."
+msgstr[0] "أعاد المصدر مرشحين بعدد {count} يتجاوز الحد {limit}. لم يُجهّز شيء — ضيّق النتائج وشغّل مجددًا."
+msgstr[1] "أعاد المصدر مرشحين بعدد {count} يتجاوز الحد {limit}. لم يُجهّز شيء — ضيّق النتائج وشغّل مجددًا."
+msgstr[2] "أعاد المصدر مرشحين بعدد {count} يتجاوز الحد {limit}. لم يُجهّز شيء — ضيّق النتائج وشغّل مجددًا."
+msgstr[3] "أعاد المصدر مرشحين بعدد {count} يتجاوز الحد {limit}. لم يُجهّز شيء — ضيّق النتائج وشغّل مجددًا."
+msgstr[4] "أعاد المصدر مرشحين بعدد {count} يتجاوز الحد {limit}. لم يُجهّز شيء — ضيّق النتائج وشغّل مجددًا."
+msgstr[5] "أعاد المصدر مرشحين بعدد {count} يتجاوز الحد {limit}. لم يُجهّز شيء — ضيّق النتائج وشغّل مجددًا."
+
+#: src/i18n/en/pivot.ts:110
+msgctxt "pivot.entry.run"
+msgid "Run"
+msgstr "تشغيل"
+
+#: src/i18n/en/pivot.ts:111
+msgctxt "pivot.entry.fetch"
+msgid "Fetch"
+msgstr "جلب"
+
+#: src/i18n/en/pivot.ts:112
+msgctxt "pivot.entry.runIngest"
+msgid "Run & ingest"
+msgstr "تشغيل واستيراد"
+
+#: src/i18n/en/pivot.ts:113
+msgctxt "pivot.entry.fetchIngest"
+msgid "Fetch & ingest"
+msgstr "جلب واستيراد"
+
+#: src/i18n/en/pivot.ts:114
+msgctxt "pivot.entry.ingest.title"
+msgid "Add every result to the graph without reviewing it first"
+msgstr "إضافة كل النتائج إلى الرسم البياني دون مراجعتها أولًا"
+
+#: src/i18n/en/pivot.ts:115
+msgctxt "pivot.entry.clearNarrowing"
+msgid "Clear narrowing"
+msgstr "مسح التضييق"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:116
+msgctxt "pivot.entry.inTriage"
+msgid "{count} in triage"
+msgstr "{count} قيد الفرز"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:117
+msgctxt "pivot.entry.rejected"
+msgid "{count} rejected"
+msgstr "{count} مرفوضة"
+
+#: src/i18n/en/pivot.ts:118
+msgctxt "pivot.entry.rejected.title"
+msgid "What you rejected here this session. It is not offered again until restored."
+msgstr "ما رفضته هنا في هذه الجلسة. لن يُعرض مجددًا حتى يُستعاد."
+
+#: src/i18n/en/pivot.ts:119
+msgctxt "pivot.entry.rejected.note"
+msgid "Not offered again this session. Restoring one brings it back on the next run."
+msgstr "لن يُعرض مجددًا في هذه الجلسة. استعادته تعيده في التشغيل التالي."
+
+#: src/i18n/en/pivot.ts:120
+msgctxt "pivot.entry.restore"
+msgid "restore"
+msgstr "استعادة"
+
+#: src/i18n/en/pivot.ts:121
+msgctxt "pivot.entry.restore.title"
+msgid "Offer this again on the next run"
+msgstr "عرض هذا مجددًا في التشغيل التالي"
+
+#: src/i18n/en/pivot.ts:122
+msgctxt "pivot.entry.restoreAll"
+msgid "Restore all"
+msgstr "استعادة الكل"
+
+#: src/i18n/en/pivot.ts:123
+msgctxt "pivot.entry.restoreAll.title"
+msgid "Take back every rejection this pivot holds"
+msgstr "التراجع عن كل حالات الرفض لهذا الاستكشاف"
+
+#: src/i18n/en/pivot.ts:126
+msgctxt "pivot.review.tab"
+msgid "Review"
+msgstr "مراجعة"
+
+#: src/i18n/en/pivot.ts:127
+msgctxt "pivot.review.tabLoading"
+msgid "Review…"
+msgstr "مراجعة…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:128
+msgctxt "pivot.review.tabWaiting"
+msgid "Review ({count})"
+msgstr "مراجعة ({count})"
+
+#: src/i18n/en/pivot.ts:129
+msgctxt "pivot.review.strip.aria"
+msgid "Staged providers"
+msgstr "موفرو البيانات المجهزون"
+
+#: src/i18n/en/pivot.ts:130
+msgctxt "pivot.review.closeFailed"
+msgid "Close failed"
+msgstr "إغلاق الفاشلة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:131
+msgctxt "pivot.review.closeFailed.title"
+msgid "Drop the one provider whose fetch brought nothing back"
+msgid_plural "Drop the {count} providers whose fetches brought nothing back"
+msgstr[0] "إغلاق موفري البيانات الذين لم يُرجع جلبهم شيئًا وعددهم {count}"
+msgstr[1] "إغلاق موفر البيانات الوحيد الذي لم يُرجع جلبه شيئًا"
+msgstr[2] "إغلاق موفري البيانات الذين لم يُرجع جلبهم شيئًا وعددهم {count}"
+msgstr[3] "إغلاق موفري البيانات الذين لم يُرجع جلبهم شيئًا وعددهم {count}"
+msgstr[4] "إغلاق موفري البيانات الذين لم يُرجع جلبهم شيئًا وعددهم {count}"
+msgstr[5] "إغلاق موفري البيانات الذين لم يُرجع جلبهم شيئًا وعددهم {count}"
+
+#: src/i18n/en/pivot.ts:135
+msgctxt "pivot.review.closeAll"
+msgid "Close all"
+msgstr "إغلاق الكل"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:136
+msgctxt "pivot.review.closeAll.title"
+msgid "Drop {count} staged provider. Nothing is rejected."
+msgid_plural "Drop all {count} staged providers. Nothing is rejected."
+msgstr[0] "إغلاق موفري البيانات المجهزين وعددهم {count}. لن يُرفض شيء."
+msgstr[1] "إغلاق موفري البيانات المجهزين وعددهم {count}. لن يُرفض شيء."
+msgstr[2] "إغلاق موفري البيانات المجهزين وعددهم {count}. لن يُرفض شيء."
+msgstr[3] "إغلاق موفري البيانات المجهزين وعددهم {count}. لن يُرفض شيء."
+msgstr[4] "إغلاق موفري البيانات المجهزين وعددهم {count}. لن يُرفض شيء."
+msgstr[5] "إغلاق موفري البيانات المجهزين وعددهم {count}. لن يُرفض شيء."
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:140
+msgctxt "pivot.review.item.fetching"
+msgid "{provider} — fetching"
+msgstr "{provider} — جارٍ الجلب"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:141
+msgctxt "pivot.review.item.failed"
+msgid "{provider} — the fetch failed"
+msgstr "{provider} — فشل الجلب"
+
+#. Preserve placeholders: {count}, {provider}
+#: src/i18n/en/pivot.ts:142
+msgctxt "pivot.review.item.waiting"
+msgid "{provider} — {count} waiting for a verdict"
+msgstr "{provider} — {count} تنتظر قرارًا"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:143
+msgctxt "pivot.review.item.idle"
+msgid "{provider} — nothing waiting"
+msgstr "{provider} — لا شيء قيد الانتظار"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:144
+msgctxt "pivot.review.item.close.aria"
+msgid "Close {provider}"
+msgstr "إغلاق {provider}"
+
+#: src/i18n/en/pivot.ts:145
+msgctxt "pivot.review.item.close.title"
+msgid "Drop these candidates. Nothing is rejected."
+msgstr "إغلاق هؤلاء المرشحين. لن يُرفض شيء."
+
+#: src/i18n/en/pivot.ts:148
+msgctxt "pivot.triage.search.placeholder"
+msgid "Search rows…"
+msgstr "البحث في الصفوف…"
+
+#: src/i18n/en/pivot.ts:149
+msgctxt "pivot.triage.search.patternPlaceholder"
+msgid "Match rows by pattern…"
+msgstr "مطابقة الصفوف بنمط…"
+
+#: src/i18n/en/pivot.ts:150
+msgctxt "pivot.triage.search.title"
+msgid "Narrow the candidates. Nothing here touches the graph."
+msgstr "تضييق المرشحين. لا يؤثر شيء هنا على الرسم البياني."
+
+#: src/i18n/en/pivot.ts:151
+msgctxt "pivot.triage.regex"
+msgid "regex"
+msgstr "تعبير نمطي"
+
+#: src/i18n/en/pivot.ts:152
+msgctxt "pivot.triage.regex.title"
+msgid "Read the search box as a regular expression"
+msgstr "قراءة مربع البحث كتعبير نمطي"
+
+#: src/i18n/en/pivot.ts:153
+msgctxt "pivot.triage.rerun"
+msgid "Re-run"
+msgstr "إعادة التشغيل"
+
+#: src/i18n/en/pivot.ts:154
+msgctxt "pivot.triage.rerun.title"
+msgid "Fetch again with the same narrowing"
+msgstr "الجلب مجددًا بنفس التضييق"
+
+#: src/i18n/en/pivot.ts:157
+msgctxt "pivot.triage.loading"
+msgid "Fetching candidates…"
+msgstr "جارٍ جلب المرشحين…"
+
+#: src/i18n/en/pivot.ts:158
+msgctxt "pivot.triage.loading.sub"
+msgid "Nothing is on the canvas yet — candidates are staged, not merged."
+msgstr "لا شيء على اللوحة بعد — المرشحون مجهزون ولم يُدمجوا."
+
+#: src/i18n/en/pivot.ts:159
+msgctxt "pivot.triage.error"
+msgid "Couldn't fetch candidates."
+msgstr "تعذر جلب المرشحين."
+
+#: src/i18n/en/pivot.ts:160
+msgctxt "pivot.triage.error.sub"
+msgid "Nothing was staged. Retrying runs the same request with the narrowing you already chose."
+msgstr "لم يُجهّز شيء. تعيد المحاولة الطلب نفسه بالتضييق الذي اخترته بالفعل."
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:161
+msgctxt "pivot.triage.refused"
+msgid "The source returned {count} candidate, over the {limit} limit."
+msgid_plural "The source returned {count} candidates, over the {limit} limit."
+msgstr[0] "أعاد المصدر مرشحين بعدد {count} يتجاوز الحد {limit}."
+msgstr[1] "أعاد المصدر مرشحين بعدد {count} يتجاوز الحد {limit}."
+msgstr[2] "أعاد المصدر مرشحين بعدد {count} يتجاوز الحد {limit}."
+msgstr[3] "أعاد المصدر مرشحين بعدد {count} يتجاوز الحد {limit}."
+msgstr[4] "أعاد المصدر مرشحين بعدد {count} يتجاوز الحد {limit}."
+msgstr[5] "أعاد المصدر مرشحين بعدد {count} يتجاوز الحد {limit}."
+
+#: src/i18n/en/pivot.ts:165
+msgctxt "pivot.triage.refused.sub"
+msgid "Nothing was staged — narrow and run again."
+msgstr "لم يُجهّز شيء — ضيّق النتائج وشغّل مجددًا."
+
+#: src/i18n/en/pivot.ts:166
+msgctxt "pivot.triage.empty"
+msgid "No candidates came back"
+msgstr "لم يُرجع أي مرشحين"
+
+#: src/i18n/en/pivot.ts:167
+msgctxt "pivot.triage.empty.sub"
+msgid "The narrowing may be tighter than the data."
+msgstr "قد يكون التضييق أشد مما تسمح به البيانات."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:168
+msgctxt "pivot.triage.allRejected"
+msgid "The only candidate was rejected earlier this session"
+msgid_plural "All {count} were rejected earlier this session"
+msgstr[0] "رُفض الجميع سابقًا في هذه الجلسة وعددهم {count}"
+msgstr[1] "رُفض المرشح الوحيد سابقًا في هذه الجلسة"
+msgstr[2] "رُفض الجميع سابقًا في هذه الجلسة وعددهم {count}"
+msgstr[3] "رُفض الجميع سابقًا في هذه الجلسة وعددهم {count}"
+msgstr[4] "رُفض الجميع سابقًا في هذه الجلسة وعددهم {count}"
+msgstr[5] "رُفض الجميع سابقًا في هذه الجلسة وعددهم {count}"
+
+#: src/i18n/en/pivot.ts:172
+msgctxt "pivot.triage.allRejected.sub"
+msgid "Nothing new came back. Restoring one offers it again on the next run."
+msgstr "لم يصل شيء جديد. استعادة أحد المرشحين تعيده في التشغيل التالي."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:173
+msgctxt "pivot.triage.allOnCanvas"
+msgid "The only candidate is already on the canvas — nothing to triage"
+msgid_plural "All {count} are already on the canvas — nothing to triage"
+msgstr[0] "الجميع موجودون على اللوحة وعددهم {count} — لا شيء لفرزه"
+msgstr[1] "المرشح الوحيد موجود على اللوحة — لا شيء لفرزه"
+msgstr[2] "الجميع موجودون على اللوحة وعددهم {count} — لا شيء لفرزه"
+msgstr[3] "الجميع موجودون على اللوحة وعددهم {count} — لا شيء لفرزه"
+msgstr[4] "الجميع موجودون على اللوحة وعددهم {count} — لا شيء لفرزه"
+msgstr[5] "الجميع موجودون على اللوحة وعددهم {count} — لا شيء لفرزه"
+
+#: src/i18n/en/pivot.ts:177
+msgctxt "pivot.triage.allOnCanvas.sub"
+msgid "Nothing was changed: an id already here is left exactly as it was."
+msgstr "لم يتغير شيء: يبقى المعرّف الموجود هنا كما كان تمامًا."
+
+#: src/i18n/en/pivot.ts:178
+msgctxt "pivot.triage.done"
+msgid "Nothing left to triage"
+msgstr "لم يتبق شيء لفرزه"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:179
+msgctxt "pivot.triage.done.ingested"
+msgid "{count} ingested"
+msgstr "{count} مستوردة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:180
+msgctxt "pivot.triage.done.rejected"
+msgid "{count} rejected"
+msgstr "{count} مرفوضة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:181
+msgctxt "pivot.triage.done.onCanvas"
+msgid "{count} already on canvas"
+msgstr "{count} موجودة بالفعل على اللوحة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:182
+msgctxt "pivot.triage.showRejected"
+msgid "Show the {count} rejected"
+msgstr "إظهار المرفوضة وعددها {count}"
+
+#: src/i18n/en/pivot.ts:183
+msgctxt "pivot.triage.hideRejected"
+msgid "Hide the rejected"
+msgstr "إخفاء المرفوضة"
+
+#: src/i18n/en/pivot.ts:186
+msgctxt "pivot.triage.banner.running"
+msgid "Running again…"
+msgstr "جارٍ إعادة التشغيل…"
+
+#: src/i18n/en/pivot.ts:187
+msgctxt "pivot.triage.banner.failed"
+msgid "The re-run failed. What is below is untouched."
+msgstr "فشلت إعادة التشغيل. لم يتغير ما هو أدناه."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:188
+msgctxt "pivot.triage.banner.ready"
+msgid "This pivot was run again. {count} new candidate is ready."
+msgid_plural "This pivot was run again. {count} new candidates are ready."
+msgstr[0] "أُعيد تشغيل هذا الاستكشاف. عدد المرشحين الجدد الجاهزين: {count}."
+msgstr[1] "أُعيد تشغيل هذا الاستكشاف. عدد المرشحين الجدد الجاهزين: {count}."
+msgstr[2] "أُعيد تشغيل هذا الاستكشاف. عدد المرشحين الجدد الجاهزين: {count}."
+msgstr[3] "أُعيد تشغيل هذا الاستكشاف. عدد المرشحين الجدد الجاهزين: {count}."
+msgstr[4] "أُعيد تشغيل هذا الاستكشاف. عدد المرشحين الجدد الجاهزين: {count}."
+msgstr[5] "أُعيد تشغيل هذا الاستكشاف. عدد المرشحين الجدد الجاهزين: {count}."
+
+#: src/i18n/en/pivot.ts:192
+msgctxt "pivot.triage.banner.show"
+msgid "Show new"
+msgstr "إظهار الجديدة"
+
+#: src/i18n/en/pivot.ts:193
+msgctxt "pivot.triage.banner.keep"
+msgid "Keep triaging"
+msgstr "متابعة الفرز"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:196
+msgctxt "pivot.triage.head.fetched"
+msgid "{count} fetched"
+msgstr "{count} مجلوبة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:197
+msgctxt "pivot.triage.head.deduped"
+msgid "{count} already on canvas (skipped)"
+msgstr "{count} موجودة على اللوحة (تم تخطيها)"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:198
+msgctxt "pivot.triage.head.suppressed"
+msgid "{count} rejected earlier"
+msgstr "{count} مرفوضة سابقًا"
+
+#: src/i18n/en/pivot.ts:199
+msgctxt "pivot.triage.head.suppressed.title"
+msgid "Suppressed because they were rejected earlier this session"
+msgstr "حُجبت لأنها رُفضت سابقًا في هذه الجلسة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:200
+msgctxt "pivot.triage.head.unsaved"
+msgid "{count} unsaved"
+msgstr "{count} غير محفوظة"
+
+#: src/i18n/en/pivot.ts:201
+msgctxt "pivot.triage.head.save"
+msgid "save"
+msgstr "حفظ"
+
+#: src/i18n/en/pivot.ts:202
+msgctxt "pivot.triage.head.saving"
+msgid "saving…"
+msgstr "جارٍ الحفظ…"
+
+#: src/i18n/en/pivot.ts:203
+msgctxt "pivot.triage.head.save.title"
+msgid "Write this provider's ingested results back to the source system"
+msgstr "كتابة نتائج هذا الموفر المستوردة إلى نظام المصدر"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:204
+msgctxt "pivot.triage.head.origin"
+msgid "{count} origin node"
+msgid_plural "{count} origin nodes"
+msgstr[0] "عدد عقد الأصل: {count}"
+msgstr[1] "عدد عقد الأصل: {count}"
+msgstr[2] "عدد عقد الأصل: {count}"
+msgstr[3] "عدد عقد الأصل: {count}"
+msgstr[4] "عدد عقد الأصل: {count}"
+msgstr[5] "عدد عقد الأصل: {count}"
+
+#: src/i18n/en/pivot.ts:205
+msgctxt "pivot.triage.head.noOrigin"
+msgid "no origin"
+msgstr "بلا نقطة أصل"
+
+#: src/i18n/en/pivot.ts:206
+msgctxt "pivot.triage.head.narrowed"
+msgid "narrowed"
+msgstr "مضيّقة"
+
+#: src/i18n/en/pivot.ts:209
+msgctxt "pivot.triage.suppressed.note"
+msgid "Rejected earlier, so not offered again this session. Restoring one brings it back on the next run."
+msgstr "رُفضت سابقًا فلن تُعرض مجددًا في هذه الجلسة. استعادة أحدها تعيده في التشغيل التالي."
+
+#: src/i18n/en/pivot.ts:210
+msgctxt "pivot.triage.restore"
+msgid "restore"
+msgstr "استعادة"
+
+#: src/i18n/en/pivot.ts:211
+msgctxt "pivot.triage.restoreAll"
+msgid "restore all"
+msgstr "استعادة الكل"
+
+#: src/i18n/en/pivot.ts:214
+msgctxt "pivot.triage.column.candidate"
+msgid "Candidate"
+msgstr "مرشح"
+
+#: src/i18n/en/pivot.ts:215
+msgctxt "pivot.triage.column.children"
+msgid "Children"
+msgstr "العقد الفرعية"
+
+#: src/i18n/en/pivot.ts:216
+msgctxt "pivot.triage.column.from"
+msgid "From"
+msgstr "من"
+
+#: src/i18n/en/pivot.ts:217
+msgctxt "pivot.triage.column.to"
+msgid "To"
+msgstr "إلى"
+
+#: src/i18n/en/pivot.ts:218
+msgctxt "pivot.triage.section.nodes"
+msgid "Nodes"
+msgstr "العقد"
+
+#: src/i18n/en/pivot.ts:219
+msgctxt "pivot.triage.section.edges"
+msgid "Edges"
+msgstr "الحواف"
+
+#: src/i18n/en/pivot.ts:220
+msgctxt "pivot.triage.section.edges.note"
+msgid "both ends are already on the canvas"
+msgstr "كلا الطرفين موجودان بالفعل على اللوحة"
+
+#. Preserve placeholders: {from}, {to}
+#: src/i18n/en/pivot.ts:221
+msgctxt "pivot.triage.edge.endpoints"
+msgid "{from} → {to}"
+msgstr "{from} → {to}"
+
+#. Preserve placeholders: {row}
+#: src/i18n/en/pivot.ts:222
+msgctxt "pivot.triage.row.select.aria"
+msgid "Select {row}"
+msgstr "تحديد {row}"
+
+#: src/i18n/en/pivot.ts:223
+msgctxt "pivot.triage.row.onCanvas"
+msgid "on canvas"
+msgstr "على اللوحة"
+
+#: src/i18n/en/pivot.ts:224
+msgctxt "pivot.triage.row.undo"
+msgid "undo"
+msgstr "تراجع"
+
+#: src/i18n/en/pivot.ts:225
+msgctxt "pivot.triage.row.willIngest"
+msgid "will ingest"
+msgstr "سيُستورد"
+
+#: src/i18n/en/pivot.ts:226
+msgctxt "pivot.triage.children.show.title"
+msgid "Show what this row holds"
+msgstr "إظهار ما يحتويه هذا الصف"
+
+#: src/i18n/en/pivot.ts:227
+msgctxt "pivot.triage.children.hide.title"
+msgid "Hide what this row holds"
+msgstr "إخفاء ما يحتويه هذا الصف"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:228
+msgctxt "pivot.triage.children.summary"
+msgid "{count} child — ingesting this row takes all of them."
+msgid_plural "{count} children — ingesting this row takes all of them."
+msgstr[0] "عدد العقد الفرعية {count} — استيراد هذا الصف يستوردها كلها."
+msgstr[1] "عدد العقد الفرعية {count} — استيراد هذا الصف يستوردها كلها."
+msgstr[2] "عدد العقد الفرعية {count} — استيراد هذا الصف يستوردها كلها."
+msgstr[3] "عدد العقد الفرعية {count} — استيراد هذا الصف يستوردها كلها."
+msgstr[4] "عدد العقد الفرعية {count} — استيراد هذا الصف يستوردها كلها."
+msgstr[5] "عدد العقد الفرعية {count} — استيراد هذا الصف يستوردها كلها."
+
+#. Preserve placeholders: {key}, {value}
+#: src/i18n/en/pivot.ts:233
+msgctxt "pivot.triage.children.field"
+msgid "{key}: {value}"
+msgstr "{key}: {value}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:234
+msgctxt "pivot.triage.children.nested"
+msgid "+{count} inside"
+msgstr "+{count} بالداخل"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:237
+msgctxt "pivot.triage.foot.ingest"
+msgid "Ingest selected ({count})"
+msgstr "استيراد المحدد ({count})"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:238
+msgctxt "pivot.triage.foot.ingestLoose"
+msgid "Ingest loose ({count})"
+msgstr "استيراد منفصل ({count})"
+
+#: src/i18n/en/pivot.ts:239
+msgctxt "pivot.triage.foot.ingestLoose.title"
+msgid "Land the selected rows as separate nodes"
+msgstr "إضافة الصفوف المحددة كعقد منفصلة"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:240
+msgctxt "pivot.triage.foot.ingestGrouped"
+msgid "Ingest in a group ({count})"
+msgstr "استيراد في مجموعة ({count})"
+
+#: src/i18n/en/pivot.ts:241
+msgctxt "pivot.triage.foot.ingestGrouped.title"
+msgid "Land the selected rows folded, one group per type"
+msgstr "إضافة الصفوف المحددة مطوية في مجموعة لكل نوع"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:242
+msgctxt "pivot.triage.foot.ingestAll"
+msgid "Ingest all {count}"
+msgstr "استيراد الكل وعددها {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:243
+msgctxt "pivot.triage.foot.selectAll"
+msgid "Select all {count}"
+msgstr "تحديد الكل وعددها {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:244
+msgctxt "pivot.triage.foot.selectMatching"
+msgid "Select all {count} matching"
+msgstr "تحديد كل المطابقة وعددها {count}"
+
+#: src/i18n/en/pivot.ts:245
+msgctxt "pivot.triage.foot.rejectSelected"
+msgid "Reject selected"
+msgstr "رفض المحدد"
+
+#: src/i18n/en/pivot.ts:246
+msgctxt "pivot.triage.foot.rejectRemaining"
+msgid "Reject all remaining"
+msgstr "رفض كل المتبقي"
+
+#. Preserve placeholders: {count}, {from}, {to}
+#: src/i18n/en/pivot.ts:247
+msgctxt "pivot.triage.foot.page"
+msgid "{from}–{to} of {count}"
+msgstr "{from}–{to} من {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:248
+msgctxt "pivot.triage.foot.shown"
+msgid "{count} shown"
+msgstr "{count} معروضة"
+
+#: src/i18n/en/pivot.ts:249
+msgctxt "pivot.triage.foot.note"
+msgid "closing this pane rejects nothing — leftovers are re-offered next run"
+msgstr "إغلاق هذه اللوحة لا يرفض شيئًا — يُعرض المتبقي مجددًا في التشغيل التالي"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:6
+msgctxt "history.entry.hid"
+msgid "Hid {count} node"
+msgid_plural "Hid {count} nodes"
+msgstr[0] "عدد العقد التي أُخفيت: {count}"
+msgstr[1] "عدد العقد التي أُخفيت: {count}"
+msgstr[2] "عدد العقد التي أُخفيت: {count}"
+msgstr[3] "عدد العقد التي أُخفيت: {count}"
+msgstr[4] "عدد العقد التي أُخفيت: {count}"
+msgstr[5] "عدد العقد التي أُخفيت: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:7
+msgctxt "history.entry.showed"
+msgid "Showed {count} node"
+msgid_plural "Showed {count} nodes"
+msgstr[0] "عدد العقد التي عُرضت: {count}"
+msgstr[1] "عدد العقد التي عُرضت: {count}"
+msgstr[2] "عدد العقد التي عُرضت: {count}"
+msgstr[3] "عدد العقد التي عُرضت: {count}"
+msgstr[4] "عدد العقد التي عُرضت: {count}"
+msgstr[5] "عدد العقد التي عُرضت: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:8
+msgctxt "history.entry.deletedNodes"
+msgid "Deleted {count} node"
+msgid_plural "Deleted {count} nodes"
+msgstr[0] "عدد العقد المحذوفة: {count}"
+msgstr[1] "عدد العقد المحذوفة: {count}"
+msgstr[2] "عدد العقد المحذوفة: {count}"
+msgstr[3] "عدد العقد المحذوفة: {count}"
+msgstr[4] "عدد العقد المحذوفة: {count}"
+msgstr[5] "عدد العقد المحذوفة: {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:9
+msgctxt "history.entry.deletedEdges"
+msgid "Deleted {count} edge"
+msgid_plural "Deleted {count} edges"
+msgstr[0] "عدد الحواف المحذوفة: {count}"
+msgstr[1] "عدد الحواف المحذوفة: {count}"
+msgstr[2] "عدد الحواف المحذوفة: {count}"
+msgstr[3] "عدد الحواف المحذوفة: {count}"
+msgstr[4] "عدد الحواف المحذوفة: {count}"
+msgstr[5] "عدد الحواف المحذوفة: {count}"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/core.ts:10
+msgctxt "history.entry.deletedBoth"
+msgid "Deleted {nodes}, {edges}"
+msgstr "تم حذف {nodes}، {edges}"
+
+#. Preserve placeholders: {label}
+#: src/i18n/en/core.ts:11
+msgctxt "history.entry.created"
+msgid "Created “{label}”"
+msgstr "تم إنشاء «{label}»"
+
+#: src/i18n/en/core.ts:12
+msgctxt "history.entry.createdNode"
+msgid "Created a node"
+msgstr "تم إنشاء عقدة"
+
+#: src/i18n/en/core.ts:13
+msgctxt "history.entry.createdEdge"
+msgid "Created an edge"
+msgstr "تم إنشاء حافة"
+
+#: src/i18n/en/core.ts:14
+msgctxt "history.entry.removedSeed"
+msgid "Removed the loaded data"
+msgstr "تمت إزالة البيانات المحملة"
+
+#: src/i18n/en/core.ts:15
+msgctxt "history.entry.removedManual"
+msgid "Removed hand-drawn work"
+msgstr "تمت إزالة العمل المرسوم يدويًا"
+
+#. Preserve placeholders: {source}
+#: src/i18n/en/core.ts:16
+msgctxt "history.entry.removedSource"
+msgid "Removed “{source}”"
+msgstr "تمت إزالة «{source}»"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:17
+msgctxt "history.entry.grouped"
+msgid "Grouped “{group}”"
+msgstr "تم تجميع «{group}»"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:18
+msgctxt "history.entry.ungrouped"
+msgid "Ungrouped “{group}”"
+msgstr "تم فك تجميع «{group}»"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:19
+msgctxt "history.entry.ungroupedMany"
+msgid "Ungrouped {count} group"
+msgid_plural "Ungrouped {count} groups"
+msgstr[0] "عدد المجموعات التي فُك تجميعها: {count}"
+msgstr[1] "عدد المجموعات التي فُك تجميعها: {count}"
+msgstr[2] "عدد المجموعات التي فُك تجميعها: {count}"
+msgstr[3] "عدد المجموعات التي فُك تجميعها: {count}"
+msgstr[4] "عدد المجموعات التي فُك تجميعها: {count}"
+msgstr[5] "عدد المجموعات التي فُك تجميعها: {count}"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:20
+msgctxt "history.entry.renamed"
+msgid "Renamed to “{group}”"
+msgstr "أُعيدت التسمية إلى «{group}»"
+
+#. Preserve placeholders: {count}, {type}
+#: src/i18n/en/core.ts:23
+msgctxt "simplify.typeLabel"
+msgid "{count} × {type}"
+msgstr "{count} × {type}"
+
+#: src/i18n/en/core.ts:24
+msgctxt "simplify.untyped"
+msgid "node"
+msgstr "عقدة"
+
+#: src/i18n/en/core.ts:27
+msgctxt "simplify.builtin.neighbours.label"
+msgid "Same neighbours"
+msgstr "الجيران أنفسهم"
+
+#: src/i18n/en/core.ts:28
+msgctxt "simplify.builtin.neighbours.description"
+msgid "Nodes of one type linked to exactly the same nodes."
+msgstr "عقد من نوع واحد مرتبطة بالعقد نفسها تمامًا."
+
+#: src/i18n/en/core.ts:29
+msgctxt "simplify.builtin.chains.label"
+msgid "Chains"
+msgstr "سلاسل"
+
+#: src/i18n/en/core.ts:30
+msgctxt "simplify.builtin.chains.description"
+msgid "Nodes leading chains of the same shape, folded level by level."
+msgstr "عقد تبدأ سلاسل بالشكل نفسه، تُطوى مستوى بعد مستوى."
+
+#: src/i18n/en/core.ts:31
+msgctxt "simplify.builtin.degree.label"
+msgid "Few links"
+msgstr "اتصالات قليلة"
+
+#: src/i18n/en/core.ts:32
+msgctxt "simplify.builtin.degree.description"
+msgid "Nodes with fewer links than this fold into the nodes they hang from."
+msgstr "العقد ذات الاتصالات الأقل من هذا تُطوى داخل العقد التي تتصل بها."
+
+#: src/i18n/en/core.ts:33
+msgctxt "simplify.builtin.kcore.label"
+msgid "Outside the core"
+msgstr "خارج النواة"
+
+#: src/i18n/en/core.ts:34
+msgctxt "simplify.builtin.kcore.description"
+msgid "Peels off nodes with fewer links than this, again and again, into the core."
+msgstr "تزيل مرارًا العقد ذات الاتصالات الأقل من هذا وتضمها إلى النواة."
+
+#: src/i18n/en/core.ts:35
+msgctxt "simplify.builtin.communities.label"
+msgid "Communities"
+msgstr "مجتمعات"
+
+#: src/i18n/en/core.ts:36
+msgctxt "simplify.builtin.communities.description"
+msgid "Whole neighbourhoods into a few super-nodes."
+msgstr "أحياء كاملة في عدد قليل من العقد الفائقة."
+
+#: src/i18n/en/core.ts:37
+msgctxt "simplify.builtin.landings.label"
+msgid "Pivot landings"
+msgstr "نتائج الاستكشاف"
+
+#: src/i18n/en/core.ts:38
+msgctxt "simplify.builtin.landings.description"
+msgid "What a pivot brought in, one group per type."
+msgstr "ما جلبه الاستكشاف، في مجموعة لكل نوع."
+
+#: src/i18n/en/core.ts:39
+msgctxt "simplify.builtin.manual.label"
+msgid "By hand"
+msgstr "يدويًا"
+
+#: src/i18n/en/core.ts:40
+msgctxt "simplify.builtin.manual.description"
+msgid "Groups made from a selection."
+msgstr "مجموعات أُنشئت من تحديد."
+
+#: src/i18n/en/core.ts:43
+msgctxt "simplify.setting.level"
+msgid "Level"
+msgstr "المستوى"
+
+#: src/i18n/en/core.ts:44
+msgctxt "simplify.setting.minSize"
+msgid "Smallest group"
+msgstr "أصغر مجموعة"
+
+#: src/i18n/en/core.ts:45
+msgctxt "simplify.setting.fewestLinks"
+msgid "Fewest links"
+msgstr "أقل عدد اتصالات"
+
+#: src/i18n/en/core.ts:46
+msgctxt "simplify.setting.coreStrength"
+msgid "Core strength"
+msgstr "قوة النواة"
+
+#: src/i18n/en/core.ts:49
+msgctxt "renderer.progress.simulating"
+msgid "Optimizing node positions..."
+msgstr "جارٍ تحسين مواضع العقد…"
+
+#: src/i18n/en/core.ts:50
+msgctxt "renderer.progress.rendering"
+msgid "Rendering in progress"
+msgstr "جارٍ الرسم"
+
+#. Preserve placeholders: {seconds}
+#: src/i18n/en/core.ts:51
+msgctxt "renderer.progress.elapsed"
+msgid "Elapsed time: {seconds} sec"
+msgstr "الوقت المنقضي: {seconds} ث"
+
+#: src/i18n/en/core.ts:52
+msgctxt "renderer.progress.done"
+msgid "All done"
+msgstr "اكتمل الكل"
+
+#: src/i18n/en/core.ts:55
+msgctxt "simulation.slow.title"
+msgid "Physics engine running slow"
+msgstr "محرك الفيزياء يعمل ببطء"
+
+#: src/i18n/en/core.ts:56
+msgctxt "simulation.slow.message"
+msgid "The physic has been disabled."
+msgstr "تم تعطيل الفيزياء."
+
+#: src/i18n/en/core.ts:59
+msgctxt "node.expand.title"
+msgid "Expand node"
+msgstr "توسيع العقدة"
+
+#: src/i18n/en/core.ts:60
+msgctxt "node.collapse.title"
+msgid "Collapse nodes"
+msgstr "طي العقد"
+
+#: src/i18n/en/core.ts:61
+msgctxt "node.defaultLabel"
+msgid "New node"
+msgstr "عقدة جديدة"
+
+#: src/i18n/en/core.ts:64
+msgctxt "groupOutline.drag.title"
+msgid "drag to move the group"
+msgstr "اسحب لتحريك المجموعة"
+
+#: src/i18n/en/core.ts:65
+msgctxt "groupOutline.close.title"
+msgid "Fold back into the group"
+msgstr "الطي مجددًا في المجموعة"
+
+#. Preserve placeholders: {count}, {pivot}
+#: src/i18n/en/core.ts:68
+msgctxt "pivotBadge.title"
+msgid "~{count} · {pivot}"
+msgstr "~{count} · {pivot}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/core.ts:69
+msgctxt "pivotBadge.summary.declared"
+msgid "~{total} across {count} pivot"
+msgid_plural "~{total} across {count} pivots"
+msgstr[0] "نحو {total} عبر استكشافات عددها {count}"
+msgstr[1] "نحو {total} عبر استكشافات عددها {count}"
+msgstr[2] "نحو {total} عبر استكشافات عددها {count}"
+msgstr[3] "نحو {total} عبر استكشافات عددها {count}"
+msgstr[4] "نحو {total} عبر استكشافات عددها {count}"
+msgstr[5] "نحو {total} عبر استكشافات عددها {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:70
+msgctxt "pivotBadge.summary.applies"
+msgid "{count} pivot applies"
+msgid_plural "{count} pivots apply"
+msgstr[0] "عدد الاستكشافات القابلة للتطبيق: {count}"
+msgstr[1] "عدد الاستكشافات القابلة للتطبيق: {count}"
+msgstr[2] "عدد الاستكشافات القابلة للتطبيق: {count}"
+msgstr[3] "عدد الاستكشافات القابلة للتطبيق: {count}"
+msgstr[4] "عدد الاستكشافات القابلة للتطبيق: {count}"
+msgstr[5] "عدد الاستكشافات القابلة للتطبيق: {count}"
+
+#: src/i18n/en/core.ts:73
+msgctxt "noteCard.surfaceToggle.title"
+msgid "Toggle terminal look"
+msgstr "تبديل مظهر الطرفية"
+
+#: src/i18n/en/core.ts:74
+msgctxt "noteCard.edit.title"
+msgid "Edit the note"
+msgstr "تعديل الملاحظة"
+
+#: src/i18n/en/core.ts:75
+msgctxt "noteCard.save.title"
+msgid "Save changes"
+msgstr "حفظ التغييرات"
+
+#: src/i18n/en/core.ts:76
+msgctxt "noteCard.remove.title"
+msgid "Remove the note"
+msgstr "إزالة الملاحظة"
+
+#: src/i18n/en/core.ts:77
+msgctxt "noteCard.link.search.title"
+msgid "Search for a note"
+msgstr "البحث عن ملاحظة"
+
+#: src/i18n/en/core.ts:78
+msgctxt "noteCard.link.pickTitle"
+msgid "Select a node to link to this note"
+msgstr "حدد عقدة لربطها بهذه الملاحظة"
+
+#: src/i18n/en/core.ts:79
+msgctxt "noteCard.link.empty"
+msgid "Link this note to a node"
+msgstr "ربط هذه الملاحظة بعقدة"
+
+#. Preserve placeholders: {id}
+#: src/i18n/en/core.ts:80
+msgctxt "noteCard.link.missing"
+msgid "Missing node: {id}"
+msgstr "عقدة مفقودة: {id}"
+
+#: src/i18n/en/core.ts:81
+msgctxt "noteCard.reference.unresolved.title"
+msgid "Could not resolve node"
+msgstr "تعذر تحديد العقدة"
+
+#: src/i18n/en/core.ts:84
+msgctxt "minimap.expand.title"
+msgid "Show the minimap"
+msgstr "إظهار الخريطة المصغرة"
+
+#: src/i18n/en/core.ts:85
+msgctxt "minimap.collapse.title"
+msgid "Collapse the minimap"
+msgstr "طي الخريطة المصغرة"

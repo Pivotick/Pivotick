@@ -6,6 +6,10 @@ const languages = [
     { locale: 'fr-CA', search: 'Rechercher', zoom: 'Zoom avant', empty: 'Le canevas est encore vide' },
     { locale: 'de-CH', search: 'Suchen', zoom: 'Vergrößern', empty: 'Noch nichts auf der Arbeitsfläche' },
     { locale: 'pt-BR', search: 'Pesquisar', zoom: 'Ampliar', empty: 'Ainda não há nada na tela' },
+    { locale: 'nl-BE', search: 'Zoeken', zoom: 'Inzoomen', empty: 'Er staat nog niets op het canvas' },
+    { locale: 'ja-JP', search: '検索', zoom: '拡大', empty: 'キャンバスにはまだ何もありません' },
+    { locale: 'ar-EG', search: 'بحث', zoom: 'تكبير', empty: 'لا يوجد شيء على اللوحة بعد' },
+    { locale: 'es-MX', search: 'Buscar', zoom: 'Acercar', empty: 'Aún no hay nada en el lienzo' },
 ]
 
 test.beforeEach(async ({ page }) => { await gotoHarness(page) })
