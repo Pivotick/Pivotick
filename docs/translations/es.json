@@ -28,7 +28,7 @@
   "918c144fbade741ea44fa8de": "Devuelve una ⟦0⟧copia profunda⟦1⟧ de todos los nodos.",
   "8971c4080c0fcc334c5a510e": "Devuelve el ⟦0⟧objeto de nodo real⟦1⟧ utilizado internamente por ⟦2⟧.",
   "5753c1a0bf6a6eec9898621b": "Devuelve ⟦0⟧todos los objetos del nodo interno⟦1⟧.",
-  "97380187a878903ffe722b7b": "propina",
+  "97380187a878903ffe722b7b": "Consejo",
   "123fd666aa39d376690cfa65": "peligro",
   "e188a2fa223e2b802819192d": "En devolución de llamada cargada",
   "2cf76ca12df69d62412c0ecd": "Agrega y dibuja una nota y emite ⟦0⟧. Lanza si se toma la identificación. Devuelve ⟦1⟧ mientras que ⟦2⟧ es ⟦3⟧.",
