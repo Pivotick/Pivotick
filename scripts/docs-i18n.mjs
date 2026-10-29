@@ -8,7 +8,7 @@ import yaml from 'js-yaml'
 
 export const root = fileURLToPath(new URL('../', import.meta.url))
 export const docs = path.join(root, 'docs')
-export const languages = ['zh', 'fr', 'de', 'pt']
+export const languages = ['zh', 'fr', 'de', 'pt', 'nl', 'ja', 'ar', 'es']
 const markdown = new MarkdownIt({ html: true })
 export const headingId = text => text.normalize('NFKD').replace(/[\u0300-\u036f\u0000-\u001f]/g, '')
     .replace(/[\s~`!@#$%^&*()\-_+=[\]{}|\\;:"'“”‘’<>,.?/]+/g, '-')

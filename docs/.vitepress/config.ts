@@ -97,7 +97,7 @@ function localeTheme(language: SiteLanguage): DefaultTheme.Config {
   }
 }
 
-const labels = { en: 'English', zh: '简体中文', fr: 'Français', de: 'Deutsch', pt: 'Português' }
+const labels = { en: 'English', zh: '简体中文', fr: 'Français', de: 'Deutsch', pt: 'Português', nl: 'Nederlands', ja: '日本語', ar: 'العربية', es: 'Español' }
 const searchLocales = Object.fromEntries(languages.map(language => {
   const text = (value: string) => siteText(value, language)
   return [language === 'en' ? 'root' : language, { translations: {
@@ -121,6 +121,7 @@ export default defineConfig({
   lastUpdated: true, ignoreDeadLinks: true,
   locales: Object.fromEntries(languages.map(language => [language === 'en' ? 'root' : language, {
     label: labels[language], lang: language === 'zh' ? 'zh-CN' : language,
+    dir: language === 'ar' ? 'rtl' : 'ltr',
     description: siteText('Pivotick documentation', language),
     link: language === 'en' ? '/' : `/${language}/`, themeConfig: localeTheme(language),
   }])),
@@ -128,7 +129,7 @@ export default defineConfig({
     locales: searchLocales, miniSearch: { options: { tokenize: searchTerms } },
   } } },
   transformHead({ pageData }) {
-    const page = pageData.relativePath.replace(/^(?:zh|fr|de|pt)\//, '').replace(/index\.md$/, '').replace(/\.md$/, '.html')
+    const page = pageData.relativePath.replace(/^(?:zh|fr|de|pt|nl|ja|ar|es)\//, '').replace(/index\.md$/, '').replace(/\.md$/, '.html')
     const url = (language: string) => `https://pivotick.github.io${baseurl}${language === 'en' ? '' : language + '/'}${page}`
     return languages.map(language => ['link', { rel: 'alternate', hreflang: language === 'zh' ? 'zh-CN' : language, href: url(language) }] as HeadConfig)
   },

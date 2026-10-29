@@ -1,14 +1,15 @@
 # Pivotick translations
 
-Select a bundled language with `i18n: { locale: 'fr' }` (or `zh`, `de`, `pt`).
+Select a bundled language with `i18n: { locale: 'fr' }` (or `zh`, `de`, `pt`, `nl`, `ja`, `ar`, `es`).
 English remains the default. Chinese uses Simplified characters. Regional locale tags
 share the language catalogue and retain regional formatting and plural rules.
 
 Edit the UTF-8 `.po` files here, using Poedit or a text editor. `msgctxt` is the stable
 message key, `msgid` is the English source, and `msgstr` is the translation. Preserve all
-`{placeholders}`. For plural messages, Chinese has one slot (`other`); the other bundled
+`{placeholders}`. For plural messages, Chinese and Japanese have one slot (`other`);
+Arabic has six (`zero`, `one`, `two`, `few`, `many`, `other`); the other bundled
 languages have two (`one`, `other`). `Intl.PluralRules` chooses the runtime category;
-additional categories such as `many` fall back to `other`.
+categories without a dedicated slot, such as Spanish `many`, fall back to `other`.
 
 From a source checkout after `npm ci`:
 

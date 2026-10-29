@@ -3773,5 +3773,20 @@
   "880d08167b388c8a0eaafc44": "⟦0⟧CIRCL⟦1⟧",
   "2775f827470d99a781e75a4c": "Conheça os projetos de cibersegurança de código aberto mantidos pelo CIRCL.",
   "27c906e353829f01ccb92b52": "⟦0⟧MISP⟦1⟧",
-  "0b5a687a2471745cd6e877a8": "Compartilhe, armazene e correlacione inteligência de ameaças usando padrões abertos."
+  "0b5a687a2471745cd6e877a8": "Compartilhe, armazene e correlacione inteligência de ameaças usando padrões abertos.",
+  "ae1c24b78f314d9c41a7270a": "Os catálogos são exportados como ⟦0⟧, ⟦1⟧, ⟦2⟧, ⟦3⟧,\n⟦4⟧, ⟦5⟧, ⟦6⟧, ⟦7⟧, ⟦8⟧ e juntos como\n⟦9⟧, também disponível em ⟦10⟧ em versões de navegador.",
+  "53e3a600197c1ce882ff2716": "O diretório ⟦0⟧ do repositório contém um modelo gettext, ⟦1⟧, e completo\nArquivos ⟦2⟧, ⟦3⟧, ⟦4⟧, ⟦5⟧, ⟦6⟧, ⟦7⟧, ⟦8⟧ e ⟦9⟧. Esses arquivos também são enviados no pacote npm.\nAbra um arquivo ⟦10⟧ no Poedit ou qualquer editor de texto UTF-8. Cada ⟦11⟧ é a chave de mensagem estável;\n⟦12⟧ é a fonte em inglês e ⟦13⟧ é a tradução. Mantenha ⟦14⟧ intacto.\nPara entradas no plural, traduza cada slot ⟦15⟧: chinês e japonês têm ⟦16⟧\napenas; Árabe tem ⟦17⟧, ⟦18⟧, ⟦19⟧, ⟦20⟧, ⟦21⟧, então ⟦22⟧; francês, alemão,\nPortuguês, holandês e espanhol têm ⟦23⟧ e depois ⟦24⟧. O tempo de execução usa ⟦25⟧,\ncom categorias ausentes voltando para ⟦26⟧, em vez de avaliar o cabeçalho gettext como ⟦27⟧.",
+  "45f16144c18cb09894ec3e24": "Holandês",
+  "be4ee906d3efecfc34a94a6c": "Japonês",
+  "bafb66f32cd77a326693cd4d": "Árabe",
+  "3411059cb8e0660e29dd7a37": "Espanhol",
+  "f3fab115440cd4b7c0fafd9c": "Uma tag ⟦0⟧ como ⟦1⟧ ou ⟦2⟧. Ele escolhe as regras plurais, como os números\nsão escritos e como as listas são classificadas. Quando fornecido, também é definido como ⟦3⟧ do\nelemento raiz do gráfico.\nInglês, Chinês Simplificado (⟦4⟧), Francês (⟦5⟧), Alemão (⟦6⟧), Português (⟦7⟧),\nHolandês (⟦8⟧), japonês (⟦9⟧), árabe (⟦10⟧) e espanhol (⟦11⟧) estão incluídos.\nTags regionais como ⟦12⟧ usam seus\ncatálogo do idioma e mantêm sua própria formatação e regras plurais.",
+  "d68fc49e8d27e55b13d13650": "⟦0⟧pivotick⟦1⟧ / ⟦2⟧",
+  "0d4c9d636788906c5b929ce1": "Definido em: i18n/locales/ar.ts:5",
+  "0beee2c422df917313088fc4": "⟦0⟧pivotick⟦1⟧ / ⟦2⟧",
+  "c9ac3aabecd3905d1daff4bb": "Definido em: i18n/locales/es.ts:5",
+  "8a885994e9030a2f41b91e91": "⟦0⟧pivotick⟦1⟧ / ⟦2⟧",
+  "bbf585bee73a59c85a972cef": "Definido em: i18n/locales/ja.ts:5",
+  "ca1bad360aca2b30d314dfb6": "⟦0⟧pivotick⟦1⟧ / ⟦2⟧",
+  "d8c75e803533d7a6c87fa186": "Definido em: i18n/locales/nl.ts:5"
 }

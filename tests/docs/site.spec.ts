@@ -8,13 +8,18 @@ const locales = [
     { prefix: 'fr/', language: 'fr', label: 'Français', title: '', search: 'Rechercher' },
     { prefix: 'de/', language: 'de', label: 'Deutsch', title: '', search: 'Suchen' },
     { prefix: 'pt/', language: 'pt', label: 'Português', title: '', search: 'Pesquisar' },
+    { prefix: 'nl/', language: 'nl', label: 'Nederlands', title: '', search: 'Zoeken' },
+    { prefix: 'ja/', language: 'ja', label: '日本語', title: '', search: '検索' },
+    { prefix: 'ar/', language: 'ar', label: 'العربية', title: '', search: 'بحث' },
+    { prefix: 'es/', language: 'es', label: 'Español', title: '', search: 'Buscar' },
 ]
 
 for (const locale of locales) {
     test(`${locale.language}: translated guide, navigation, search and shared code examples`, async ({ page }) => {
         await open(page, `/Pivotick/${locale.prefix}getting-started.html`)
         await expect(page.locator('html')).toHaveAttribute('lang', locale.language)
-        await expect(page.locator('head link[rel="alternate"][hreflang]')).toHaveCount(5)
+        await expect(page.locator('head link[rel="alternate"][hreflang]')).toHaveCount(locales.length)
+        await expect(page.locator('html')).toHaveAttribute('dir', locale.language === 'ar' ? 'rtl' : 'ltr')
         const heading = page.locator('.vp-doc h1')
         if (locale.title) await expect(heading).toHaveText(locale.title)
         else await expect(heading).not.toHaveText('Getting Started')
@@ -36,19 +41,19 @@ test('language switching keeps the current page and English section anchor', asy
     await expect(page).toHaveURL(/\/Pivotick\/getting-started.html#installation$/)
 })
 
-test('mobile navigation offers all five languages', async ({ page }) => {
+test('mobile navigation offers every supported language', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await open(page, '/Pivotick/getting-started.html')
     await page.locator('.VPNavBarHamburger').click()
     await page.locator('.VPNavScreenTranslations button').click()
-    for (const label of ['简体中文', 'Français', 'Deutsch', 'Português']) {
+    for (const { label } of locales.filter(locale => locale.language !== 'en')) {
         await expect(page.locator('.VPNavScreenTranslations').getByRole('link', { name: label, exact: true })).toBeVisible()
     }
     await page.locator('.VPNavScreenTranslations').getByRole('link', { name: 'Português', exact: true }).click()
     await expect(page.locator('html')).toHaveAttribute('lang', 'pt')
 })
 
-for (const [language, query] of [['fr', 'configuration'], ['zh', '节点']]) {
+for (const [language, query] of [['fr', 'configuration'], ['zh', '节点'], ['nl', 'configuratie'], ['ja', 'ノード'], ['ar', 'العقد'], ['es', 'configuración']]) {
     test(`${language}: documentation search returns results in the selected language`, async ({ page }) => {
         await open(page, `/Pivotick/${language}/getting-started.html`)
         await page.locator('.VPNavBarSearch button').click()
@@ -59,25 +64,30 @@ for (const [language, query] of [['fr', 'configuration'], ['zh', '节点']]) {
     })
 }
 
-test('translated gallery keeps translated card titles, shared thumbnails and localized links', async ({ page }) => {
-    await open(page, '/Pivotick/fr/gallery.html')
-    const card = page.locator('.pvt-gallery__card').first()
-    await expect(card).toBeVisible()
-    await expect(card).toHaveAttribute('href', /\/Pivotick\/fr\/examples\/gallery\//)
-    await expect(card.locator('img')).toBeVisible()
-    await expect.poll(() => card.locator('img').evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
-    await card.click()
-    await expect(page.locator('html')).toHaveAttribute('lang', 'fr')
-    await expect(page.locator('.pivotick')).toHaveAttribute('lang', 'fr')
-})
+for (const language of ['fr', 'nl', 'ja', 'ar', 'es']) {
+    test(`${language}: translated gallery keeps translated card titles, shared thumbnails and localized links`, async ({ page }) => {
+        await open(page, `/Pivotick/${language}/gallery.html`)
+        const card = page.locator('.pvt-gallery__card').first()
+        await expect(card).toBeVisible()
+        await expect(card).toHaveAttribute('href', new RegExp(`/Pivotick/${language}/examples/gallery/`))
+        await expect(card.locator('img')).toBeVisible()
+        await expect.poll(() => card.locator('img').evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+        await card.click()
+        await expect(page.locator('html')).toHaveAttribute('lang', language)
+        await expect(page.locator('.pivotick')).toHaveAttribute('lang', language)
+        expect(await page.locator('.pivotick').evaluate(element => getComputedStyle(element).direction)).toBe('ltr')
+    })
+}
 
-test('generated API reference has translated prose and the same language selector', async ({ page }) => {
-    await open(page, '/Pivotick/fr/reference/classes/Node.html')
-    await expect(page.locator('.vp-doc h1')).toContainText('Node')
-    await expect(page.locator('.vp-doc h1')).not.toContainText('Class:')
-    await expect(page.locator('.VPNavBarTranslations')).toBeVisible()
-    await expect(page.locator('.vp-doc')).toContainText('nœud')
-})
+for (const [language, node] of [['fr', 'nœud'], ['nl', 'knoop'], ['ja', 'ノード'], ['ar', 'عقد'], ['es', 'nodo']]) {
+    test(`${language}: generated API reference has translated prose and the same language selector`, async ({ page }) => {
+        await open(page, `/Pivotick/${language}/reference/classes/Node.html`)
+        await expect(page.locator('.vp-doc h1')).toContainText('Node')
+        await expect(page.locator('.vp-doc h1')).not.toContainText('Class:')
+        await expect(page.locator('.VPNavBarTranslations')).toBeVisible()
+        await expect(page.locator('.vp-doc')).toContainText(node)
+    })
+}
 
 test('the standalone graph tool keeps the language selector', async ({ page }) => {
     await open(page, '/Pivotick/de/tool.html')

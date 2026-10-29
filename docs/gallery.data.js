@@ -6,9 +6,9 @@ import { galleryByCategory } from './.vitepress/gallery-files.js'
 export default {
     watch: [
         './examples/gallery/*/content.md', './examples/gallery/*/pic.png',
-        ...['zh', 'fr', 'de', 'pt'].map(language => `./${language}/examples/gallery/*/content.md`),
+        ...['zh', 'fr', 'de', 'pt', 'nl', 'ja', 'ar', 'es'].map(language => `./${language}/examples/gallery/*/content.md`),
     ],
     load() {
-        return Object.fromEntries(['en', 'zh', 'fr', 'de', 'pt'].map(language => [language, galleryByCategory(language)]))
+        return Object.fromEntries(['en', 'zh', 'fr', 'de', 'pt', 'nl', 'ja', 'ar', 'es'].map(language => [language, galleryByCategory(language)]))
     },
 }

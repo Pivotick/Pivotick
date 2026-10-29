@@ -1,5 +1,5 @@
 <template>
-    <div ref="container" :style="props.useInlineStyle"></div>
+    <div ref="container" dir="ltr" :style="props.useInlineStyle"></div>
 </template>
 
 <script setup>

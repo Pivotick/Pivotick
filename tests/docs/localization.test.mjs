@@ -8,7 +8,7 @@ import { resolveConfig } from 'vitepress'
 import { docs, extract, sources, headingId, keyFor, languages, protect, restore, validateTranslation, transformMarkdown, rebaseAssets } from '../../scripts/docs-i18n.mjs'
 
 const compiled = buildSync({ entryPoints: [path.join(docs, '.vitepress/site-i18n.ts')], bundle: true, write: false, format: 'esm' })
-const { localizedLink, siteText, searchTerms } = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`)
+const { localizedLink, siteText, searchTerms, siteLanguage, languages: siteLanguages } = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`)
 
 test('translation markers preserve code, links, HTML, interpolation and API names', () => {
     const original = 'Call `getNode()` in **Pivotick**. [Guide](/api#nodes) <kbd>Ctrl</kbd> {{ value }}'
@@ -63,6 +63,14 @@ test('a release bump keeps the version breadcrumb out of the prose catalogues', 
 })
 
 test('locale routes stay on the same documentation page without changing asset URLs', () => {
+    assert.deepEqual(siteLanguages, ['en', ...languages])
+    for (const [language, search, regional] of [['nl', 'Zoeken', 'nl-BE'], ['ja', '検索', 'ja-JP'], ['ar', 'بحث', 'ar-EG'], ['es', 'Buscar', 'es-MX']]) {
+        assert.equal(siteLanguage(regional), language)
+        assert.equal(siteText('Search', regional), search)
+        assert.equal(localizedLink('/ui-table#columns', regional), `/${language}/ui-table#columns`)
+        assert.equal(localizedLink(`/${language}/ui-table#columns`, 'fr'), `/${language}/ui-table#columns`)
+        assert.equal(localizedLink('/logo.svg', language), '/logo.svg')
+    }
     assert.equal(localizedLink('/ui-table#columns', 'fr'), '/fr/ui-table#columns')
     assert.equal(localizedLink('/api/html/classes/Pivotick.html', 'de'), '/de/reference/classes/Pivotick')
     assert.equal(localizedLink('/api/html/types/GraphUI.MenuActionItemOptions.html', 'fr'), '/fr/reference/pivotick/namespaces/GraphUI/type-aliases/MenuActionItemOptions')
@@ -91,7 +99,7 @@ test('site routes contain every language once and exclude public API sources and
     assert.deepEqual([...config.pages].sort(), expected.sort())
 })
 
-test('all guide, gallery and API pages have complete protected prose in four languages', async () => {
+test('all guide, gallery and API pages have complete protected prose in every supported language', async () => {
     const { pages, units } = await extract()
     assert.ok(pages.filter(page => !page.reference).length >= 82)
     assert.ok(pages.filter(page => page.reference).length >= 250)

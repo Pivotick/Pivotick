@@ -5,8 +5,12 @@ import { build } from 'esbuild'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 export const locales = {
+    ar: { name: 'Arabic', forms: ['zero', 'one', 'two', 'few', 'many', 'other'], rule: 'nplurals=6; plural=(n == 0 ? 0 : n == 1 ? 1 : n == 2 ? 2 : n % 100 >= 3 && n % 100 <= 10 ? 3 : n % 100 >= 11 && n % 100 <= 99 ? 4 : 5);' },
     de: { name: 'German', forms: ['one', 'other'], rule: 'nplurals=2; plural=(n != 1);' },
+    es: { name: 'Spanish', forms: ['one', 'other'], rule: 'nplurals=2; plural=(n != 1);' },
     fr: { name: 'French', forms: ['one', 'other'], rule: 'nplurals=2; plural=(n > 1);' },
+    ja: { name: 'Japanese', forms: ['other'], rule: 'nplurals=1; plural=0;' },
+    nl: { name: 'Dutch', forms: ['one', 'other'], rule: 'nplurals=2; plural=(n != 1);' },
     pt: { name: 'Portuguese', forms: ['one', 'other'], rule: 'nplurals=2; plural=(n > 1);' },
     zh: { name: 'Simplified Chinese', forms: ['other'], rule: 'nplurals=1; plural=0;' },
 }

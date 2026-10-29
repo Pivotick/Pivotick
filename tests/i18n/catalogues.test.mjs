@@ -23,7 +23,7 @@ for (const locale of Object.keys(locales)) {
         for (const [key, source] of Object.entries(english)) {
             const forms = typeof source === 'string' ? [source] : Object.values(source)
             const params = Object.fromEntries(forms.flatMap(text => [...text.matchAll(/\{(\w+)\}/g)].map(match => [match[1], 'VALUE'])))
-            for (const count of [0, 1, 2, 1.5, 1000000]) {
+            for (const count of [0, 1, 2, 3, 11, 100, 1.5, 1000000]) {
                 const text = i18n.t(key, { ...params, count })
                 assert.ok(text.length > 0, key)
                 assert.doesNotMatch(text, /\{\w+\}/, key)
@@ -33,14 +33,42 @@ for (const locale of Object.keys(locales)) {
 }
 
 test('locale-only selection and regional aliases use bundled messages', () => {
-    const expected = { fr: 'Rechercher', de: 'Suchen', pt: 'Pesquisar', zh: '搜索' }
+    const expected = { fr: 'Rechercher', de: 'Suchen', pt: 'Pesquisar', zh: '搜索', nl: 'Zoeken', ja: '検索', ar: 'بحث', es: 'Buscar' }
     for (const [language, message] of Object.entries(expected)) {
-        for (const locale of [language, { fr: 'fr-CA', de: 'de-CH', pt: 'pt-BR', zh: 'zh-Hans-CN' }[language]]) {
+        for (const locale of [language, { fr: 'fr-CA', de: 'de-CH', pt: 'pt-BR', zh: 'zh-Hans-CN', nl: 'nl-BE', ja: 'ja-JP', ar: 'ar-EG', es: 'es-MX' }[language]]) {
             assert.equal(new I18n({ locale }).t('topBar.search'), message)
         }
     }
     assert.equal(new I18n().t('topBar.search'), 'Search')
     assert.equal(new I18n({ locale: 'hi' }).t('count.nodes', { count: 0 }), '0 nodes')
+})
+
+test('new bundled languages use their own number formats and plural forms', async () => {
+    for (const locale of ['nl-NL', 'nl-BE', 'ja-JP', 'es-ES', 'es-MX', 'ar-EG']) {
+        const i18n = new I18n({ locale })
+        const language = locale.split('-')[0]
+        const messages = compileCatalogue(parsePo(await read(language)), english, language)
+        for (const count of [0, 1, 2, 3, 11, 100, 1.5, 1000000]) {
+            const category = new Intl.PluralRules(locale).select(count)
+            const forms = messages['count.nodes']
+            const expected = (forms[category] ?? forms.other).replace('{count}', new Intl.NumberFormat(locale).format(count))
+            assert.equal(i18n.t('count.nodes', { count }), expected)
+        }
+    }
+    const arabic = compileCatalogue(parsePo(await read('ar')), english, 'ar')
+    assert.deepEqual(Object.keys(arabic['count.nodes']), ['zero', 'one', 'two', 'few', 'many', 'other'])
+    assert.equal(new I18n({ locale: 'nl' }).t('count.nodes', { count: 2 }), '2 knopen')
+    assert.equal(new I18n({ locale: 'ja' }).t('count.nodes', { count: 2 }), '2 個のノード')
+    assert.equal(new I18n({ locale: 'es' }).t('count.nodes', { count: 2 }), '2 nodos')
+    for (const [count, noun] of [[0, 'عقدة'], [1, 'عقدة'], [2, 'عقدتان'], [3, 'عقد'], [11, 'عقدة'], [100, 'عقدة']]) {
+        assert.equal(new I18n({ locale: 'ar' }).t('count.nodes', { count }), `${new Intl.NumberFormat('ar').format(count)} ${noun}`)
+    }
+})
+
+test('Arabic catalogues reject a missing plural category', async () => {
+    const entries = parsePo(await read('ar'))
+    delete entries.find(entry => entry.msgctxt === 'count.nodes')['msgstr[2]']
+    assert.throws(() => compileCatalogue(entries, english, 'ar'), /invalid plural slots/)
 })
 
 test('bundled plurals follow locale rules, including Portuguese regional differences', () => {

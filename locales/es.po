@@ -1,0 +1,4141 @@
+msgid ""
+msgstr "Project-Id-Version: Pivotick\nReport-Msgid-Bugs-To: https://github.com/Pivotick/Pivotick/issues\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nLanguage: es\nPlural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/common.ts:5
+msgctxt "count.nodes"
+msgid "{count} node"
+msgid_plural "{count} nodes"
+msgstr[0] "{count} nodo"
+msgstr[1] "{count} nodos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/common.ts:6
+msgctxt "count.edges"
+msgid "{count} edge"
+msgid_plural "{count} edges"
+msgstr[0] "{count} arista"
+msgstr[1] "{count} aristas"
+
+#: src/i18n/en/common.ts:9
+msgctxt "note.defaultContent"
+msgid "This is not a note."
+msgstr "Esto no es una nota."
+
+#. Preserve placeholders: {key}
+#: src/i18n/en/common.ts:12
+msgctxt "keys.ctrlCombo"
+msgid "Ctrl+{key}"
+msgstr "Ctrl+{key}"
+
+#: src/i18n/en/common.ts:13
+msgctxt "keys.escape"
+msgid "esc"
+msgstr "Esc"
+
+#: src/i18n/en/shell.ts:9
+msgctxt "asyncContent.error"
+msgid "Content could not be loaded"
+msgstr "No se pudo cargar el contenido"
+
+#: src/i18n/en/shell.ts:12
+msgctxt "busy.label"
+msgid "Waiting…"
+msgstr "Esperando…"
+
+#: src/i18n/en/shell.ts:15
+msgctxt "confirm.title"
+msgid "Confirm"
+msgstr "Confirmar"
+
+#: src/i18n/en/shell.ts:16
+msgctxt "confirm.submit"
+msgid "Confirm"
+msgstr "Confirmar"
+
+#: src/i18n/en/shell.ts:19
+msgctxt "emptyState.message"
+msgid "Nothing on the canvas yet"
+msgstr "Aún no hay nada en el lienzo"
+
+#: src/i18n/en/shell.ts:22
+msgctxt "prompt.title"
+msgid "Details"
+msgstr "Detalles"
+
+#: src/i18n/en/shell.ts:23
+msgctxt "prompt.submit"
+msgid "Add"
+msgstr "Añadir"
+
+#: src/i18n/en/shell.ts:24
+msgctxt "prompt.cancel"
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: src/i18n/en/shell.ts:25
+msgctxt "prompt.nodeTitle"
+msgid "Node details"
+msgstr "Detalles del nodo"
+
+#: src/i18n/en/shell.ts:26
+msgctxt "prompt.edgeTitle"
+msgid "Edge details"
+msgstr "Detalles de la arista"
+
+#: src/i18n/en/shell.ts:27
+msgctxt "prompt.edgeLabelTitle"
+msgid "Edge label"
+msgstr "Etiqueta de la arista"
+
+#: src/i18n/en/shell.ts:28
+msgctxt "prompt.edgeLabelPlaceholder"
+msgid "Label…"
+msgstr "Etiqueta…"
+
+#: src/i18n/en/shell.ts:31
+msgctxt "history.menu.aria"
+msgid "Graph history"
+msgstr "Historial del grafo"
+
+#: src/i18n/en/shell.ts:32
+msgctxt "history.menu.title"
+msgid "History"
+msgstr "Historial"
+
+#: src/i18n/en/shell.ts:33
+msgctxt "history.menu.undoSide"
+msgid "Undo side"
+msgstr "Lado de deshacer"
+
+#: src/i18n/en/shell.ts:34
+msgctxt "history.menu.redoSide"
+msgid "Redo side"
+msgstr "Lado de rehacer"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/shell.ts:35
+msgctxt "history.menu.count"
+msgid "{count} of {limit}"
+msgstr "{count} de {limit}"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/shell.ts:36
+msgctxt "history.menu.countFull"
+msgid "{count} of {limit} · oldest evicted"
+msgstr "{count} de {limit} · se eliminó el más antiguo"
+
+#: src/i18n/en/shell.ts:37
+msgctxt "history.menu.empty"
+msgid "Nothing has happened yet"
+msgstr "Aún no ha pasado nada"
+
+#: src/i18n/en/shell.ts:38
+msgctxt "history.menu.nothingAhead"
+msgid "Nothing ahead — nothing has been undone"
+msgstr "No hay nada por delante — no se ha deshecho nada"
+
+#: src/i18n/en/shell.ts:39
+msgctxt "history.menu.start"
+msgid "The start of the session"
+msgstr "El inicio de la sesión"
+
+#: src/i18n/en/shell.ts:40
+msgctxt "history.menu.now"
+msgid "NOW"
+msgstr "AHORA"
+
+#. Preserve placeholders: {done}, {undone}
+#: src/i18n/en/shell.ts:41
+msgctxt "history.menu.nowMeta"
+msgid "{undone} undone · {done} done"
+msgstr "{undone} deshechas · {done} hechas"
+
+#: src/i18n/en/shell.ts:42
+msgctxt "history.menu.jump.title"
+msgid "Scroll back to now"
+msgstr "Volver al momento actual"
+
+#. Preserve placeholders: {label}, {ordinal}
+#: src/i18n/en/shell.ts:43
+msgctxt "history.row.pivotRun"
+msgid "{label} #{ordinal}"
+msgstr "{label} #{ordinal}"
+
+#: src/i18n/en/shell.ts:44
+msgctxt "history.row.kept"
+msgid "kept"
+msgstr "conservado"
+
+#: src/i18n/en/shell.ts:45
+msgctxt "history.row.locked"
+msgid "locked"
+msgstr "bloqueado"
+
+#: src/i18n/en/shell.ts:46
+msgctxt "history.row.saved"
+msgid "saved"
+msgstr "guardado"
+
+#: src/i18n/en/shell.ts:47
+msgctxt "history.row.nothingLeft"
+msgid "Nothing left the canvas"
+msgstr "Nada salió del lienzo"
+
+#: src/i18n/en/shell.ts:48
+msgctxt "history.foot.idle"
+msgid "Point at a row to travel there."
+msgstr "Apunta a una fila para ir a ese momento."
+
+#. Preserve placeholders: {ahead}, {behind}
+#: src/i18n/en/shell.ts:49
+msgctxt "history.foot.position"
+msgid "{ahead} ahead · {behind} behind"
+msgstr "{ahead} por delante · {behind} por detrás"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:50
+msgctxt "history.foot.undoesSteps"
+msgid "Undoes {count} step"
+msgid_plural "Undoes {count} steps"
+msgstr[0] "Deshace {count} paso"
+msgstr[1] "Deshace {count} pasos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:51
+msgctxt "history.foot.redoesSteps"
+msgid "Redoes {count} step"
+msgid_plural "Redoes {count} steps"
+msgstr[0] "Rehace {count} paso"
+msgstr[1] "Rehace {count} pasos"
+
+#. Preserve placeholders: {acting}, {total}
+#: src/i18n/en/shell.ts:52
+msgctxt "history.foot.undoesSome"
+msgid "Undoes {acting} of {total}"
+msgstr "Deshace {acting} de {total}"
+
+#. Preserve placeholders: {acting}, {total}
+#: src/i18n/en/shell.ts:53
+msgctxt "history.foot.redoesSome"
+msgid "Redoes {acting} of {total}"
+msgstr "Rehace {acting} de {total}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:54
+msgctxt "history.foot.keptSaved"
+msgid "{count} saved item kept"
+msgid_plural "{count} saved items kept"
+msgstr[0] "{count} elemento guardado conservado"
+msgstr[1] "{count} elementos guardados conservados"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:55
+msgctxt "history.foot.alreadyApplied"
+msgid "{count} already applied"
+msgstr "{count} ya aplicados"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:56
+msgctxt "history.foot.savedUpstream"
+msgid "{count} item saved upstream"
+msgid_plural "{count} items saved upstream"
+msgstr[0] "{count} elemento guardado en el sistema de origen"
+msgstr[1] "{count} elementos guardados en el sistema de origen"
+
+#: src/i18n/en/shell.ts:57
+msgctxt "history.foot.nothingToReverse"
+msgid "Nothing to reverse"
+msgstr "Nada que revertir"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:58
+msgctxt "history.delta.nodesAdded"
+msgid "+{count} node"
+msgid_plural "+{count} nodes"
+msgstr[0] "+{count} nodo"
+msgstr[1] "+{count} nodos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:59
+msgctxt "history.delta.nodesRemoved"
+msgid "−{count} node"
+msgid_plural "−{count} nodes"
+msgstr[0] "−{count} nodo"
+msgstr[1] "−{count} nodos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:60
+msgctxt "history.delta.edgesAdded"
+msgid "+{count} edge"
+msgid_plural "+{count} edges"
+msgstr[0] "+{count} arista"
+msgstr[1] "+{count} aristas"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:61
+msgctxt "history.delta.edgesRemoved"
+msgid "−{count} edge"
+msgid_plural "−{count} edges"
+msgstr[0] "−{count} arista"
+msgstr[1] "−{count} aristas"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:62
+msgctxt "history.delta.shownNodes"
+msgid "{count} node back in view"
+msgid_plural "{count} nodes back in view"
+msgstr[0] "{count} nodo de nuevo visible"
+msgstr[1] "{count} nodos de nuevo visibles"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:63
+msgctxt "history.delta.shown"
+msgid "{count} back in view"
+msgstr "{count} de nuevo visibles"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:64
+msgctxt "history.delta.hiddenNodes"
+msgid "{count} node hidden"
+msgid_plural "{count} nodes hidden"
+msgstr[0] "{count} nodo oculto"
+msgstr[1] "{count} nodos ocultos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:65
+msgctxt "history.delta.hidden"
+msgid "{count} hidden"
+msgstr "{count} ocultos"
+
+#: src/i18n/en/shell.ts:66
+msgctxt "history.delta.groups"
+msgid "groups change"
+msgstr "cambian los grupos"
+
+#: src/i18n/en/shell.ts:67
+msgctxt "history.delta.none"
+msgid "nothing changes"
+msgstr "nada cambia"
+
+#: src/i18n/en/shell.ts:68
+msgctxt "history.time.now"
+msgid "now"
+msgstr "ahora"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:69
+msgctxt "history.time.minutes"
+msgid "{count}m"
+msgstr "{count} min"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:70
+msgctxt "history.time.hours"
+msgid "{count}h"
+msgstr "{count} h"
+
+#. Preserve placeholders: {hours}, {minutes}
+#: src/i18n/en/shell.ts:71
+msgctxt "history.time.hoursMinutes"
+msgid "{hours}h {minutes}m"
+msgstr "{hours} h {minutes} min"
+
+#: src/i18n/en/shell.ts:74
+msgctxt "jsonViewer.copy"
+msgid "Copy JSON"
+msgstr "Copiar JSON"
+
+#: src/i18n/en/shell.ts:75
+msgctxt "jsonViewer.copied"
+msgid "Copied!"
+msgstr "¡Copiado!"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:76
+msgctxt "jsonViewer.items"
+msgid "{count} item"
+msgid_plural "{count} items"
+msgstr[0] "{count} elemento"
+msgstr[1] "{count} elementos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:77
+msgctxt "jsonViewer.properties"
+msgid "{count} property"
+msgid_plural "{count} properties"
+msgstr[0] "{count} propiedad"
+msgstr[1] "{count} propiedades"
+
+#: src/i18n/en/shell.ts:80
+msgctxt "modal.ok"
+msgid "Ok"
+msgstr "Aceptar"
+
+#: src/i18n/en/shell.ts:81
+msgctxt "modal.close.aria"
+msgid "Close"
+msgstr "Cerrar"
+
+#: src/i18n/en/shell.ts:82
+msgctxt "modal.editNode.heading"
+msgid "Editing node:"
+msgstr "Editando nodo:"
+
+#: src/i18n/en/shell.ts:83
+msgctxt "modal.editNode.submit"
+msgid "Edit Node"
+msgstr "Editar nodo"
+
+#: src/i18n/en/shell.ts:84
+msgctxt "modal.editEdge.heading"
+msgid "Editing edge:"
+msgstr "Editando arista:"
+
+#: src/i18n/en/shell.ts:85
+msgctxt "modal.editEdge.submit"
+msgid "Edit Edge"
+msgstr "Editar arista"
+
+#. Preserve placeholders: {from}, {to}
+#: src/i18n/en/shell.ts:86
+msgctxt "modal.editEdge.endpoints"
+msgid "{from} → {to}"
+msgstr "{from} → {to}"
+
+#: src/i18n/en/shell.ts:87
+msgctxt "modal.editEdge.labelField"
+msgid "Label"
+msgstr "Etiqueta"
+
+#: src/i18n/en/shell.ts:88
+msgctxt "modal.inspect.properties"
+msgid "Properties"
+msgstr "Propiedades"
+
+#: src/i18n/en/shell.ts:89
+msgctxt "modal.inspect.json"
+msgid "JSON"
+msgstr "JSON"
+
+#: src/i18n/en/shell.ts:92
+msgctxt "navigation.fit"
+msgid "Fit and center"
+msgstr "Ajustar y centrar"
+
+#: src/i18n/en/shell.ts:93
+msgctxt "navigation.zoomIn"
+msgid "Zoom In"
+msgstr "Acercar"
+
+#: src/i18n/en/shell.ts:94
+msgctxt "navigation.zoomOut"
+msgid "Zoom Out"
+msgstr "Alejar"
+
+#: src/i18n/en/shell.ts:95
+msgctxt "navigation.fullscreen"
+msgid "Toggle Fullscreen"
+msgstr "Alternar pantalla completa"
+
+#: src/i18n/en/shell.ts:98
+msgctxt "notification.dismiss.aria"
+msgid "Dismiss"
+msgstr "Descartar"
+
+#: src/i18n/en/shell.ts:101
+msgctxt "rail.select"
+msgid "Select"
+msgstr "Seleccionar"
+
+#: src/i18n/en/shell.ts:102
+msgctxt "rail.create"
+msgid "Create"
+msgstr "Crear"
+
+#: src/i18n/en/shell.ts:103
+msgctxt "rail.view"
+msgid "View"
+msgstr "Vista"
+
+#: src/i18n/en/shell.ts:104
+msgctxt "rail.physics"
+msgid "Physics"
+msgstr "Física"
+
+#: src/i18n/en/shell.ts:105
+msgctxt "rail.simplify"
+msgid "Simplify"
+msgstr "Simplificar"
+
+#: src/i18n/en/shell.ts:106
+msgctxt "rail.lasso"
+msgid "Lasso"
+msgstr "Lazo"
+
+#: src/i18n/en/shell.ts:107
+msgctxt "rail.edge"
+msgid "Edge"
+msgstr "Arista"
+
+#. Preserve placeholders: {label}, {shortcut}
+#: src/i18n/en/shell.ts:108
+msgctxt "rail.button.title"
+msgid "{label} ({shortcut})"
+msgstr "{label} ({shortcut})"
+
+#. Preserve placeholders: {folded}, {groups}
+#: src/i18n/en/shell.ts:109
+msgctxt "rail.simplify.summary"
+msgid "Simplify: {groups}, {folded}"
+msgstr "Simplificar: {groups}, {folded}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:110
+msgctxt "rail.simplify.groups"
+msgid "{count} group"
+msgid_plural "{count} groups"
+msgstr[0] "{count} grupo"
+msgstr[1] "{count} grupos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:111
+msgctxt "rail.simplify.folded"
+msgid "{count} node folded"
+msgid_plural "{count} nodes folded"
+msgstr[0] "{count} nodo contraído"
+msgstr[1] "{count} nodos contraídos"
+
+#: src/i18n/en/shell.ts:114
+msgctxt "slidePanel.empty"
+msgid "- empty panel -"
+msgstr "- panel vacío -"
+
+#: src/i18n/en/shell.ts:117
+msgctxt "search.placeholder"
+msgid "Search"
+msgstr "Buscar"
+
+#: src/i18n/en/shell.ts:118
+msgctxt "search.hint.navigate"
+msgid "to navigate"
+msgstr "para navegar"
+
+#: src/i18n/en/shell.ts:119
+msgctxt "search.hint.select"
+msgid "to select"
+msgstr "para seleccionar"
+
+#: src/i18n/en/shell.ts:120
+msgctxt "search.hint.showAll"
+msgid "to show all"
+msgstr "para mostrar todo"
+
+#: src/i18n/en/shell.ts:121
+msgctxt "search.hint.close"
+msgid "to close"
+msgstr "para cerrar"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/shell.ts:122
+msgctxt "search.result.inGroup"
+msgid "in {group}"
+msgstr "en {group}"
+
+#: src/i18n/en/shell.ts:123
+msgctxt "search.summary.none"
+msgid "No results found"
+msgstr "No se encontraron resultados"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/shell.ts:124
+msgctxt "search.summary.top"
+msgid "Showing top {shown} of {count} results"
+msgstr "Mostrando los primeros {shown} de {count} resultados"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/shell.ts:125
+msgctxt "search.summary.all"
+msgid "{count} result"
+msgid_plural "{count} results"
+msgstr[0] "{count} resultado"
+msgstr[1] "{count} resultados"
+
+#: src/i18n/en/shell.ts:126
+msgctxt "search.showAll"
+msgid "Show all on the canvas"
+msgstr "Mostrar todo en el lienzo"
+
+#: src/i18n/en/shell.ts:129
+msgctxt "toolPanel.select"
+msgid "Select"
+msgstr "Seleccionar"
+
+#: src/i18n/en/shell.ts:130
+msgctxt "toolPanel.create"
+msgid "Create"
+msgstr "Crear"
+
+#: src/i18n/en/shell.ts:131
+msgctxt "toolPanel.pointer"
+msgid "Pointer"
+msgstr "Puntero"
+
+#: src/i18n/en/shell.ts:132
+msgctxt "toolPanel.lasso"
+msgid "Lasso"
+msgstr "Lazo"
+
+#: src/i18n/en/shell.ts:133
+msgctxt "toolPanel.pathSelect"
+msgid "Path select"
+msgstr "Selección de ruta"
+
+#: src/i18n/en/shell.ts:134
+msgctxt "toolPanel.invertSelection"
+msgid "Invert selection"
+msgstr "Invertir selección"
+
+#: src/i18n/en/shell.ts:135
+msgctxt "toolPanel.addNode"
+msgid "Add node"
+msgstr "Añadir nodo"
+
+#: src/i18n/en/shell.ts:136
+msgctxt "toolPanel.addEdge"
+msgid "Add edge"
+msgstr "Añadir arista"
+
+#: src/i18n/en/shell.ts:137
+msgctxt "toolPanel.addNote"
+msgid "Add note"
+msgstr "Añadir nota"
+
+#: src/i18n/en/shell.ts:138
+msgctxt "toolPanel.editNode"
+msgid "Edit node"
+msgstr "Editar nodo"
+
+#: src/i18n/en/shell.ts:139
+msgctxt "toolPanel.soon"
+msgid "SOON"
+msgstr "PRÓXIMAMENTE"
+
+#. Preserve placeholders: {tool}
+#: src/i18n/en/shell.ts:140
+msgctxt "toolPanel.soon.title"
+msgid "{tool} — coming soon"
+msgstr "{tool} — próximamente"
+
+#: src/i18n/en/shell.ts:141
+msgctxt "toolPanel.resize.aria"
+msgid "Resize the tool panel"
+msgstr "Cambiar tamaño del panel de herramientas"
+
+#: src/i18n/en/shell.ts:144
+msgctxt "topBar.search"
+msgid "Search"
+msgstr "Buscar"
+
+#: src/i18n/en/shell.ts:145
+msgctxt "topBar.search.aria"
+msgid "Search for a node"
+msgstr "Buscar un nodo"
+
+#: src/i18n/en/shell.ts:146
+msgctxt "topBar.filter"
+msgid "Filter Graph"
+msgstr "Filtrar grafo"
+
+#: src/i18n/en/shell.ts:147
+msgctxt "topBar.filter.aria"
+msgid "Filter the graph"
+msgstr "Filtrar el grafo"
+
+#: src/i18n/en/shell.ts:148
+msgctxt "topBar.filter.panelTitle"
+msgid "Graph Filters"
+msgstr "Filtros del grafo"
+
+#: src/i18n/en/shell.ts:149
+msgctxt "topBar.notes"
+msgid "Notes"
+msgstr "Notas"
+
+#: src/i18n/en/shell.ts:150
+msgctxt "topBar.undo"
+msgid "Undo"
+msgstr "Deshacer"
+
+#. Preserve placeholders: {shortcut}
+#: src/i18n/en/shell.ts:151
+msgctxt "topBar.undo.title"
+msgid "Undo ({shortcut})"
+msgstr "Deshacer ({shortcut})"
+
+#. Preserve placeholders: {entry}, {shortcut}
+#: src/i18n/en/shell.ts:152
+msgctxt "topBar.undo.titleNamed"
+msgid "Undo — {entry} ({shortcut})"
+msgstr "Deshacer — {entry} ({shortcut})"
+
+#. Preserve placeholders: {entry}
+#: src/i18n/en/shell.ts:153
+msgctxt "topBar.undo.ariaNamed"
+msgid "Undo {entry}"
+msgstr "Deshacer {entry}"
+
+#: src/i18n/en/shell.ts:154
+msgctxt "topBar.redo"
+msgid "Redo"
+msgstr "Rehacer"
+
+#. Preserve placeholders: {shortcut}
+#: src/i18n/en/shell.ts:155
+msgctxt "topBar.redo.title"
+msgid "Redo ({shortcut})"
+msgstr "Rehacer ({shortcut})"
+
+#. Preserve placeholders: {entry}, {shortcut}
+#: src/i18n/en/shell.ts:156
+msgctxt "topBar.redo.titleNamed"
+msgid "Redo — {entry} ({shortcut})"
+msgstr "Rehacer — {entry} ({shortcut})"
+
+#. Preserve placeholders: {entry}
+#: src/i18n/en/shell.ts:157
+msgctxt "topBar.redo.ariaNamed"
+msgid "Redo {entry}"
+msgstr "Rehacer {entry}"
+
+#: src/i18n/en/shell.ts:158
+msgctxt "topBar.undoHistory.aria"
+msgid "Undo history"
+msgstr "Historial de deshacer"
+
+#: src/i18n/en/shell.ts:159
+msgctxt "topBar.redoHistory.aria"
+msgid "Redo history"
+msgstr "Historial de rehacer"
+
+#. Preserve placeholders: {action}
+#: src/i18n/en/shell.ts:160
+msgctxt "topBar.action.more.aria"
+msgid "More: {action}"
+msgstr "Más: {action}"
+
+#: src/i18n/en/shell.ts:161
+msgctxt "topBar.promptSubmit"
+msgid "OK"
+msgstr "Aceptar"
+
+#: src/i18n/en/contextMenu.ts:6
+msgctxt "contextMenu.selectNeighbors"
+msgid "Select Neighbors"
+msgstr "Seleccionar vecinos"
+
+#: src/i18n/en/contextMenu.ts:7
+msgctxt "contextMenu.ungroup"
+msgid "Ungroup"
+msgstr "Desagrupar"
+
+#: src/i18n/en/contextMenu.ts:10
+msgctxt "contextMenu.node.pin"
+msgid "Pin Node"
+msgstr "Fijar nodo"
+
+#: src/i18n/en/contextMenu.ts:11
+msgctxt "contextMenu.node.unpin"
+msgid "Unpin Node"
+msgstr "Desfijar nodo"
+
+#: src/i18n/en/contextMenu.ts:12
+msgctxt "contextMenu.node.focus"
+msgid "Focus Node"
+msgstr "Enfocar nodo"
+
+#: src/i18n/en/contextMenu.ts:13
+msgctxt "contextMenu.node.hide"
+msgid "Hide Node"
+msgstr "Ocultar nodo"
+
+#: src/i18n/en/contextMenu.ts:14
+msgctxt "contextMenu.node.viewImage"
+msgid "View Image"
+msgstr "Ver imagen"
+
+#: src/i18n/en/contextMenu.ts:15
+msgctxt "contextMenu.node.hideChildren"
+msgid "Hide Children"
+msgstr "Ocultar hijos"
+
+#: src/i18n/en/contextMenu.ts:16
+msgctxt "contextMenu.node.connect"
+msgid "Connect to..."
+msgstr "Conectar con…"
+
+#: src/i18n/en/contextMenu.ts:17
+msgctxt "contextMenu.node.connect.picker"
+msgid "Select the target node to link with"
+msgstr "Selecciona el nodo de destino para conectarlo"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/contextMenu.ts:18
+msgctxt "contextMenu.node.connect.pickerNode"
+msgid "\"{node}\""
+msgstr "«{node}»"
+
+#: src/i18n/en/contextMenu.ts:19
+msgctxt "contextMenu.node.expand"
+msgid "Expand Node"
+msgstr "Expandir nodo"
+
+#: src/i18n/en/contextMenu.ts:20
+msgctxt "contextMenu.node.inspect"
+msgid "Inspect Properties"
+msgstr "Inspeccionar propiedades"
+
+#: src/i18n/en/contextMenu.ts:21
+msgctxt "contextMenu.node.delete"
+msgid "Delete Node"
+msgstr "Eliminar nodo"
+
+#: src/i18n/en/contextMenu.ts:24
+msgctxt "contextMenu.group.pin"
+msgid "Pin Group"
+msgstr "Fijar grupo"
+
+#: src/i18n/en/contextMenu.ts:25
+msgctxt "contextMenu.group.unpin"
+msgid "Unpin Group"
+msgstr "Desfijar grupo"
+
+#: src/i18n/en/contextMenu.ts:26
+msgctxt "contextMenu.group.focus"
+msgid "Focus Group"
+msgstr "Enfocar grupo"
+
+#: src/i18n/en/contextMenu.ts:27
+msgctxt "contextMenu.group.selectNeighbors.title"
+msgid "Select the nodes this group links to"
+msgstr "Seleccionar los nodos conectados a este grupo"
+
+#: src/i18n/en/contextMenu.ts:28
+msgctxt "contextMenu.group.open"
+msgid "Open group"
+msgstr "Abrir grupo"
+
+#: src/i18n/en/contextMenu.ts:29
+msgctxt "contextMenu.group.open.title"
+msgid "Put the members back on the canvas"
+msgstr "Devolver los miembros al lienzo"
+
+#: src/i18n/en/contextMenu.ts:30
+msgctxt "contextMenu.group.selectMembers"
+msgid "Select members"
+msgstr "Seleccionar miembros"
+
+#: src/i18n/en/contextMenu.ts:31
+msgctxt "contextMenu.group.selectMembers.title"
+msgid "Select the nodes in this group"
+msgstr "Seleccionar los nodos de este grupo"
+
+#: src/i18n/en/contextMenu.ts:32
+msgctxt "contextMenu.group.viewInTable"
+msgid "View members in table"
+msgstr "Ver miembros en la tabla"
+
+#: src/i18n/en/contextMenu.ts:33
+msgctxt "contextMenu.group.viewInTable.title"
+msgid "List the members in the data dock, to filter and search them"
+msgstr "Listar los miembros en el panel de datos para filtrarlos y buscarlos"
+
+#: src/i18n/en/contextMenu.ts:34
+msgctxt "contextMenu.group.rename"
+msgid "Rename group"
+msgstr "Renombrar grupo"
+
+#: src/i18n/en/contextMenu.ts:35
+msgctxt "contextMenu.group.rename.title"
+msgid "Give this group a title"
+msgstr "Dar un título a este grupo"
+
+#: src/i18n/en/contextMenu.ts:36
+msgctxt "contextMenu.group.ungroup.title"
+msgid "Draw the members as they were before this group"
+msgstr "Mostrar los miembros como estaban antes de agruparlos"
+
+#: src/i18n/en/contextMenu.ts:37
+msgctxt "contextMenu.group.deleteMembers"
+msgid "Delete members"
+msgstr "Eliminar miembros"
+
+#: src/i18n/en/contextMenu.ts:38
+msgctxt "contextMenu.group.deleteMembers.title"
+msgid "Delete every node in this group"
+msgstr "Eliminar todos los nodos de este grupo"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:41
+msgctxt "contextMenu.selection.count"
+msgid "{count} selected"
+msgstr "{count} seleccionados"
+
+#: src/i18n/en/contextMenu.ts:42
+msgctxt "contextMenu.selection.pin"
+msgid "Pin Selected"
+msgstr "Fijar selección"
+
+#: src/i18n/en/contextMenu.ts:43
+msgctxt "contextMenu.selection.unpin"
+msgid "Unpin Selected"
+msgstr "Desfijar selección"
+
+#: src/i18n/en/contextMenu.ts:44
+msgctxt "contextMenu.selection.hide"
+msgid "Hide Selected"
+msgstr "Ocultar selección"
+
+#: src/i18n/en/contextMenu.ts:45
+msgctxt "contextMenu.selection.selectNeighbors.title"
+msgid "Select the nodes linked to the selection"
+msgstr "Seleccionar los nodos conectados a la selección"
+
+#: src/i18n/en/contextMenu.ts:46
+msgctxt "contextMenu.selection.group"
+msgid "Group selected nodes"
+msgstr "Agrupar nodos seleccionados"
+
+#: src/i18n/en/contextMenu.ts:47
+msgctxt "contextMenu.selection.group.title"
+msgid "Fold the selection into one group with a title"
+msgstr "Contraer la selección en un grupo con título"
+
+#: src/i18n/en/contextMenu.ts:48
+msgctxt "contextMenu.selection.ungroup.title"
+msgid "Draw the members of these hand-made groups as they were"
+msgstr "Mostrar los miembros de estos grupos manuales como estaban"
+
+#: src/i18n/en/contextMenu.ts:49
+msgctxt "contextMenu.selection.delete"
+msgid "Delete Selected"
+msgstr "Eliminar selección"
+
+#: src/i18n/en/contextMenu.ts:50
+msgctxt "contextMenu.selection.delete.title"
+msgid "Delete every selected node"
+msgstr "Eliminar todos los nodos seleccionados"
+
+#: src/i18n/en/contextMenu.ts:53
+msgctxt "contextMenu.membership.pullOut"
+msgid "Pull out of group"
+msgstr "Sacar del grupo"
+
+#: src/i18n/en/contextMenu.ts:54
+msgctxt "contextMenu.membership.pullOut.title"
+msgid "Keep these nodes out of their groups"
+msgstr "Mantener estos nodos fuera de sus grupos"
+
+#: src/i18n/en/contextMenu.ts:55
+msgctxt "contextMenu.membership.putBack"
+msgid "Put back in group"
+msgstr "Devolver al grupo"
+
+#: src/i18n/en/contextMenu.ts:56
+msgctxt "contextMenu.membership.putBack.title"
+msgid "Let these nodes be grouped again"
+msgstr "Permitir que estos nodos vuelvan a agruparse"
+
+#: src/i18n/en/contextMenu.ts:59
+msgctxt "contextMenu.edge.edit"
+msgid "Edit Edge"
+msgstr "Editar arista"
+
+#: src/i18n/en/contextMenu.ts:60
+msgctxt "contextMenu.edge.delete"
+msgid "Delete Edge"
+msgstr "Eliminar arista"
+
+#: src/i18n/en/contextMenu.ts:63
+msgctxt "contextMenu.note.hide"
+msgid "Hide Note"
+msgstr "Ocultar nota"
+
+#: src/i18n/en/contextMenu.ts:64
+msgctxt "contextMenu.note.remove"
+msgid "Remove Note"
+msgstr "Eliminar nota"
+
+#: src/i18n/en/contextMenu.ts:67
+msgctxt "contextMenu.canvas.pinAll"
+msgid "Pin All"
+msgstr "Fijar todo"
+
+#: src/i18n/en/contextMenu.ts:68
+msgctxt "contextMenu.canvas.unpinAll"
+msgid "Unpin All"
+msgstr "Desfijar todo"
+
+#: src/i18n/en/contextMenu.ts:69
+msgctxt "contextMenu.canvas.addNode"
+msgid "Add Node Here"
+msgstr "Añadir nodo aquí"
+
+#: src/i18n/en/contextMenu.ts:70
+msgctxt "contextMenu.canvas.addNote"
+msgid "Add Note"
+msgstr "Añadir nota"
+
+#: src/i18n/en/contextMenu.ts:71
+msgctxt "contextMenu.canvas.releasePinned"
+msgid "Release pinned nodes"
+msgstr "Liberar nodos fijados"
+
+#: src/i18n/en/contextMenu.ts:72
+msgctxt "contextMenu.canvas.releasePinned.title"
+msgid "Unpin every pinned node so the layout can move them again"
+msgstr "Desfijar todos los nodos para que la distribución pueda moverlos de nuevo"
+
+#: src/i18n/en/contextMenu.ts:75
+msgctxt "contextMenu.pivot"
+msgid "Pivot"
+msgstr "Pivote"
+
+#: src/i18n/en/contextMenu.ts:76
+msgctxt "contextMenu.pivot.openPanel"
+msgid "Open pivot panel…"
+msgstr "Abrir panel de pivotes…"
+
+#: src/i18n/en/contextMenu.ts:77
+msgctxt "contextMenu.pivot.openPanel.title"
+msgid "Read the counts, narrow, then run"
+msgstr "Consulta los recuentos, filtra y ejecuta"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:78
+msgctxt "contextMenu.pivot.peek"
+msgid "~{count}"
+msgstr "~{count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/contextMenu.ts:79
+msgctxt "contextMenu.pivot.peek.title"
+msgid "About {count} out there"
+msgstr "Unos {count} disponibles"
+
+#. Preserve placeholders: {count}, {nodes}
+#: src/i18n/en/contextMenu.ts:80
+msgctxt "contextMenu.pivot.peek.titleAcross"
+msgid "About {count} across {nodes}"
+msgstr "Unos {count} en {nodes}"
+
+#: src/i18n/en/contextMenu.ts:81
+msgctxt "contextMenu.pivot.peek.failed.title"
+msgid "This pivot could not say what is out there"
+msgstr "Este pivote no pudo indicar qué hay disponible"
+
+#: src/i18n/en/sidebar.ts:6
+msgctxt "sidebar.collapse.aria"
+msgid "Collapse sidebar"
+msgstr "Contraer barra lateral"
+
+#: src/i18n/en/sidebar.ts:7
+msgctxt "sidebar.expand.aria"
+msgid "Expand sidebar"
+msgstr "Expandir barra lateral"
+
+#: src/i18n/en/sidebar.ts:8
+msgctxt "sidebar.clearSelection"
+msgid "Clear selection"
+msgstr "Borrar selección"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:11
+msgctxt "sidebar.header.representedEdges"
+msgid "Stands for {count} edge"
+msgid_plural "Stands for {count} edges"
+msgstr[0] "Representa {count} arista"
+msgstr[1] "Representa {count} aristas"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:12
+msgctxt "sidebar.header.nodesSelected"
+msgid "{count} node selected"
+msgid_plural "{count} nodes selected"
+msgstr[0] "{count} nodo seleccionado"
+msgstr[1] "{count} nodos seleccionados"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:13
+msgctxt "sidebar.header.edgesSelected"
+msgid "{count} edge selected"
+msgid_plural "{count} edges selected"
+msgstr[0] "{count} arista seleccionada"
+msgstr[1] "{count} aristas seleccionadas"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:14
+msgctxt "sidebar.header.nodesTotal"
+msgid "Out of {count} total"
+msgstr "De un total de {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:15
+msgctxt "sidebar.header.edgesTotal"
+msgid "Out of {count} total"
+msgstr "De un total de {count}"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/sidebar.ts:16
+msgctxt "sidebar.header.showing"
+msgid "Showing {nodes} and {edges}"
+msgstr "Mostrando {nodes} y {edges}"
+
+#: src/i18n/en/sidebar.ts:19
+msgctxt "headerMap.untitled"
+msgid "Could not resolve title"
+msgstr "No se pudo determinar el título"
+
+#: src/i18n/en/sidebar.ts:20
+msgctxt "headerMap.nameFallback"
+msgid "Optional name or label"
+msgstr "Nombre o etiqueta opcional"
+
+#: src/i18n/en/sidebar.ts:21
+msgctxt "headerMap.descriptionFallback"
+msgid "Optional subtitle or description"
+msgstr "Subtítulo o descripción opcional"
+
+#: src/i18n/en/sidebar.ts:24
+msgctxt "sidebar.bulk.pin"
+msgid "Pin"
+msgstr "Fijar"
+
+#: src/i18n/en/sidebar.ts:25
+msgctxt "sidebar.bulk.unpin"
+msgid "Unpin"
+msgstr "Desfijar"
+
+#: src/i18n/en/sidebar.ts:26
+msgctxt "sidebar.bulk.hide"
+msgid "Hide"
+msgstr "Ocultar"
+
+#: src/i18n/en/sidebar.ts:27
+msgctxt "sidebar.bulk.isolate"
+msgid "Isolate"
+msgstr "Aislar"
+
+#: src/i18n/en/sidebar.ts:28
+msgctxt "sidebar.bulk.group"
+msgid "Group"
+msgstr "Agrupar"
+
+#: src/i18n/en/sidebar.ts:29
+msgctxt "sidebar.bulk.ungroup"
+msgid "Ungroup"
+msgstr "Desagrupar"
+
+#: src/i18n/en/sidebar.ts:30
+msgctxt "sidebar.bulk.bulkEdit"
+msgid "Bulk edit"
+msgstr "Edición masiva"
+
+#: src/i18n/en/sidebar.ts:31
+msgctxt "sidebar.bulk.delete"
+msgid "Delete"
+msgstr "Eliminar"
+
+#. Preserve placeholders: {action}
+#: src/i18n/en/sidebar.ts:32
+msgctxt "sidebar.bulk.soon.title"
+msgid "{action} — coming soon"
+msgstr "{action} — próximamente"
+
+#: src/i18n/en/sidebar.ts:35
+msgctxt "sidebar.properties.nodeHeading"
+msgid "Basic Node Properties"
+msgstr "Propiedades básicas del nodo"
+
+#: src/i18n/en/sidebar.ts:36
+msgctxt "sidebar.properties.edgeHeading"
+msgid "Basic Edge Properties"
+msgstr "Propiedades básicas de la arista"
+
+#: src/i18n/en/sidebar.ts:37
+msgctxt "sidebar.properties.nodesHeading"
+msgid "Aggregated Node Properties"
+msgstr "Propiedades agregadas de los nodos"
+
+#: src/i18n/en/sidebar.ts:38
+msgctxt "sidebar.properties.edgesHeading"
+msgid "Aggregated Edge Properties"
+msgstr "Propiedades agregadas de las aristas"
+
+#: src/i18n/en/sidebar.ts:39
+msgctxt "sidebar.properties.keep.title"
+msgid "Keep only nodes with this value"
+msgstr "Conservar solo nodos con este valor"
+
+#: src/i18n/en/sidebar.ts:40
+msgctxt "sidebar.properties.exclude.title"
+msgid "Exclude nodes with this value"
+msgstr "Excluir nodos con este valor"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:43
+msgctxt "sidebar.facets.unique"
+msgid "{count} unique"
+msgstr "{count} únicos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:44
+msgctxt "sidebar.facets.values"
+msgid "{count} value"
+msgid_plural "{count} values"
+msgstr[0] "{count} valor"
+msgstr[1] "{count} valores"
+
+#: src/i18n/en/sidebar.ts:45
+msgctxt "sidebar.facets.shared"
+msgid "shared"
+msgstr "compartido"
+
+#: src/i18n/en/sidebar.ts:46
+msgctxt "sidebar.facets.empty"
+msgid "— empty —"
+msgstr "— vacío —"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:47
+msgctxt "sidebar.facets.allNodes"
+msgid "all {count} node"
+msgid_plural "all {count} nodes"
+msgstr[0] "el único nodo ({count})"
+msgstr[1] "los {count} nodos"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/sidebar.ts:48
+msgctxt "sidebar.facets.someNodes"
+msgid "{count} of {total}"
+msgstr "{count} de {total}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:49
+msgctxt "sidebar.facets.percent"
+msgid "{count}%"
+msgstr "{count}%"
+
+#. Preserve placeholders: {count}, {percent}, {value}
+#: src/i18n/en/sidebar.ts:50
+msgctxt "sidebar.facets.segment.title"
+msgid "{value} — {count} ({percent}%)"
+msgstr "{value} — {count} ({percent}%)"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:51
+msgctxt "sidebar.facets.otherValues"
+msgid "{count} other value"
+msgid_plural "{count} other values"
+msgstr[0] "{count} valor más"
+msgstr[1] "{count} valores más"
+
+#. Preserve placeholders: {count}, {percent}, {values}
+#: src/i18n/en/sidebar.ts:52
+msgctxt "sidebar.facets.other.title"
+msgid "{values} — {count} ({percent}%)"
+msgstr "{values} — {count} ({percent}%)"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:53
+msgctxt "sidebar.facets.moreValues"
+msgid "+{count} more value"
+msgid_plural "+{count} more values"
+msgstr[0] "+{count} valor más"
+msgstr[1] "+{count} valores más"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:54
+msgctxt "sidebar.facets.moreChips"
+msgid "+{count} more"
+msgstr "+{count} más"
+
+#: src/i18n/en/sidebar.ts:55
+msgctxt "sidebar.facets.noRepeats"
+msgid "no repeated values"
+msgstr "sin valores repetidos"
+
+#: src/i18n/en/sidebar.ts:56
+msgctxt "sidebar.facets.filterHint"
+msgid "Click to keep only · Alt-click to exclude"
+msgstr "Clic para conservar solo estos · Alt-clic para excluir"
+
+#: src/i18n/en/sidebar.ts:59
+msgctxt "propertyList.label"
+msgid "PROPERTIES"
+msgstr "PROPIEDADES"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:60
+msgctxt "propertyList.fields"
+msgid "{count} field"
+msgid_plural "{count} fields"
+msgstr[0] "{count} campo"
+msgstr[1] "{count} campos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:61
+msgctxt "propertyList.items"
+msgid "{count} item"
+msgid_plural "{count} items"
+msgstr[0] "{count} elemento"
+msgstr[1] "{count} elementos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:62
+msgctxt "propertyList.keys"
+msgid "{count} key"
+msgid_plural "{count} keys"
+msgstr[0] "{count} clave"
+msgstr[1] "{count} claves"
+
+#: src/i18n/en/sidebar.ts:63
+msgctxt "propertyList.copy.title"
+msgid "Copy"
+msgstr "Copiar"
+
+#: src/i18n/en/sidebar.ts:66
+msgctxt "sidebar.neighbors.tab.graph"
+msgid "Neighbor Graph"
+msgstr "Grafo de vecinos"
+
+#: src/i18n/en/sidebar.ts:67
+msgctxt "sidebar.neighbors.tab.stats"
+msgid "Stats"
+msgstr "Estadísticas"
+
+#: src/i18n/en/sidebar.ts:68
+msgctxt "sidebar.neighbors.tab.list"
+msgid "List"
+msgstr "Lista"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:69
+msgctxt "sidebar.neighbors.connections"
+msgid "{count} connection"
+msgid_plural "{count} connections"
+msgstr[0] "{count} conexión"
+msgstr[1] "{count} conexiones"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:70
+msgctxt "sidebar.neighbors.moreNode"
+msgid "{count} more"
+msgstr "{count} más"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:71
+msgctxt "sidebar.neighbors.aggregate.count"
+msgid "+{count}"
+msgstr "+{count}"
+
+#: src/i18n/en/sidebar.ts:72
+msgctxt "sidebar.neighbors.aggregate.group"
+msgid "Group"
+msgstr "Agrupar"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:73
+msgctxt "sidebar.neighbors.row.outgoing"
+msgid "Outgoing connection — {node}"
+msgstr "Conexión saliente — {node}"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:74
+msgctxt "sidebar.neighbors.row.incoming"
+msgid "Incoming connection — {node}"
+msgstr "Conexión entrante — {node}"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/sidebar.ts:75
+msgctxt "sidebar.neighbors.row.undirected"
+msgid "Connection — {node}"
+msgstr "Conexión — {node}"
+
+#: src/i18n/en/sidebar.ts:76
+msgctxt "sidebar.neighbors.stats.degree"
+msgid "Degree"
+msgstr "Grado"
+
+#: src/i18n/en/sidebar.ts:77
+msgctxt "sidebar.neighbors.stats.degree.title"
+msgid "Total connections"
+msgstr "Total de conexiones"
+
+#: src/i18n/en/sidebar.ts:78
+msgctxt "sidebar.neighbors.stats.outgoing.title"
+msgid "Outgoing edges"
+msgstr "Aristas salientes"
+
+#: src/i18n/en/sidebar.ts:79
+msgctxt "sidebar.neighbors.stats.incoming.title"
+msgid "Incoming edges"
+msgstr "Aristas entrantes"
+
+#: src/i18n/en/sidebar.ts:80
+msgctxt "sidebar.neighbors.stats.label"
+msgid "Label"
+msgstr "Etiqueta"
+
+#: src/i18n/en/sidebar.ts:81
+msgctxt "sidebar.neighbors.stats.select.title"
+msgid "Select nodes linked with this label"
+msgstr "Seleccionar nodos conectados con esta etiqueta"
+
+#: src/i18n/en/sidebar.ts:82
+msgctxt "sidebar.neighbors.stats.exclude.title"
+msgid "Exclude nodes linked with this label"
+msgstr "Excluir nodos conectados con esta etiqueta"
+
+#: src/i18n/en/sidebar.ts:85
+msgctxt "sidebar.group.open"
+msgid "Open"
+msgstr "Abrir"
+
+#: src/i18n/en/sidebar.ts:86
+msgctxt "sidebar.group.cancel"
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: src/i18n/en/sidebar.ts:87
+msgctxt "sidebar.group.close"
+msgid "Close"
+msgstr "Cerrar"
+
+#: src/i18n/en/sidebar.ts:88
+msgctxt "sidebar.group.selectMembers"
+msgid "Select members"
+msgstr "Seleccionar miembros"
+
+#: src/i18n/en/sidebar.ts:89
+msgctxt "sidebar.group.rename"
+msgid "Rename"
+msgstr "Renombrar"
+
+#: src/i18n/en/sidebar.ts:90
+msgctxt "sidebar.group.ungroup"
+msgid "Ungroup"
+msgstr "Desagrupar"
+
+#: src/i18n/en/sidebar.ts:91
+msgctxt "sidebar.group.ungroup.title"
+msgid "Draw the members as they were before this group"
+msgstr "Mostrar los miembros como estaban antes de agruparlos"
+
+#: src/i18n/en/sidebar.ts:92
+msgctxt "sidebar.group.viewInTable"
+msgid "View in table"
+msgstr "Ver en la tabla"
+
+#: src/i18n/en/sidebar.ts:93
+msgctxt "sidebar.group.viewInTable.title"
+msgid "List the members in the data dock, to filter and search them"
+msgstr "Listar los miembros en el panel de datos para filtrarlos y buscarlos"
+
+#: src/i18n/en/sidebar.ts:94
+msgctxt "sidebar.group.pivot"
+msgid "Pivot ▸"
+msgstr "Pivote ▸"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:95
+msgctxt "sidebar.group.delete"
+msgid "Delete {count}"
+msgstr "Eliminar {count}"
+
+#: src/i18n/en/sidebar.ts:96
+msgctxt "sidebar.group.edit"
+msgid "Edit"
+msgstr "Editar"
+
+#: src/i18n/en/sidebar.ts:97
+msgctxt "sidebar.group.edit.title"
+msgid "A group has no data of its own to edit"
+msgstr "Un grupo no tiene datos propios que editar"
+
+#: src/i18n/en/sidebar.ts:98
+msgctxt "sidebar.group.members"
+msgid "Members"
+msgstr "Miembros"
+
+#: src/i18n/en/sidebar.ts:99
+msgctxt "sidebar.group.pullOut"
+msgid "Pull out"
+msgstr "Sacar"
+
+#: src/i18n/en/sidebar.ts:100
+msgctxt "sidebar.group.pullOut.title"
+msgid "Keep this node out of the group"
+msgstr "Mantener este nodo fuera del grupo"
+
+#. Preserve placeholders: {rule}
+#: src/i18n/en/sidebar.ts:103
+msgctxt "groupSummary.subtitle"
+msgid "Group · {rule}"
+msgstr "Grupo · {rule}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/sidebar.ts:104
+msgctxt "groupSummary.match"
+msgid "{count} of {total} match"
+msgstr "{count} de {total} coinciden"
+
+#. Preserve placeholders: {count}, {query}, {total}
+#: src/i18n/en/sidebar.ts:105
+msgctxt "groupSummary.matchQuery"
+msgid "{count} of {total} match \"{query}\""
+msgstr "{count} de {total} coinciden con «{query}»"
+
+#: src/i18n/en/sidebar.ts:106
+msgctxt "groupSummary.members"
+msgid "Members"
+msgstr "Miembros"
+
+#: src/i18n/en/sidebar.ts:107
+msgctxt "groupSummary.linkedTo"
+msgid "Linked to"
+msgstr "Conectado con"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:108
+msgctxt "groupSummary.more"
+msgid "{count} more"
+msgstr "{count} más"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/sidebar.ts:111
+msgctxt "groupActions.openAsk"
+msgid "Put {group} on the canvas?"
+msgstr "¿Colocar {group} en el lienzo?"
+
+#: src/i18n/en/sidebar.ts:112
+msgctxt "groupActions.open"
+msgid "Open"
+msgstr "Abrir"
+
+#: src/i18n/en/sidebar.ts:113
+msgctxt "groupActions.titleField.aria"
+msgid "Group title"
+msgstr "Título del grupo"
+
+#: src/i18n/en/sidebar.ts:114
+msgctxt "groupActions.group.heading"
+msgid "Group nodes"
+msgstr "Agrupar nodos"
+
+#: src/i18n/en/sidebar.ts:115
+msgctxt "groupActions.group.submit"
+msgid "Group"
+msgstr "Agrupar"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/sidebar.ts:116
+msgctxt "groupActions.group.left"
+msgid "{count} of the selected node stays out: annotated, or an open cluster."
+msgid_plural "{count} of the selected nodes stay out: annotated, or an open cluster."
+msgstr[0] "{count} nodo seleccionado queda fuera: tiene anotaciones o es un clúster abierto."
+msgstr[1] "{count} nodos seleccionados quedan fuera: tienen anotaciones o son clústeres abiertos."
+
+#: src/i18n/en/sidebar.ts:120
+msgctxt "groupActions.rename.heading"
+msgid "Rename group"
+msgstr "Renombrar grupo"
+
+#: src/i18n/en/sidebar.ts:121
+msgctxt "groupActions.rename.submit"
+msgid "Rename"
+msgstr "Renombrar"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/sidebar.ts:122
+msgctxt "groupActions.tableScope"
+msgid "Members of {group}"
+msgstr "Miembros de {group}"
+
+#: src/i18n/en/sidebar.ts:125
+msgctxt "tooltip.pin"
+msgid "Pin Tooltip"
+msgstr "Fijar información emergente"
+
+#: src/i18n/en/sidebar.ts:126
+msgctxt "tooltip.close"
+msgid "Close Tooltip"
+msgstr "Cerrar información emergente"
+
+#: src/i18n/en/sidebar.ts:127
+msgctxt "tooltip.focus"
+msgid "Focus Element in Graph"
+msgstr "Enfocar elemento en el grafo"
+
+#: src/i18n/en/sidebar.ts:128
+msgctxt "tooltip.select"
+msgid "Select Element in Graph"
+msgstr "Seleccionar elemento en el grafo"
+
+#: src/i18n/en/sidebar.ts:129
+msgctxt "tooltip.image.title"
+msgid "Click to view full size"
+msgstr "Clic para ver a tamaño completo"
+
+#: src/i18n/en/sidebar.ts:130
+msgctxt "tooltip.groupHint"
+msgid "Double-click to open · Select for the member list"
+msgstr "Doble clic para abrir · Selecciona para ver los miembros"
+
+#: src/i18n/en/sidebar.ts:133
+msgctxt "noteSidebar.empty"
+msgid "No notes yet"
+msgstr "Aún no hay notas"
+
+#: src/i18n/en/sidebar.ts:134
+msgctxt "noteSidebar.untitled"
+msgid "Untitled note"
+msgstr "Nota sin título"
+
+#: src/i18n/en/sidebar.ts:135
+msgctxt "noteSidebar.hide.title"
+msgid "Hide note"
+msgstr "Ocultar nota"
+
+#: src/i18n/en/sidebar.ts:136
+msgctxt "noteSidebar.restore.title"
+msgid "Restore hidden note"
+msgstr "Restaurar nota oculta"
+
+#: src/i18n/en/sidebar.ts:137
+msgctxt "noteSidebar.remove.title"
+msgid "Remove note"
+msgstr "Eliminar nota"
+
+#: src/i18n/en/sidebar.ts:138
+msgctxt "noteSidebar.add"
+msgid "Add Note"
+msgstr "Añadir nota"
+
+#: src/i18n/en/sidebar.ts:139
+msgctxt "noteSidebar.hideAll"
+msgid "Hide all"
+msgstr "Ocultar todo"
+
+#: src/i18n/en/sidebar.ts:140
+msgctxt "noteSidebar.hideAll.title"
+msgid "Hide all notes"
+msgstr "Ocultar todas las notas"
+
+#: src/i18n/en/sidebar.ts:141
+msgctxt "noteSidebar.hidden.heading"
+msgid "Hidden notes"
+msgstr "Notas ocultas"
+
+#: src/i18n/en/sidebar.ts:142
+msgctxt "noteSidebar.showAll"
+msgid "Show all notes"
+msgstr "Mostrar todas las notas"
+
+#: src/i18n/en/sidebar.ts:143
+msgctxt "noteSidebar.showAll.title"
+msgid "Restore hidden notes"
+msgstr "Restaurar notas ocultas"
+
+#: src/i18n/en/sidebar.ts:146
+msgctxt "nodePreview.imageUnavailable"
+msgid "Image unavailable"
+msgstr "Imagen no disponible"
+
+#: src/i18n/en/table.ts:6
+msgctxt "table.tab"
+msgid "Table"
+msgstr "Tabla"
+
+#: src/i18n/en/table.ts:7
+msgctxt "table.view.nodes"
+msgid "Nodes"
+msgstr "Nodos"
+
+#: src/i18n/en/table.ts:8
+msgctxt "table.view.edges"
+msgid "Edges"
+msgstr "Aristas"
+
+#: src/i18n/en/table.ts:11
+msgctxt "table.column.label"
+msgid "Label"
+msgstr "Etiqueta"
+
+#: src/i18n/en/table.ts:12
+msgctxt "table.column.degree"
+msgid "Degree"
+msgstr "Grado"
+
+#: src/i18n/en/table.ts:13
+msgctxt "table.column.degreeIn"
+msgid "In"
+msgstr "Entrada"
+
+#: src/i18n/en/table.ts:14
+msgctxt "table.column.degreeOut"
+msgid "Out"
+msgstr "Salida"
+
+#: src/i18n/en/table.ts:15
+msgctxt "table.column.visibility"
+msgid "Visibility"
+msgstr "Visibilidad"
+
+#: src/i18n/en/table.ts:16
+msgctxt "table.column.pinned"
+msgid "Pinned"
+msgstr "Fijado"
+
+#: src/i18n/en/table.ts:17
+msgctxt "table.column.children"
+msgid "Children"
+msgstr "Hijos"
+
+#: src/i18n/en/table.ts:18
+msgctxt "table.column.cluster"
+msgid "Cluster"
+msgstr "Clúster"
+
+#: src/i18n/en/table.ts:19
+msgctxt "table.column.group"
+msgid "Group"
+msgstr "Agrupar"
+
+#: src/i18n/en/table.ts:20
+msgctxt "table.column.source"
+msgid "Source"
+msgstr "Origen"
+
+#: src/i18n/en/table.ts:21
+msgctxt "table.column.target"
+msgid "Target"
+msgstr "Destino"
+
+#. Preserve placeholders: {column}
+#: src/i18n/en/table.ts:22
+msgctxt "table.column.sort.title"
+msgid "Sort by {column}"
+msgstr "Ordenar por {column}"
+
+#: src/i18n/en/table.ts:25
+msgctxt "table.visibility.visible"
+msgid "visible"
+msgstr "visible"
+
+#: src/i18n/en/table.ts:26
+msgctxt "table.visibility.filtered"
+msgid "filtered"
+msgstr "filtrado"
+
+#: src/i18n/en/table.ts:27
+msgctxt "table.visibility.excluded"
+msgid "excluded"
+msgstr "excluido"
+
+#: src/i18n/en/table.ts:28
+msgctxt "table.visibility.endpoint"
+msgid "endpoint"
+msgstr "extremo"
+
+#: src/i18n/en/table.ts:29
+msgctxt "table.visibility.nested"
+msgid "nested"
+msgstr "anidado"
+
+#: src/i18n/en/table.ts:30
+msgctxt "table.visibility.grouped"
+msgid "grouped"
+msgstr "agrupado"
+
+#: src/i18n/en/table.ts:33
+msgctxt "table.value.true"
+msgid "true"
+msgstr "verdadero"
+
+#: src/i18n/en/table.ts:34
+msgctxt "table.value.false"
+msgid "false"
+msgstr "falso"
+
+#. Preserve placeholders: {column}
+#: src/i18n/en/table.ts:37
+msgctxt "table.filter.title"
+msgid "Narrow the rows by {column}"
+msgstr "Filtrar filas por {column}"
+
+#: src/i18n/en/table.ts:38
+msgctxt "table.filter.placeholder"
+msgid "Filter rows…"
+msgstr "Filtrar filas…"
+
+#: src/i18n/en/table.ts:39
+msgctxt "table.filter.all"
+msgid "All"
+msgstr "Todo"
+
+#: src/i18n/en/table.ts:40
+msgctxt "table.filter.min.placeholder"
+msgid "Min"
+msgstr "Mín"
+
+#: src/i18n/en/table.ts:41
+msgctxt "table.filter.max.placeholder"
+msgid "Max"
+msgstr "Máx"
+
+#: src/i18n/en/table.ts:44
+msgctxt "table.empty.filtered"
+msgid "No rows match the column filters."
+msgstr "Ninguna fila coincide con los filtros de columna."
+
+#. Preserve placeholders: {scope}
+#: src/i18n/en/table.ts:45
+msgctxt "table.empty.scope"
+msgid "{scope}: none left."
+msgstr "{scope}: no queda nada."
+
+#: src/i18n/en/table.ts:46
+msgctxt "table.empty.nodes"
+msgid "This graph has no nodes."
+msgstr "Este grafo no tiene nodos."
+
+#: src/i18n/en/table.ts:47
+msgctxt "table.empty.edges"
+msgid "This graph has no edges."
+msgstr "Este grafo no tiene aristas."
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/table.ts:50
+msgctxt "table.summary.someNodes"
+msgid "{shown} of {count} node"
+msgid_plural "{shown} of {count} nodes"
+msgstr[0] "{shown} de {count} nodo"
+msgstr[1] "{shown} de {count} nodos"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/table.ts:51
+msgctxt "table.summary.someEdges"
+msgid "{shown} of {count} edge"
+msgid_plural "{shown} of {count} edges"
+msgstr[0] "{shown} de {count} arista"
+msgstr[1] "{shown} de {count} aristas"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:52
+msgctxt "table.summary.hidden"
+msgid "{count} hidden"
+msgstr "{count} ocultos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:53
+msgctxt "table.summary.hiddenNodes.title"
+msgid "{count} node hidden on the canvas by this table's column filters"
+msgid_plural "{count} nodes hidden on the canvas by this table's column filters"
+msgstr[0] "{count} nodo oculto en el lienzo por los filtros de columna de esta tabla"
+msgstr[1] "{count} nodos ocultos en el lienzo por los filtros de columna de esta tabla"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:57
+msgctxt "table.summary.hiddenEdges.title"
+msgid "{count} relation hidden on the canvas by this table's column filters"
+msgid_plural "{count} relations hidden on the canvas by this table's column filters"
+msgstr[0] "{count} relación oculta en el lienzo por los filtros de columna de esta tabla"
+msgstr[1] "{count} relaciones ocultas en el lienzo por los filtros de columna de esta tabla"
+
+#: src/i18n/en/table.ts:63
+msgctxt "table.selectAll"
+msgid "Select all"
+msgstr "Seleccionar todo"
+
+#: src/i18n/en/table.ts:64
+msgctxt "table.selectAll.title"
+msgid "Select every row currently listed"
+msgstr "Seleccionar todas las filas de la lista actual"
+
+#. Preserve placeholders: {format}
+#: src/i18n/en/table.ts:65
+msgctxt "table.export.title"
+msgid "Export the rows and columns currently shown as {format}"
+msgstr "Exportar las filas y columnas visibles como {format}"
+
+#: src/i18n/en/table.ts:66
+msgctxt "table.export.blocked"
+msgid "Export blocked"
+msgstr "Exportación bloqueada"
+
+#: src/i18n/en/table.ts:67
+msgctxt "table.export.blocked.message"
+msgid "This page will not let the file download. Try the example outside its frame."
+msgstr "Esta página no permite descargar el archivo. Prueba el ejemplo fuera del marco."
+
+#: src/i18n/en/table.ts:68
+msgctxt "table.columns"
+msgid "Columns"
+msgstr "Columnas"
+
+#: src/i18n/en/table.ts:69
+msgctxt "table.columns.title"
+msgid "Choose which columns to show"
+msgstr "Elegir las columnas que se muestran"
+
+#: src/i18n/en/table.ts:70
+msgctxt "table.scope.clear.title"
+msgid "List every node again"
+msgstr "Volver a listar todos los nodos"
+
+#: src/i18n/en/table.ts:71
+msgctxt "table.nested"
+msgid "Nested nodes"
+msgstr "Nodos anidados"
+
+#: src/i18n/en/table.ts:72
+msgctxt "table.nested.title"
+msgid "List the nodes inside clusters alongside the graph's own"
+msgstr "Listar los nodos dentro de clústeres junto con los del grafo"
+
+#: src/i18n/en/table.ts:75
+msgctxt "table.apply"
+msgid "Apply to graph"
+msgstr "Aplicar al grafo"
+
+#: src/i18n/en/table.ts:76
+msgctxt "table.apply.clear"
+msgid "Clear"
+msgstr "Borrar"
+
+#: src/i18n/en/table.ts:77
+msgctxt "table.apply.disabled.title"
+msgid "Narrow a column first, then apply it to the graph"
+msgstr "Filtra primero una columna y luego aplícala al grafo"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:78
+msgctxt "table.apply.nodes.title"
+msgid "Hide the {count} node the column filters leave out"
+msgid_plural "Hide the {count} nodes the column filters leave out"
+msgstr[0] "Ocultar {count} nodo excluido por los filtros de columna"
+msgstr[1] "Ocultar {count} nodos excluidos por los filtros de columna"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:82
+msgctxt "table.apply.edges.title"
+msgid "Hide the {count} relation the column filters leave out"
+msgid_plural "Hide the {count} relations the column filters leave out"
+msgstr[0] "Ocultar {count} relación excluida por los filtros de columna"
+msgstr[1] "Ocultar {count} relaciones excluidas por los filtros de columna"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:86
+msgctxt "table.apply.clearNodes.title"
+msgid "Stop filtering the graph from this table — {count} node hidden"
+msgid_plural "Stop filtering the graph from this table — {count} nodes hidden"
+msgstr[0] "Dejar de filtrar desde esta tabla — {count} nodo oculto"
+msgstr[1] "Dejar de filtrar desde esta tabla — {count} nodos ocultos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/table.ts:90
+msgctxt "table.apply.clearEdges.title"
+msgid "Stop filtering the graph from this table — {count} relation hidden"
+msgid_plural "Stop filtering the graph from this table — {count} relations hidden"
+msgstr[0] "Dejar de filtrar desde esta tabla — {count} relación oculta"
+msgstr[1] "Dejar de filtrar desde esta tabla — {count} relaciones ocultas"
+
+#: src/i18n/en/table.ts:94
+msgctxt "table.graphFilter.label"
+msgid "From the table"
+msgstr "Desde la tabla"
+
+#: src/i18n/en/table.ts:97
+msgctxt "dock.resize.aria"
+msgid "Resize the dock"
+msgstr "Cambiar tamaño del panel"
+
+#: src/i18n/en/table.ts:98
+msgctxt "dock.expand.title"
+msgid "Expand the dock"
+msgstr "Expandir panel"
+
+#: src/i18n/en/table.ts:99
+msgctxt "dock.collapse.title"
+msgid "Collapse the dock"
+msgstr "Contraer panel"
+
+#: src/i18n/en/panels.ts:6
+msgctxt "filter.attributes"
+msgid "Attributes"
+msgstr "Atributos"
+
+#: src/i18n/en/panels.ts:7
+msgctxt "filter.reset"
+msgid "Reset"
+msgstr "Restablecer"
+
+#: src/i18n/en/panels.ts:8
+msgctxt "filter.reset.title"
+msgid "Clear all attribute filters"
+msgstr "Borrar todos los filtros de atributos"
+
+#: src/i18n/en/panels.ts:9
+msgctxt "filter.value.true"
+msgid "true"
+msgstr "verdadero"
+
+#: src/i18n/en/panels.ts:10
+msgctxt "filter.value.false"
+msgid "false"
+msgstr "falso"
+
+#: src/i18n/en/panels.ts:11
+msgctxt "filter.invalidPattern"
+msgid "Invalid pattern"
+msgstr "Patrón no válido"
+
+#: src/i18n/en/panels.ts:12
+msgctxt "filter.layers"
+msgid "Relationships"
+msgstr "Relaciones"
+
+#: src/i18n/en/panels.ts:13
+msgctxt "filter.layers.showAll"
+msgid "Show all"
+msgstr "Mostrar todo"
+
+#: src/i18n/en/panels.ts:14
+msgctxt "filter.layers.showAll.title"
+msgid "Show every relationship layer"
+msgstr "Mostrar todas las capas de relaciones"
+
+#. Preserve placeholders: {layer}
+#: src/i18n/en/panels.ts:15
+msgctxt "filter.layer.hide.title"
+msgid "Hide {layer}"
+msgstr "Ocultar {layer}"
+
+#. Preserve placeholders: {layer}
+#: src/i18n/en/panels.ts:16
+msgctxt "filter.layer.show.title"
+msgid "Show {layer}"
+msgstr "Mostrar {layer}"
+
+#: src/i18n/en/panels.ts:17
+msgctxt "filter.fromTable"
+msgid "From the table"
+msgstr "Desde la tabla"
+
+#: src/i18n/en/panels.ts:18
+msgctxt "filter.fromTable.clear"
+msgid "Clear"
+msgstr "Borrar"
+
+#: src/i18n/en/panels.ts:19
+msgctxt "filter.fromTable.clearNodes.title"
+msgid "Stop hiding the nodes the table's column filters leave out"
+msgstr "Dejar de ocultar los nodos excluidos por los filtros de columna"
+
+#: src/i18n/en/panels.ts:20
+msgctxt "filter.fromTable.clearEdges.title"
+msgid "Stop hiding the relations the table's column filters leave out"
+msgstr "Dejar de ocultar las relaciones excluidas por los filtros de columna"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:21
+msgctxt "filter.fromTable.nodesHidden"
+msgid "{count} node hidden"
+msgid_plural "{count} nodes hidden"
+msgstr[0] "{count} nodo oculto"
+msgstr[1] "{count} nodos ocultos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:22
+msgctxt "filter.fromTable.edgesHidden"
+msgid "{count} relation hidden"
+msgid_plural "{count} relations hidden"
+msgstr[0] "{count} relación oculta"
+msgstr[1] "{count} relaciones ocultas"
+
+#: src/i18n/en/panels.ts:23
+msgctxt "filter.hiddenNodes"
+msgid "Hidden nodes"
+msgstr "Nodos ocultos"
+
+#: src/i18n/en/panels.ts:24
+msgctxt "filter.hiddenNodes.showAll"
+msgid "Show all"
+msgstr "Mostrar todo"
+
+#: src/i18n/en/panels.ts:25
+msgctxt "filter.hiddenNodes.showAll.title"
+msgid "Restore manually hidden nodes"
+msgstr "Restaurar nodos ocultos manualmente"
+
+#: src/i18n/en/panels.ts:26
+msgctxt "filter.hiddenNode.show"
+msgid "Show node"
+msgstr "Mostrar nodo"
+
+#: src/i18n/en/panels.ts:27
+msgctxt "filter.hiddenNode.show.title"
+msgid "Restore manually hidden node"
+msgstr "Restaurar nodo oculto manualmente"
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/panels.ts:28
+msgctxt "filter.hiddenNode.inspect.aria"
+msgid "Inspect {node}"
+msgstr "Inspeccionar {node}"
+
+#: src/i18n/en/panels.ts:32
+msgctxt "filter.button.active"
+msgid "active filter"
+msgid_plural "active filters"
+msgstr[0] "filtro activo"
+msgstr[1] "filtros activos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:33
+msgctxt "filter.button.hidden"
+msgid "{count} hidden"
+msgstr "{count} ocultos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:34
+msgctxt "filter.button.hiddenEdges"
+msgid "{count} edge hidden"
+msgid_plural "{count} edges hidden"
+msgstr[0] "{count} arista oculta"
+msgstr[1] "{count} aristas ocultas"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/panels.ts:35
+msgctxt "filter.button.hiddenNodesAndEdges"
+msgid "{nodes}, {edges} hidden"
+msgstr "{nodes}, {edges} ocultos"
+
+#: src/i18n/en/panels.ts:38
+msgctxt "form.pattern.placeholder"
+msgid "pattern…"
+msgstr "patrón…"
+
+#: src/i18n/en/panels.ts:39
+msgctxt "form.min.placeholder"
+msgid "Min"
+msgstr "Mín"
+
+#: src/i18n/en/panels.ts:40
+msgctxt "form.max.placeholder"
+msgid "Max"
+msgstr "Máx"
+
+#. Preserve placeholders: {field}
+#: src/i18n/en/panels.ts:41
+msgctxt "form.negate.aria"
+msgid "How {field} filters"
+msgstr "Cómo filtra {field}"
+
+#: src/i18n/en/panels.ts:42
+msgctxt "form.negate.is"
+msgid "is"
+msgstr "es"
+
+#: src/i18n/en/panels.ts:43
+msgctxt "form.negate.is.title"
+msgid "Keep what matches"
+msgstr "Conservar coincidencias"
+
+#: src/i18n/en/panels.ts:44
+msgctxt "form.negate.not"
+msgid "is not"
+msgstr "no es"
+
+#: src/i18n/en/panels.ts:45
+msgctxt "form.negate.not.title"
+msgid "Keep what does not match, and what has no value"
+msgstr "Conservar lo que no coincide y lo que no tiene valor"
+
+#: src/i18n/en/panels.ts:46
+msgctxt "picker.placeholder"
+msgid "Select..."
+msgstr "Seleccionar…"
+
+#: src/i18n/en/panels.ts:47
+msgctxt "picker.search.placeholder"
+msgid "Search..."
+msgstr "Buscar…"
+
+#: src/i18n/en/panels.ts:48
+msgctxt "picker.empty"
+msgid "No options available"
+msgstr "No hay opciones disponibles"
+
+#. Preserve placeholders: {option}
+#: src/i18n/en/panels.ts:49
+msgctxt "picker.remove.aria"
+msgid "Remove {option}"
+msgstr "Eliminar {option}"
+
+#: src/i18n/en/panels.ts:52
+msgctxt "legend.title"
+msgid "Legend"
+msgstr "Leyenda"
+
+#: src/i18n/en/panels.ts:53
+msgctxt "legend.title.type"
+msgid "Type"
+msgstr "Tipo"
+
+#: src/i18n/en/panels.ts:54
+msgctxt "legend.showAll.title"
+msgid "Show every category"
+msgstr "Mostrar todas las categorías"
+
+#: src/i18n/en/panels.ts:55
+msgctxt "legend.invert.title"
+msgid "Invert which categories are shown"
+msgstr "Invertir las categorías visibles"
+
+#: src/i18n/en/panels.ts:56
+msgctxt "legend.expand.title"
+msgid "Expand this section"
+msgstr "Expandir esta sección"
+
+#: src/i18n/en/panels.ts:57
+msgctxt "legend.collapse.title"
+msgid "Collapse this section"
+msgstr "Contraer esta sección"
+
+#: src/i18n/en/panels.ts:58
+msgctxt "legend.expandAll.title"
+msgid "Expand this section (alt-click for every section)"
+msgstr "Expandir esta sección (Alt-clic para todas)"
+
+#: src/i18n/en/panels.ts:59
+msgctxt "legend.collapseAll.title"
+msgid "Collapse this section (alt-click for every section)"
+msgstr "Contraer esta sección (Alt-clic para todas)"
+
+#. Preserve placeholders: {category}
+#: src/i18n/en/panels.ts:60
+msgctxt "legend.entry.show.title"
+msgid "Show {category}"
+msgstr "Mostrar {category}"
+
+#. Preserve placeholders: {category}
+#: src/i18n/en/panels.ts:61
+msgctxt "legend.entry.hide.title"
+msgid "Hide {category} (alt-click to show only this one)"
+msgstr "Ocultar {category} (Alt-clic para mostrar solo esta)"
+
+#: src/i18n/en/panels.ts:62
+msgctxt "legend.entry.lastShown.title"
+msgid "The last shown category can't be hidden while the legend drives the filter panel's facet."
+msgstr "No se puede ocultar la última categoría visible mientras la leyenda controle la faceta del panel de filtros."
+
+#: src/i18n/en/panels.ts:65
+msgctxt "physicsFlyout.title"
+msgid "Physics"
+msgstr "Física"
+
+#: src/i18n/en/panels.ts:66
+msgctxt "physicsFlyout.section"
+msgid "LAYOUT & SIMULATION"
+msgstr "DISTRIBUCIÓN Y SIMULACIÓN"
+
+#: src/i18n/en/panels.ts:67
+msgctxt "physicsFlyout.layout.force"
+msgid "Force"
+msgstr "Fuerzas"
+
+#: src/i18n/en/panels.ts:68
+msgctxt "physicsFlyout.layout.force.title"
+msgid "Force — positions nodes freely using the physics simulation."
+msgstr "Fuerzas — coloca los nodos libremente mediante la simulación física."
+
+#: src/i18n/en/panels.ts:69
+msgctxt "physicsFlyout.layout.treeV"
+msgid "Vertical"
+msgstr "Vertical"
+
+#: src/i18n/en/panels.ts:70
+msgctxt "physicsFlyout.layout.treeV.title"
+msgid "Tree — hierarchical layout flowing from top to bottom."
+msgstr "Árbol — distribución jerárquica de arriba abajo."
+
+#: src/i18n/en/panels.ts:71
+msgctxt "physicsFlyout.layout.treeH"
+msgid "Horizontal"
+msgstr "Horizontal"
+
+#: src/i18n/en/panels.ts:72
+msgctxt "physicsFlyout.layout.treeH.title"
+msgid "Tree — hierarchical layout flowing from left to right."
+msgstr "Árbol — distribución jerárquica de izquierda a derecha."
+
+#: src/i18n/en/panels.ts:73
+msgctxt "physicsFlyout.layout.treeR"
+msgid "Radial"
+msgstr "Radial"
+
+#: src/i18n/en/panels.ts:74
+msgctxt "physicsFlyout.layout.treeR.title"
+msgid "Tree — hierarchical layout radiating out from a central root."
+msgstr "Árbol — distribución jerárquica desde una raíz central."
+
+#: src/i18n/en/panels.ts:75
+msgctxt "physicsFlyout.root"
+msgid "Root"
+msgstr "Raíz"
+
+#: src/i18n/en/panels.ts:76
+msgctxt "physicsFlyout.root.selected"
+msgid "Selected node"
+msgstr "Nodo seleccionado"
+
+#: src/i18n/en/panels.ts:77
+msgctxt "physicsFlyout.root.selected.description"
+msgid "Hangs the tree from the node you have selected, following edges either way round."
+msgstr "Usa el nodo seleccionado como raíz y recorre las aristas en ambas direcciones."
+
+#: src/i18n/en/panels.ts:78
+msgctxt "physicsFlyout.root.firstSource"
+msgid "First source"
+msgstr "Primer origen"
+
+#: src/i18n/en/panels.ts:79
+msgctxt "physicsFlyout.root.firstSource.description"
+msgid "The first node nothing points at."
+msgstr "El primer nodo al que no apunta nada."
+
+#: src/i18n/en/panels.ts:80
+msgctxt "physicsFlyout.root.widestReach"
+msgid "Widest reach"
+msgstr "Mayor alcance"
+
+#: src/i18n/en/panels.ts:81
+msgctxt "physicsFlyout.root.widestReach.description"
+msgid "Reaches the most other nodes."
+msgstr "Alcanza la mayor cantidad de otros nodos."
+
+#: src/i18n/en/panels.ts:82
+msgctxt "physicsFlyout.root.shallowest"
+msgid "Shallowest"
+msgstr "Menor profundidad"
+
+#: src/i18n/en/panels.ts:83
+msgctxt "physicsFlyout.root.shallowest.description"
+msgid "Makes the tree as shallow as it can be."
+msgstr "Hace que el árbol tenga la menor profundidad posible."
+
+#: src/i18n/en/panels.ts:84
+msgctxt "physicsFlyout.root.selectFirst"
+msgid "Select a node first."
+msgstr "Selecciona primero un nodo."
+
+#. Preserve placeholders: {node}
+#: src/i18n/en/panels.ts:85
+msgctxt "physicsFlyout.root.pinned.title"
+msgid "The tree is hung from \"{node}\". Pick again to change it."
+msgstr "El árbol parte de «{node}». Vuelve a elegir para cambiarlo."
+
+#. Preserve placeholders: {description}, {label}
+#: src/i18n/en/panels.ts:86
+msgctxt "physicsFlyout.root.finder.title"
+msgid "{label}: {description}"
+msgstr "{label}: {description}"
+
+#: src/i18n/en/panels.ts:87
+msgctxt "physicsFlyout.spacing"
+msgid "Spacing"
+msgstr "Espaciado"
+
+#: src/i18n/en/panels.ts:88
+msgctxt "physicsFlyout.spacing.auto"
+msgid "Auto"
+msgstr "Automático"
+
+#: src/i18n/en/panels.ts:89
+msgctxt "physicsFlyout.spacing.auto.title"
+msgid "Let the tree work out its own distances from the size of the nodes and the shape of the tree — and keep working them out as the graph changes."
+msgstr "Calcula las distancias según el tamaño de los nodos y la forma del árbol, y las ajusta cuando cambia el grafo."
+
+#: src/i18n/en/panels.ts:90
+msgctxt "physicsFlyout.spacing.level"
+msgid "Level distance"
+msgstr "Distancia entre niveles"
+
+#: src/i18n/en/panels.ts:91
+msgctxt "physicsFlyout.spacing.level.title"
+msgid "How far apart consecutive levels of the tree sit — the gap between rings, in the radial layout."
+msgstr "Distancia entre niveles consecutivos del árbol, o entre anillos en la distribución radial."
+
+#: src/i18n/en/panels.ts:92
+msgctxt "physicsFlyout.spacing.sibling"
+msgid "Sibling distance"
+msgstr "Distancia entre hermanos"
+
+#: src/i18n/en/panels.ts:93
+msgctxt "physicsFlyout.spacing.sibling.title"
+msgid "How far apart nodes on the same level sit. The radial layout spreads a level over the whole circle, so it ignores this one."
+msgstr "Distancia entre nodos del mismo nivel. La distribución radial la ignora porque reparte el nivel por todo el círculo."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:94
+msgctxt "physicsFlyout.spacing.value"
+msgid "{count}×"
+msgstr "{count}×"
+
+#: src/i18n/en/panels.ts:95
+msgctxt "physicsFlyout.simulation"
+msgid "Simulation"
+msgstr "Simulación"
+
+#: src/i18n/en/panels.ts:96
+msgctxt "physicsFlyout.pause.title"
+msgid "Pause physics"
+msgstr "Pausar física"
+
+#: src/i18n/en/panels.ts:97
+msgctxt "physicsFlyout.resume.title"
+msgid "Resume physics"
+msgstr "Reanudar física"
+
+#: src/i18n/en/panels.ts:98
+msgctxt "physicsFlyout.preset.auto"
+msgid "Auto"
+msgstr "Automático"
+
+#: src/i18n/en/panels.ts:99
+msgctxt "physicsFlyout.preset.auto.title"
+msgid "Let the layout tune itself from the number of nodes, their size and the canvas — and keep tuning as the graph changes."
+msgstr "Ajusta la distribución según la cantidad y el tamaño de los nodos y el lienzo, y sigue ajustándola cuando cambia el grafo."
+
+#: src/i18n/en/panels.ts:100
+msgctxt "physicsFlyout.preset.tight"
+msgid "Tight"
+msgstr "Compacta"
+
+#: src/i18n/en/panels.ts:101
+msgctxt "physicsFlyout.preset.tight.title"
+msgid "Compact layout with nodes packed closely together."
+msgstr "Distribución compacta con nodos muy juntos."
+
+#: src/i18n/en/panels.ts:102
+msgctxt "physicsFlyout.preset.loose"
+msgid "Loose"
+msgstr "Amplia"
+
+#: src/i18n/en/panels.ts:103
+msgctxt "physicsFlyout.preset.loose.title"
+msgid "Spacious layout with nodes spread further apart."
+msgstr "Distribución amplia con nodos más separados."
+
+#: src/i18n/en/panels.ts:104
+msgctxt "physicsFlyout.knob.repulsion"
+msgid "Repulsion"
+msgstr "Repulsión"
+
+#: src/i18n/en/panels.ts:105
+msgctxt "physicsFlyout.knob.repulsion.title"
+msgid "How strongly nodes push each other apart. Higher values spread the graph out."
+msgstr "Fuerza con la que se repelen los nodos. Los valores altos expanden el grafo."
+
+#: src/i18n/en/panels.ts:106
+msgctxt "physicsFlyout.knob.linkDistance"
+msgid "Link distance"
+msgstr "Distancia de enlace"
+
+#: src/i18n/en/panels.ts:107
+msgctxt "physicsFlyout.knob.linkDistance.title"
+msgid "The resting length of edges, in pixels. Higher values place connected nodes further apart."
+msgstr "Longitud de reposo de las aristas en píxeles. Los valores altos separan más los nodos conectados."
+
+#: src/i18n/en/panels.ts:108
+msgctxt "physicsFlyout.knob.collisionRadius"
+msgid "Collision radius"
+msgstr "Radio de colisión"
+
+#: src/i18n/en/panels.ts:109
+msgctxt "physicsFlyout.knob.collisionRadius.title"
+msgid "The clear space kept around each node to prevent overlap. Higher values keep nodes further apart."
+msgstr "Espacio libre alrededor de cada nodo para evitar solapamientos. Los valores altos separan más los nodos."
+
+#: src/i18n/en/panels.ts:110
+msgctxt "physicsFlyout.knob.friction"
+msgid "Friction"
+msgstr "Fricción"
+
+#: src/i18n/en/panels.ts:111
+msgctxt "physicsFlyout.knob.friction.title"
+msgid "How quickly node motion is damped. Higher values calm the layout and settle it faster."
+msgstr "Rapidez con la que se amortigua el movimiento. Los valores altos estabilizan antes la distribución."
+
+#: src/i18n/en/panels.ts:112
+msgctxt "physicsFlyout.knob.centering"
+msgid "Centering"
+msgstr "Centrado"
+
+#: src/i18n/en/panels.ts:113
+msgctxt "physicsFlyout.knob.centering.title"
+msgid "How strongly the graph is pulled toward the middle of the canvas. Higher values keep disconnected parts in frame."
+msgstr "Fuerza que atrae el grafo al centro del lienzo. Los valores altos mantienen a la vista las partes desconectadas."
+
+#: src/i18n/en/panels.ts:114
+msgctxt "physicsFlyout.knob.settleTime"
+msgid "Settle time"
+msgstr "Tiempo de estabilización"
+
+#: src/i18n/en/panels.ts:115
+msgctxt "physicsFlyout.knob.settleTime.title"
+msgid "How long the layout is given to settle, in seconds. Higher values let large graphs unfold further before they stop."
+msgstr "Tiempo en segundos para estabilizar la distribución. Los valores altos permiten que los grafos grandes se desplieguen más antes de detenerse."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:116
+msgctxt "physicsFlyout.knob.seconds"
+msgid "{count}s"
+msgstr "{count} s"
+
+#: src/i18n/en/panels.ts:119
+msgctxt "viewFlyout.title"
+msgid "View"
+msgstr "Vista"
+
+#: src/i18n/en/panels.ts:120
+msgctxt "viewFlyout.section"
+msgid "GRID & CANVAS"
+msgstr "CUADRÍCULA Y LIENZO"
+
+#: src/i18n/en/panels.ts:121
+msgctxt "viewFlyout.background"
+msgid "Background"
+msgstr "Fondo"
+
+#: src/i18n/en/panels.ts:122
+msgctxt "viewFlyout.background.grid"
+msgid "Grid"
+msgstr "Cuadrícula"
+
+#: src/i18n/en/panels.ts:123
+msgctxt "viewFlyout.background.grid.title"
+msgid "Rule the canvas with grid lines."
+msgstr "Dibujar líneas de cuadrícula en el lienzo."
+
+#: src/i18n/en/panels.ts:124
+msgctxt "viewFlyout.background.dots"
+msgid "Dots"
+msgstr "Puntos"
+
+#: src/i18n/en/panels.ts:125
+msgctxt "viewFlyout.background.dots.title"
+msgid "Mark the grid with dots instead of lines."
+msgstr "Marcar la cuadrícula con puntos en vez de líneas."
+
+#: src/i18n/en/panels.ts:126
+msgctxt "viewFlyout.background.none"
+msgid "None"
+msgstr "Ninguno"
+
+#: src/i18n/en/panels.ts:127
+msgctxt "viewFlyout.background.none.title"
+msgid "Leave the canvas plain."
+msgstr "Dejar el lienzo liso."
+
+#: src/i18n/en/panels.ts:128
+msgctxt "viewFlyout.background.image"
+msgid "Image"
+msgstr "Imagen"
+
+#: src/i18n/en/panels.ts:129
+msgctxt "viewFlyout.background.image.title"
+msgid "Paint an image behind the graph."
+msgstr "Mostrar una imagen detrás del grafo."
+
+#: src/i18n/en/panels.ts:130
+msgctxt "viewFlyout.canvasColour"
+msgid "Canvas colour"
+msgstr "Color del lienzo"
+
+#: src/i18n/en/panels.ts:131
+msgctxt "viewFlyout.canvasColour.custom.title"
+msgid "Custom canvas colour"
+msgstr "Color personalizado del lienzo"
+
+#: src/i18n/en/panels.ts:132
+msgctxt "viewFlyout.gridColour"
+msgid "Grid colour"
+msgstr "Color de la cuadrícula"
+
+#: src/i18n/en/panels.ts:133
+msgctxt "viewFlyout.gridColour.custom.title"
+msgid "Custom grid colour"
+msgstr "Color personalizado de la cuadrícula"
+
+#: src/i18n/en/panels.ts:134
+msgctxt "viewFlyout.colour.default"
+msgid "Theme default"
+msgstr "Predeterminado del tema"
+
+#: src/i18n/en/panels.ts:135
+msgctxt "viewFlyout.colour.white"
+msgid "White"
+msgstr "Blanco"
+
+#: src/i18n/en/panels.ts:136
+msgctxt "viewFlyout.colour.lightGrey"
+msgid "Light grey"
+msgstr "Gris claro"
+
+#: src/i18n/en/panels.ts:137
+msgctxt "viewFlyout.colour.darkGrey"
+msgid "Dark grey"
+msgstr "Gris oscuro"
+
+#: src/i18n/en/panels.ts:138
+msgctxt "viewFlyout.colour.black"
+msgid "Black"
+msgstr "Negro"
+
+#: src/i18n/en/panels.ts:139
+msgctxt "viewFlyout.highlightGrid"
+msgid "Highlight grid"
+msgstr "Resaltar cuadrícula"
+
+#: src/i18n/en/panels.ts:140
+msgctxt "viewFlyout.highlightGrid.title"
+msgid "Make the background grid lines more visible."
+msgstr "Hacer más visibles las líneas de la cuadrícula."
+
+#: src/i18n/en/panels.ts:141
+msgctxt "viewFlyout.image.url.placeholder"
+msgid "Image URL..."
+msgstr "URL de la imagen…"
+
+#: src/i18n/en/panels.ts:142
+msgctxt "viewFlyout.image.browse"
+msgid "Browse"
+msgstr "Examinar"
+
+#: src/i18n/en/panels.ts:143
+msgctxt "viewFlyout.image.browse.title"
+msgid "Pick an image file from this device."
+msgstr "Elegir un archivo de imagen de este dispositivo."
+
+#: src/i18n/en/panels.ts:144
+msgctxt "viewFlyout.image.fit.cover"
+msgid "Cover"
+msgstr "Cubrir"
+
+#: src/i18n/en/panels.ts:145
+msgctxt "viewFlyout.image.fit.cover.title"
+msgid "Scale the image to fill the canvas, cropping whatever overflows."
+msgstr "Escalar la imagen para llenar el lienzo y recortar lo que sobresalga."
+
+#: src/i18n/en/panels.ts:146
+msgctxt "viewFlyout.image.fit.contain"
+msgid "Contain"
+msgstr "Contener"
+
+#: src/i18n/en/panels.ts:147
+msgctxt "viewFlyout.image.fit.contain.title"
+msgid "Scale the image until all of it fits on the canvas."
+msgstr "Escalar la imagen hasta que quepa entera en el lienzo."
+
+#: src/i18n/en/panels.ts:148
+msgctxt "viewFlyout.image.fit.tile"
+msgid "Tile"
+msgstr "Mosaico"
+
+#: src/i18n/en/panels.ts:149
+msgctxt "viewFlyout.image.fit.tile.title"
+msgid "Keep the image at its own size and repeat it across the canvas."
+msgstr "Mantener la imagen a su tamaño original y repetirla por el lienzo."
+
+#: src/i18n/en/panels.ts:150
+msgctxt "viewFlyout.image.remove"
+msgid "Remove image"
+msgstr "Eliminar imagen"
+
+#: src/i18n/en/panels.ts:151
+msgctxt "viewFlyout.snap"
+msgid "Snap to grid"
+msgstr "Ajustar a la cuadrícula"
+
+#: src/i18n/en/panels.ts:152
+msgctxt "viewFlyout.snap.title"
+msgid "Align nodes to the grid while you drag them."
+msgstr "Alinear los nodos con la cuadrícula al arrastrarlos."
+
+#: src/i18n/en/panels.ts:153
+msgctxt "viewFlyout.freeze"
+msgid "Freeze on drag"
+msgstr "Fijar al arrastrar"
+
+#: src/i18n/en/panels.ts:154
+msgctxt "viewFlyout.freeze.title"
+msgid "Keep nodes pinned where you drop them instead of letting physics move them again."
+msgstr "Mantener los nodos fijados donde se sueltan para que la física no los mueva de nuevo."
+
+#: src/i18n/en/panels.ts:155
+msgctxt "viewFlyout.fit"
+msgid "Fit on expand/collapse"
+msgstr "Ajustar al expandir o contraer"
+
+#: src/i18n/en/panels.ts:156
+msgctxt "viewFlyout.fit.title"
+msgid "Zoom and re-center to fit the graph when clusters or groups are expanded or collapsed."
+msgstr "Ajustar el zoom y el centro al expandir o contraer clústeres o grupos."
+
+#: src/i18n/en/panels.ts:157
+msgctxt "viewFlyout.orphans"
+msgid "Hide unconnected"
+msgstr "Ocultar desconectados"
+
+#: src/i18n/en/panels.ts:158
+msgctxt "viewFlyout.orphans.title"
+msgid "Hide nodes that have no visible relation left. Unlike hiding a relationship layer, this moves the graph."
+msgstr "Ocultar nodos sin relaciones visibles. A diferencia de ocultar una capa de relaciones, esto mueve el grafo."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:159
+msgctxt "viewFlyout.orphans.note.title"
+msgid "{count} unconnected node hidden"
+msgid_plural "{count} unconnected nodes hidden"
+msgstr[0] "{count} nodo desconectado oculto"
+msgstr[1] "{count} nodos desconectados ocultos"
+
+#: src/i18n/en/panels.ts:162
+msgctxt "simplifyFlyout.title"
+msgid "Simplify"
+msgstr "Simplificar"
+
+#: src/i18n/en/panels.ts:163
+msgctxt "simplifyFlyout.onCanvas"
+msgid "On the canvas"
+msgstr "En el lienzo"
+
+#. Preserve placeholders: {count}, {shown}
+#: src/i18n/en/panels.ts:164
+msgctxt "simplifyFlyout.shown"
+msgid "{shown} of {count} node"
+msgid_plural "{shown} of {count} nodes"
+msgstr[0] "{shown} de {count} nodo"
+msgstr[1] "{shown} de {count} nodos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:165
+msgctxt "simplifyFlyout.groups"
+msgid "{count} group"
+msgid_plural "{count} groups"
+msgstr[0] "{count} grupo"
+msgstr[1] "{count} grupos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:166
+msgctxt "simplifyFlyout.folded"
+msgid "{count} folded"
+msgstr "{count} contraídos"
+
+#: src/i18n/en/panels.ts:167
+msgctxt "simplifyFlyout.rule.app"
+msgid "app"
+msgstr "aplicación"
+
+#: src/i18n/en/panels.ts:168
+msgctxt "simplifyFlyout.smaller.aria"
+msgid "Smaller"
+msgstr "Menor"
+
+#: src/i18n/en/panels.ts:169
+msgctxt "simplifyFlyout.larger.aria"
+msgid "Larger"
+msgstr "Mayor"
+
+#: src/i18n/en/panels.ts:170
+msgctxt "simplifyFlyout.slider.fine"
+msgid "Fine"
+msgstr "Fino"
+
+#: src/i18n/en/panels.ts:171
+msgctxt "simplifyFlyout.slider.coarse"
+msgid "Coarse"
+msgstr "Grueso"
+
+#: src/i18n/en/panels.ts:172
+msgctxt "simplifyFlyout.result.failed"
+msgid "This rule failed"
+msgstr "Esta regla falló"
+
+#: src/i18n/en/panels.ts:173
+msgctxt "simplifyFlyout.result.grouping"
+msgid "Grouping…"
+msgstr "Agrupando…"
+
+#: src/i18n/en/panels.ts:174
+msgctxt "simplifyFlyout.result.nothing"
+msgid "Nothing to fold"
+msgstr "Nada que contraer"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:175
+msgctxt "simplifyFlyout.result.nothingAt"
+msgid "Nothing to fold at {count} or more"
+msgstr "Nada que contraer con {count} o más"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:176
+msgctxt "simplifyFlyout.result.nothingByDegree"
+msgid "Every node has {count} link or more"
+msgid_plural "Every node has {count} links or more"
+msgstr[0] "Cada nodo tiene {count} enlace o más"
+msgstr[1] "Cada nodo tiene {count} enlaces o más"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/panels.ts:177
+msgctxt "simplifyFlyout.result.nothingByCore"
+msgid "Every node is in the {count}-core"
+msgstr "Cada nodo está en el núcleo de grado {count}"
+
+#: src/i18n/en/pivot.ts:6
+msgctxt "pivot.retry"
+msgid "Retry"
+msgstr "Reintentar"
+
+#: src/i18n/en/pivot.ts:7
+msgctxt "pivot.cancel"
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: src/i18n/en/pivot.ts:8
+msgctxt "pivot.close"
+msgid "Close"
+msgstr "Cerrar"
+
+#: src/i18n/en/pivot.ts:9
+msgctxt "pivot.dismiss"
+msgid "Dismiss"
+msgstr "Descartar"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:10
+msgctxt "pivot.more"
+msgid "…and {count} more"
+msgstr "…y {count} más"
+
+#: src/i18n/en/pivot.ts:13
+msgctxt "pivot.mode.label"
+msgid "Pivot"
+msgstr "Pivote"
+
+#: src/i18n/en/pivot.ts:14
+msgctxt "pivot.mode.pickOrigin"
+msgid "Pick origin"
+msgstr "Elegir origen"
+
+#: src/i18n/en/pivot.ts:15
+msgctxt "pivot.mode.lassoOrigin"
+msgid "Lasso origin"
+msgstr "Seleccionar origen con lazo"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:18
+msgctxt "pivot.toast.fetchFailed"
+msgid "Couldn't fetch {pivot}"
+msgstr "No se pudo obtener {pivot}"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:19
+msgctxt "pivot.toast.refused.title"
+msgid "{pivot} returned too much"
+msgstr "{pivot} devolvió demasiados resultados"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:20
+msgctxt "pivot.toast.refused.message"
+msgid "{count} candidate, over the {limit} limit. Nothing was ingested — narrow and run again."
+msgid_plural "{count} candidates, over the {limit} limit. Nothing was ingested — narrow and run again."
+msgstr[0] "{count} candidato, por encima del límite de {limit}. No se importó nada; filtra y ejecuta de nuevo."
+msgstr[1] "{count} candidatos, por encima del límite de {limit}. No se importó nada; filtra y ejecuta de nuevo."
+
+#: src/i18n/en/pivot.ts:26
+msgctxt "pivot.save.promptTitle"
+msgid "Save"
+msgstr "Guardar"
+
+#: src/i18n/en/pivot.ts:27
+msgctxt "pivot.save.promptSubmit"
+msgid "Save"
+msgstr "Guardar"
+
+#: src/i18n/en/pivot.ts:28
+msgctxt "pivot.save.saving"
+msgid "Saving…"
+msgstr "Guardando…"
+
+#. Preserve placeholders: {elements}
+#: src/i18n/en/pivot.ts:29
+msgctxt "pivot.save.saved"
+msgid "Saved {elements}"
+msgstr "Se guardaron {elements}"
+
+#. Preserve placeholders: {elements}
+#: src/i18n/en/pivot.ts:30
+msgctxt "pivot.save.failed"
+msgid "Couldn't save {elements}"
+msgstr "No se pudieron guardar {elements}"
+
+#: src/i18n/en/pivot.ts:31
+msgctxt "pivot.save.failedDetail"
+msgid "Nothing was written, and nothing left the canvas."
+msgstr "No se escribió nada ni salió nada del lienzo."
+
+#. Preserve placeholders: {saved}, {total}
+#: src/i18n/en/pivot.ts:32
+msgctxt "pivot.save.partial"
+msgid "Saved {saved} of {total}"
+msgstr "Se guardaron {saved} de {total}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:33
+msgctxt "pivot.save.partialDetail"
+msgid "{count} still unsaved."
+msgstr "{count} aún sin guardar."
+
+#: src/i18n/en/pivot.ts:34
+msgctxt "pivot.save.nothing"
+msgid "nothing"
+msgstr "nada"
+
+#: src/i18n/en/pivot.ts:37
+msgctxt "pivot.ingest.failed"
+msgid "Ingest failed"
+msgstr "Error al importar"
+
+#: src/i18n/en/pivot.ts:38
+msgctxt "pivot.ingest.cancelled"
+msgid "Ingest cancelled"
+msgstr "Importación cancelada"
+
+#: src/i18n/en/pivot.ts:39
+msgctxt "pivot.ingest.nothing"
+msgid "Nothing was ingested"
+msgstr "No se importó nada"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:40
+msgctxt "pivot.ingest.nodes"
+msgid "Ingested {count} node"
+msgid_plural "Ingested {count} nodes"
+msgstr[0] "Se importó {count} nodo"
+msgstr[1] "Se importaron {count} nodos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:41
+msgctxt "pivot.ingest.edges"
+msgid "Ingested {count} edge"
+msgid_plural "Ingested {count} edges"
+msgstr[0] "Se importó {count} arista"
+msgstr[1] "Se importaron {count} aristas"
+
+#. Preserve placeholders: {count}, {landed}
+#: src/i18n/en/pivot.ts:42
+msgctxt "pivot.ingest.someNodes"
+msgid "Ingested {landed} of {count} node"
+msgid_plural "Ingested {landed} of {count} nodes"
+msgstr[0] "Se importaron {landed} de {count} nodo"
+msgstr[1] "Se importaron {landed} de {count} nodos"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/pivot.ts:44
+msgctxt "pivot.ingest.nodesAndEdges"
+msgid "Ingested {nodes}, {edges}"
+msgstr "Se importaron {nodes}, {edges}"
+
+#. Preserve placeholders: {count}, {landed}
+#: src/i18n/en/pivot.ts:45
+msgctxt "pivot.ingest.nodesOfAsked"
+msgid "{landed} of {count} node"
+msgid_plural "{landed} of {count} nodes"
+msgstr[0] "{landed} de {count} nodo"
+msgstr[1] "{landed} de {count} nodos"
+
+#: src/i18n/en/pivot.ts:48
+msgctxt "pivot.panel.filter.placeholder"
+msgid "Filter pivots"
+msgstr "Filtrar pivotes"
+
+#: src/i18n/en/pivot.ts:49
+msgctxt "pivot.panel.filter.aria"
+msgid "Filter pivots"
+msgstr "Filtrar pivotes"
+
+#: src/i18n/en/pivot.ts:50
+msgctxt "pivot.panel.filter.clear.title"
+msgid "Clear the filter"
+msgstr "Borrar el filtro"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:51
+msgctxt "pivot.panel.hits.selected"
+msgid "Showing your {count} selected"
+msgstr "Mostrando tus {count} seleccionados"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:52
+msgctxt "pivot.panel.hits.matching"
+msgid "{count} match"
+msgstr "{count} coinciden"
+
+#: src/i18n/en/pivot.ts:53
+msgctxt "pivot.panel.selectNone"
+msgid "Select none"
+msgstr "No seleccionar ninguno"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:54
+msgctxt "pivot.panel.deselect"
+msgid "Deselect {count}"
+msgstr "Deseleccionar {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:55
+msgctxt "pivot.panel.selectMatching"
+msgid "Select {count} matching"
+msgstr "Seleccionar {count} coincidentes"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:56
+msgctxt "pivot.panel.selectAll"
+msgid "Select all {count}"
+msgstr "Seleccionar los {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:57
+msgctxt "pivot.panel.tray.selected"
+msgid "{count} selected"
+msgstr "{count} seleccionados"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:58
+msgctxt "pivot.panel.tray.hidden"
+msgid "{count} hidden"
+msgstr "{count} ocultos"
+
+#: src/i18n/en/pivot.ts:59
+msgctxt "pivot.panel.tray.none"
+msgid "Nothing selected"
+msgstr "Nada seleccionado"
+
+#: src/i18n/en/pivot.ts:60
+msgctxt "pivot.panel.tray.reveal.title"
+msgid "Show only what is selected"
+msgstr "Mostrar solo lo seleccionado"
+
+#: src/i18n/en/pivot.ts:61
+msgctxt "pivot.panel.tray.unreveal.title"
+msgid "Back to the filtered list"
+msgstr "Volver a la lista filtrada"
+
+#: src/i18n/en/pivot.ts:62
+msgctxt "pivot.panel.tray.clear"
+msgid "Clear"
+msgstr "Borrar"
+
+#: src/i18n/en/pivot.ts:63
+msgctxt "pivot.panel.tray.clear.title"
+msgid "Clear the selection"
+msgstr "Borrar la selección"
+
+#: src/i18n/en/pivot.ts:64
+msgctxt "pivot.panel.tray.run"
+msgid "Run"
+msgstr "Ejecutar"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:65
+msgctxt "pivot.panel.tray.runCount"
+msgid "Run {count}"
+msgstr "Ejecutar {count}"
+
+#: src/i18n/en/pivot.ts:66
+msgctxt "pivot.panel.tray.run.title"
+msgid "Run every selected pivot"
+msgstr "Ejecutar todos los pivotes seleccionados"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:67
+msgctxt "pivot.panel.tray.caution"
+msgid "{count} pivot is over {limit} — this asks every one of them at once."
+msgid_plural "{count} pivots is over {limit} — this asks every one of them at once."
+msgstr[0] "{count} pivote supera el límite de {limit}; esto los consulta todos a la vez."
+msgstr[1] "{count} pivotes superan el límite de {limit}; esto los consulta todos a la vez."
+
+#. Preserve placeholders: {query}
+#: src/i18n/en/pivot.ts:71
+msgctxt "pivot.panel.noMatch"
+msgid "No pivot matches “{query}”."
+msgstr "Ningún pivote coincide con «{query}»."
+
+#: src/i18n/en/pivot.ts:72
+msgctxt "pivot.panel.noMatch.reveal"
+msgid "Nothing selected."
+msgstr "Nada seleccionado."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:73
+msgctxt "pivot.panel.originless"
+msgid "Without an origin ({count})"
+msgstr "Sin origen ({count})"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:76
+msgctxt "pivot.panel.unsaved"
+msgid "{count} unsaved"
+msgstr "{count} sin guardar"
+
+#: src/i18n/en/pivot.ts:77
+msgctxt "pivot.panel.unsaved.title"
+msgid "Brought in by a pivot this session, and not written back"
+msgstr "Obtenidos por un pivote en esta sesión y aún sin guardar en el origen"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/pivot.ts:78
+msgctxt "pivot.panel.unsaved.titleCounts"
+msgid "{nodes} and {edges} this session's pivots brought in and have not written back"
+msgstr "{nodes} y {edges} obtenidos por los pivotes de esta sesión y aún sin guardar en el origen"
+
+#: src/i18n/en/pivot.ts:79
+msgctxt "pivot.panel.save"
+msgid "Save"
+msgstr "Guardar"
+
+#: src/i18n/en/pivot.ts:80
+msgctxt "pivot.panel.save.saving"
+msgid "Saving…"
+msgstr "Guardando…"
+
+#: src/i18n/en/pivot.ts:81
+msgctxt "pivot.panel.save.title"
+msgid "Write these back to the source system"
+msgstr "Guardar estos resultados en el sistema de origen"
+
+#: src/i18n/en/pivot.ts:84
+msgctxt "pivot.panel.origin"
+msgid "Origin"
+msgstr "Origen"
+
+#: src/i18n/en/pivot.ts:85
+msgctxt "pivot.panel.origin.empty"
+msgid "Nothing picked — click a node on the canvas to see what can be run on it"
+msgstr "Nada elegido; haz clic en un nodo del lienzo para ver qué se puede ejecutar"
+
+#: src/i18n/en/pivot.ts:86
+msgctxt "pivot.panel.origin.emptyOriginless"
+msgid "Nothing picked — click a node on the canvas, or run one of the pivots below"
+msgstr "Nada elegido; haz clic en un nodo del lienzo o ejecuta uno de los pivotes de abajo"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:87
+msgctxt "pivot.panel.origin.more"
+msgid "+{count}"
+msgstr "+{count}"
+
+#: src/i18n/en/pivot.ts:88
+msgctxt "pivot.panel.origin.clear"
+msgid "Clear"
+msgstr "Borrar"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:89
+msgctxt "pivot.panel.heading"
+msgid "{count} pivot applies"
+msgid_plural "{count} pivots apply"
+msgstr[0] "{count} pivote aplicable"
+msgstr[1] "{count} pivotes aplicables"
+
+#: src/i18n/en/pivot.ts:90
+msgctxt "pivot.panel.heading.none"
+msgid "No pivots apply to this origin"
+msgstr "No hay pivotes aplicables a este origen"
+
+#. Preserve placeholders: {pivot}
+#: src/i18n/en/pivot.ts:93
+msgctxt "pivot.entry.select.aria"
+msgid "Select {pivot}"
+msgstr "Seleccionar {pivot}"
+
+#: src/i18n/en/pivot.ts:94
+msgctxt "pivot.entry.fetching"
+msgid "Fetching…"
+msgstr "Obteniendo…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:95
+msgctxt "pivot.entry.fetchingCount"
+msgid "Fetching ~{count}…"
+msgstr "Obteniendo unos {count}…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:96
+msgctxt "pivot.entry.ingested"
+msgid "{count} ingested"
+msgstr "{count} importados"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:97
+msgctxt "pivot.entry.declared"
+msgid "~{count} declared"
+msgstr "Unos {count} declarados"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:98
+msgctxt "pivot.entry.count"
+msgid "~{count}"
+msgstr "~{count}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/pivot.ts:99
+msgctxt "pivot.entry.countAcross"
+msgid "~{total} across {count} node"
+msgid_plural "~{total} across {count} nodes"
+msgstr[0] "~{total} en {count} nodo"
+msgstr[1] "~{total} en {count} nodos"
+
+#. Preserve placeholders: {count}, {taken}
+#: src/i18n/en/pivot.ts:100
+msgctxt "pivot.entry.scope"
+msgid "Applies to {taken} of the {count} picked"
+msgstr "Se aplica a {taken} de los {count} elegidos"
+
+#. Preserve placeholders: {count}, {label}
+#: src/i18n/en/pivot.ts:102
+msgctxt "pivot.entry.breakdownItem"
+msgid "{count} {label}"
+msgstr "{count} {label}"
+
+#: src/i18n/en/pivot.ts:103
+msgctxt "pivot.entry.error"
+msgid "Couldn't reach the source."
+msgstr "No se pudo acceder al origen."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:104
+msgctxt "pivot.entry.gate.over"
+msgid "Over the cap of {count} — narrow further to fetch"
+msgstr "Supera el límite de {count}; filtra más para obtener resultados"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:105
+msgctxt "pivot.entry.gate.within"
+msgid "Within the cap of {count}"
+msgstr "Dentro del límite de {count}"
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:106
+msgctxt "pivot.entry.gate.refused"
+msgid "The source returned {count} candidate, over the {limit} limit. Nothing was staged — narrow and run again."
+msgid_plural "The source returned {count} candidates, over the {limit} limit. Nothing was staged — narrow and run again."
+msgstr[0] "El origen devolvió {count} candidato, por encima del límite de {limit}. No se preparó nada; filtra y ejecuta de nuevo."
+msgstr[1] "El origen devolvió {count} candidatos, por encima del límite de {limit}. No se preparó nada; filtra y ejecuta de nuevo."
+
+#: src/i18n/en/pivot.ts:110
+msgctxt "pivot.entry.run"
+msgid "Run"
+msgstr "Ejecutar"
+
+#: src/i18n/en/pivot.ts:111
+msgctxt "pivot.entry.fetch"
+msgid "Fetch"
+msgstr "Obtener"
+
+#: src/i18n/en/pivot.ts:112
+msgctxt "pivot.entry.runIngest"
+msgid "Run & ingest"
+msgstr "Ejecutar e importar"
+
+#: src/i18n/en/pivot.ts:113
+msgctxt "pivot.entry.fetchIngest"
+msgid "Fetch & ingest"
+msgstr "Obtener e importar"
+
+#: src/i18n/en/pivot.ts:114
+msgctxt "pivot.entry.ingest.title"
+msgid "Add every result to the graph without reviewing it first"
+msgstr "Añadir todos los resultados al grafo sin revisarlos antes"
+
+#: src/i18n/en/pivot.ts:115
+msgctxt "pivot.entry.clearNarrowing"
+msgid "Clear narrowing"
+msgstr "Borrar filtros"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:116
+msgctxt "pivot.entry.inTriage"
+msgid "{count} in triage"
+msgstr "{count} en selección"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:117
+msgctxt "pivot.entry.rejected"
+msgid "{count} rejected"
+msgstr "{count} rechazados"
+
+#: src/i18n/en/pivot.ts:118
+msgctxt "pivot.entry.rejected.title"
+msgid "What you rejected here this session. It is not offered again until restored."
+msgstr "Lo que rechazaste aquí en esta sesión. No se volverá a ofrecer hasta restaurarlo."
+
+#: src/i18n/en/pivot.ts:119
+msgctxt "pivot.entry.rejected.note"
+msgid "Not offered again this session. Restoring one brings it back on the next run."
+msgstr "No se ofrece de nuevo en esta sesión. Restaurarlo lo devuelve en la próxima ejecución."
+
+#: src/i18n/en/pivot.ts:120
+msgctxt "pivot.entry.restore"
+msgid "restore"
+msgstr "restaurar"
+
+#: src/i18n/en/pivot.ts:121
+msgctxt "pivot.entry.restore.title"
+msgid "Offer this again on the next run"
+msgstr "Volver a ofrecerlo en la próxima ejecución"
+
+#: src/i18n/en/pivot.ts:122
+msgctxt "pivot.entry.restoreAll"
+msgid "Restore all"
+msgstr "Restaurar todo"
+
+#: src/i18n/en/pivot.ts:123
+msgctxt "pivot.entry.restoreAll.title"
+msgid "Take back every rejection this pivot holds"
+msgstr "Revertir todos los rechazos de este pivote"
+
+#: src/i18n/en/pivot.ts:126
+msgctxt "pivot.review.tab"
+msgid "Review"
+msgstr "Revisar"
+
+#: src/i18n/en/pivot.ts:127
+msgctxt "pivot.review.tabLoading"
+msgid "Review…"
+msgstr "Revisar…"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:128
+msgctxt "pivot.review.tabWaiting"
+msgid "Review ({count})"
+msgstr "Revisar ({count})"
+
+#: src/i18n/en/pivot.ts:129
+msgctxt "pivot.review.strip.aria"
+msgid "Staged providers"
+msgstr "Proveedores preparados"
+
+#: src/i18n/en/pivot.ts:130
+msgctxt "pivot.review.closeFailed"
+msgid "Close failed"
+msgstr "Cerrar fallidos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:131
+msgctxt "pivot.review.closeFailed.title"
+msgid "Drop the one provider whose fetch brought nothing back"
+msgid_plural "Drop the {count} providers whose fetches brought nothing back"
+msgstr[0] "Cerrar el único proveedor cuya consulta no devolvió nada"
+msgstr[1] "Cerrar los {count} proveedores cuyas consultas no devolvieron nada"
+
+#: src/i18n/en/pivot.ts:135
+msgctxt "pivot.review.closeAll"
+msgid "Close all"
+msgstr "Cerrar todo"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:136
+msgctxt "pivot.review.closeAll.title"
+msgid "Drop {count} staged provider. Nothing is rejected."
+msgid_plural "Drop all {count} staged providers. Nothing is rejected."
+msgstr[0] "Cerrar {count} proveedor preparado. No se rechaza nada."
+msgstr[1] "Cerrar los {count} proveedores preparados. No se rechaza nada."
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:140
+msgctxt "pivot.review.item.fetching"
+msgid "{provider} — fetching"
+msgstr "{provider} — obteniendo"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:141
+msgctxt "pivot.review.item.failed"
+msgid "{provider} — the fetch failed"
+msgstr "{provider} — error al obtener"
+
+#. Preserve placeholders: {count}, {provider}
+#: src/i18n/en/pivot.ts:142
+msgctxt "pivot.review.item.waiting"
+msgid "{provider} — {count} waiting for a verdict"
+msgstr "{provider} — {count} pendientes de decisión"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:143
+msgctxt "pivot.review.item.idle"
+msgid "{provider} — nothing waiting"
+msgstr "{provider} — nada pendiente"
+
+#. Preserve placeholders: {provider}
+#: src/i18n/en/pivot.ts:144
+msgctxt "pivot.review.item.close.aria"
+msgid "Close {provider}"
+msgstr "Cerrar {provider}"
+
+#: src/i18n/en/pivot.ts:145
+msgctxt "pivot.review.item.close.title"
+msgid "Drop these candidates. Nothing is rejected."
+msgstr "Cerrar estos candidatos. No se rechaza nada."
+
+#: src/i18n/en/pivot.ts:148
+msgctxt "pivot.triage.search.placeholder"
+msgid "Search rows…"
+msgstr "Buscar filas…"
+
+#: src/i18n/en/pivot.ts:149
+msgctxt "pivot.triage.search.patternPlaceholder"
+msgid "Match rows by pattern…"
+msgstr "Buscar filas por patrón…"
+
+#: src/i18n/en/pivot.ts:150
+msgctxt "pivot.triage.search.title"
+msgid "Narrow the candidates. Nothing here touches the graph."
+msgstr "Filtrar candidatos. Nada de aquí modifica el grafo."
+
+#: src/i18n/en/pivot.ts:151
+msgctxt "pivot.triage.regex"
+msgid "regex"
+msgstr "regex"
+
+#: src/i18n/en/pivot.ts:152
+msgctxt "pivot.triage.regex.title"
+msgid "Read the search box as a regular expression"
+msgstr "Interpretar la búsqueda como expresión regular"
+
+#: src/i18n/en/pivot.ts:153
+msgctxt "pivot.triage.rerun"
+msgid "Re-run"
+msgstr "Volver a ejecutar"
+
+#: src/i18n/en/pivot.ts:154
+msgctxt "pivot.triage.rerun.title"
+msgid "Fetch again with the same narrowing"
+msgstr "Volver a obtener con los mismos filtros"
+
+#: src/i18n/en/pivot.ts:157
+msgctxt "pivot.triage.loading"
+msgid "Fetching candidates…"
+msgstr "Obteniendo candidatos…"
+
+#: src/i18n/en/pivot.ts:158
+msgctxt "pivot.triage.loading.sub"
+msgid "Nothing is on the canvas yet — candidates are staged, not merged."
+msgstr "Aún no hay nada en el lienzo; los candidatos están preparados, sin combinar."
+
+#: src/i18n/en/pivot.ts:159
+msgctxt "pivot.triage.error"
+msgid "Couldn't fetch candidates."
+msgstr "No se pudieron obtener los candidatos."
+
+#: src/i18n/en/pivot.ts:160
+msgctxt "pivot.triage.error.sub"
+msgid "Nothing was staged. Retrying runs the same request with the narrowing you already chose."
+msgstr "No se preparó nada. Reintentar repite la solicitud con los filtros que ya elegiste."
+
+#. Preserve placeholders: {count}, {limit}
+#: src/i18n/en/pivot.ts:161
+msgctxt "pivot.triage.refused"
+msgid "The source returned {count} candidate, over the {limit} limit."
+msgid_plural "The source returned {count} candidates, over the {limit} limit."
+msgstr[0] "El origen devolvió {count} candidato, por encima del límite de {limit}."
+msgstr[1] "El origen devolvió {count} candidatos, por encima del límite de {limit}."
+
+#: src/i18n/en/pivot.ts:165
+msgctxt "pivot.triage.refused.sub"
+msgid "Nothing was staged — narrow and run again."
+msgstr "No se preparó nada; filtra y ejecuta de nuevo."
+
+#: src/i18n/en/pivot.ts:166
+msgctxt "pivot.triage.empty"
+msgid "No candidates came back"
+msgstr "No se recibieron candidatos"
+
+#: src/i18n/en/pivot.ts:167
+msgctxt "pivot.triage.empty.sub"
+msgid "The narrowing may be tighter than the data."
+msgstr "Los filtros pueden ser demasiado estrictos para los datos."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:168
+msgctxt "pivot.triage.allRejected"
+msgid "The only candidate was rejected earlier this session"
+msgid_plural "All {count} were rejected earlier this session"
+msgstr[0] "El único candidato se rechazó antes en esta sesión"
+msgstr[1] "Los {count} se rechazaron antes en esta sesión"
+
+#: src/i18n/en/pivot.ts:172
+msgctxt "pivot.triage.allRejected.sub"
+msgid "Nothing new came back. Restoring one offers it again on the next run."
+msgstr "No se recibió nada nuevo. Restaurar un candidato lo ofrece de nuevo en la próxima ejecución."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:173
+msgctxt "pivot.triage.allOnCanvas"
+msgid "The only candidate is already on the canvas — nothing to triage"
+msgid_plural "All {count} are already on the canvas — nothing to triage"
+msgstr[0] "El único candidato ya está en el lienzo; nada que revisar"
+msgstr[1] "Los {count} ya están en el lienzo; nada que revisar"
+
+#: src/i18n/en/pivot.ts:177
+msgctxt "pivot.triage.allOnCanvas.sub"
+msgid "Nothing was changed: an id already here is left exactly as it was."
+msgstr "Nada cambió: un identificador existente se deja exactamente como estaba."
+
+#: src/i18n/en/pivot.ts:178
+msgctxt "pivot.triage.done"
+msgid "Nothing left to triage"
+msgstr "Nada más que revisar"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:179
+msgctxt "pivot.triage.done.ingested"
+msgid "{count} ingested"
+msgstr "{count} importados"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:180
+msgctxt "pivot.triage.done.rejected"
+msgid "{count} rejected"
+msgstr "{count} rechazados"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:181
+msgctxt "pivot.triage.done.onCanvas"
+msgid "{count} already on canvas"
+msgstr "{count} ya en el lienzo"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:182
+msgctxt "pivot.triage.showRejected"
+msgid "Show the {count} rejected"
+msgstr "Mostrar los {count} rechazados"
+
+#: src/i18n/en/pivot.ts:183
+msgctxt "pivot.triage.hideRejected"
+msgid "Hide the rejected"
+msgstr "Ocultar rechazados"
+
+#: src/i18n/en/pivot.ts:186
+msgctxt "pivot.triage.banner.running"
+msgid "Running again…"
+msgstr "Ejecutando de nuevo…"
+
+#: src/i18n/en/pivot.ts:187
+msgctxt "pivot.triage.banner.failed"
+msgid "The re-run failed. What is below is untouched."
+msgstr "La nueva ejecución falló. Lo de abajo permanece intacto."
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:188
+msgctxt "pivot.triage.banner.ready"
+msgid "This pivot was run again. {count} new candidate is ready."
+msgid_plural "This pivot was run again. {count} new candidates are ready."
+msgstr[0] "Se volvió a ejecutar este pivote. Hay {count} candidato nuevo listo."
+msgstr[1] "Se volvió a ejecutar este pivote. Hay {count} candidatos nuevos listos."
+
+#: src/i18n/en/pivot.ts:192
+msgctxt "pivot.triage.banner.show"
+msgid "Show new"
+msgstr "Mostrar nuevos"
+
+#: src/i18n/en/pivot.ts:193
+msgctxt "pivot.triage.banner.keep"
+msgid "Keep triaging"
+msgstr "Seguir revisando"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:196
+msgctxt "pivot.triage.head.fetched"
+msgid "{count} fetched"
+msgstr "{count} obtenidos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:197
+msgctxt "pivot.triage.head.deduped"
+msgid "{count} already on canvas (skipped)"
+msgstr "{count} ya en el lienzo (omitidos)"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:198
+msgctxt "pivot.triage.head.suppressed"
+msgid "{count} rejected earlier"
+msgstr "{count} rechazados antes"
+
+#: src/i18n/en/pivot.ts:199
+msgctxt "pivot.triage.head.suppressed.title"
+msgid "Suppressed because they were rejected earlier this session"
+msgstr "Ocultos porque se rechazaron antes en esta sesión"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:200
+msgctxt "pivot.triage.head.unsaved"
+msgid "{count} unsaved"
+msgstr "{count} sin guardar"
+
+#: src/i18n/en/pivot.ts:201
+msgctxt "pivot.triage.head.save"
+msgid "save"
+msgstr "guardar"
+
+#: src/i18n/en/pivot.ts:202
+msgctxt "pivot.triage.head.saving"
+msgid "saving…"
+msgstr "guardando…"
+
+#: src/i18n/en/pivot.ts:203
+msgctxt "pivot.triage.head.save.title"
+msgid "Write this provider's ingested results back to the source system"
+msgstr "Guardar los resultados importados de este proveedor en el sistema de origen"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:204
+msgctxt "pivot.triage.head.origin"
+msgid "{count} origin node"
+msgid_plural "{count} origin nodes"
+msgstr[0] "{count} nodo de origen"
+msgstr[1] "{count} nodos de origen"
+
+#: src/i18n/en/pivot.ts:205
+msgctxt "pivot.triage.head.noOrigin"
+msgid "no origin"
+msgstr "sin origen"
+
+#: src/i18n/en/pivot.ts:206
+msgctxt "pivot.triage.head.narrowed"
+msgid "narrowed"
+msgstr "filtrados"
+
+#: src/i18n/en/pivot.ts:209
+msgctxt "pivot.triage.suppressed.note"
+msgid "Rejected earlier, so not offered again this session. Restoring one brings it back on the next run."
+msgstr "Rechazados antes, por lo que no se ofrecen en esta sesión. Restaurarlos los devuelve en la próxima ejecución."
+
+#: src/i18n/en/pivot.ts:210
+msgctxt "pivot.triage.restore"
+msgid "restore"
+msgstr "restaurar"
+
+#: src/i18n/en/pivot.ts:211
+msgctxt "pivot.triage.restoreAll"
+msgid "restore all"
+msgstr "restaurar todo"
+
+#: src/i18n/en/pivot.ts:214
+msgctxt "pivot.triage.column.candidate"
+msgid "Candidate"
+msgstr "Candidato"
+
+#: src/i18n/en/pivot.ts:215
+msgctxt "pivot.triage.column.children"
+msgid "Children"
+msgstr "Hijos"
+
+#: src/i18n/en/pivot.ts:216
+msgctxt "pivot.triage.column.from"
+msgid "From"
+msgstr "Desde"
+
+#: src/i18n/en/pivot.ts:217
+msgctxt "pivot.triage.column.to"
+msgid "To"
+msgstr "Hasta"
+
+#: src/i18n/en/pivot.ts:218
+msgctxt "pivot.triage.section.nodes"
+msgid "Nodes"
+msgstr "Nodos"
+
+#: src/i18n/en/pivot.ts:219
+msgctxt "pivot.triage.section.edges"
+msgid "Edges"
+msgstr "Aristas"
+
+#: src/i18n/en/pivot.ts:220
+msgctxt "pivot.triage.section.edges.note"
+msgid "both ends are already on the canvas"
+msgstr "ambos extremos ya están en el lienzo"
+
+#. Preserve placeholders: {from}, {to}
+#: src/i18n/en/pivot.ts:221
+msgctxt "pivot.triage.edge.endpoints"
+msgid "{from} → {to}"
+msgstr "{from} → {to}"
+
+#. Preserve placeholders: {row}
+#: src/i18n/en/pivot.ts:222
+msgctxt "pivot.triage.row.select.aria"
+msgid "Select {row}"
+msgstr "Seleccionar {row}"
+
+#: src/i18n/en/pivot.ts:223
+msgctxt "pivot.triage.row.onCanvas"
+msgid "on canvas"
+msgstr "en el lienzo"
+
+#: src/i18n/en/pivot.ts:224
+msgctxt "pivot.triage.row.undo"
+msgid "undo"
+msgstr "deshacer"
+
+#: src/i18n/en/pivot.ts:225
+msgctxt "pivot.triage.row.willIngest"
+msgid "will ingest"
+msgstr "se importará"
+
+#: src/i18n/en/pivot.ts:226
+msgctxt "pivot.triage.children.show.title"
+msgid "Show what this row holds"
+msgstr "Mostrar el contenido de esta fila"
+
+#: src/i18n/en/pivot.ts:227
+msgctxt "pivot.triage.children.hide.title"
+msgid "Hide what this row holds"
+msgstr "Ocultar el contenido de esta fila"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:228
+msgctxt "pivot.triage.children.summary"
+msgid "{count} child — ingesting this row takes all of them."
+msgid_plural "{count} children — ingesting this row takes all of them."
+msgstr[0] "{count} hijo; importar esta fila incluye todos sus hijos."
+msgstr[1] "{count} hijos; importar esta fila los incluye a todos."
+
+#. Preserve placeholders: {key}, {value}
+#: src/i18n/en/pivot.ts:233
+msgctxt "pivot.triage.children.field"
+msgid "{key}: {value}"
+msgstr "{key}: {value}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:234
+msgctxt "pivot.triage.children.nested"
+msgid "+{count} inside"
+msgstr "+{count} dentro"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:237
+msgctxt "pivot.triage.foot.ingest"
+msgid "Ingest selected ({count})"
+msgstr "Importar seleccionados ({count})"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:238
+msgctxt "pivot.triage.foot.ingestLoose"
+msgid "Ingest loose ({count})"
+msgstr "Importar por separado ({count})"
+
+#: src/i18n/en/pivot.ts:239
+msgctxt "pivot.triage.foot.ingestLoose.title"
+msgid "Land the selected rows as separate nodes"
+msgstr "Añadir las filas seleccionadas como nodos separados"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:240
+msgctxt "pivot.triage.foot.ingestGrouped"
+msgid "Ingest in a group ({count})"
+msgstr "Importar en un grupo ({count})"
+
+#: src/i18n/en/pivot.ts:241
+msgctxt "pivot.triage.foot.ingestGrouped.title"
+msgid "Land the selected rows folded, one group per type"
+msgstr "Añadir las filas seleccionadas contraídas, un grupo por tipo"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:242
+msgctxt "pivot.triage.foot.ingestAll"
+msgid "Ingest all {count}"
+msgstr "Importar los {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:243
+msgctxt "pivot.triage.foot.selectAll"
+msgid "Select all {count}"
+msgstr "Seleccionar los {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:244
+msgctxt "pivot.triage.foot.selectMatching"
+msgid "Select all {count} matching"
+msgstr "Seleccionar los {count} coincidentes"
+
+#: src/i18n/en/pivot.ts:245
+msgctxt "pivot.triage.foot.rejectSelected"
+msgid "Reject selected"
+msgstr "Rechazar seleccionados"
+
+#: src/i18n/en/pivot.ts:246
+msgctxt "pivot.triage.foot.rejectRemaining"
+msgid "Reject all remaining"
+msgstr "Rechazar todos los restantes"
+
+#. Preserve placeholders: {count}, {from}, {to}
+#: src/i18n/en/pivot.ts:247
+msgctxt "pivot.triage.foot.page"
+msgid "{from}–{to} of {count}"
+msgstr "{from}–{to} de {count}"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/pivot.ts:248
+msgctxt "pivot.triage.foot.shown"
+msgid "{count} shown"
+msgstr "{count} mostrados"
+
+#: src/i18n/en/pivot.ts:249
+msgctxt "pivot.triage.foot.note"
+msgid "closing this pane rejects nothing — leftovers are re-offered next run"
+msgstr "cerrar este panel no rechaza nada; los restantes se ofrecen en la próxima ejecución"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:6
+msgctxt "history.entry.hid"
+msgid "Hid {count} node"
+msgid_plural "Hid {count} nodes"
+msgstr[0] "Se ocultó {count} nodo"
+msgstr[1] "Se ocultaron {count} nodos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:7
+msgctxt "history.entry.showed"
+msgid "Showed {count} node"
+msgid_plural "Showed {count} nodes"
+msgstr[0] "Se mostró {count} nodo"
+msgstr[1] "Se mostraron {count} nodos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:8
+msgctxt "history.entry.deletedNodes"
+msgid "Deleted {count} node"
+msgid_plural "Deleted {count} nodes"
+msgstr[0] "Se eliminó {count} nodo"
+msgstr[1] "Se eliminaron {count} nodos"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:9
+msgctxt "history.entry.deletedEdges"
+msgid "Deleted {count} edge"
+msgid_plural "Deleted {count} edges"
+msgstr[0] "Se eliminó {count} arista"
+msgstr[1] "Se eliminaron {count} aristas"
+
+#. Preserve placeholders: {edges}, {nodes}
+#: src/i18n/en/core.ts:10
+msgctxt "history.entry.deletedBoth"
+msgid "Deleted {nodes}, {edges}"
+msgstr "Se eliminaron {nodes}, {edges}"
+
+#. Preserve placeholders: {label}
+#: src/i18n/en/core.ts:11
+msgctxt "history.entry.created"
+msgid "Created “{label}”"
+msgstr "Se creó «{label}»"
+
+#: src/i18n/en/core.ts:12
+msgctxt "history.entry.createdNode"
+msgid "Created a node"
+msgstr "Se creó un nodo"
+
+#: src/i18n/en/core.ts:13
+msgctxt "history.entry.createdEdge"
+msgid "Created an edge"
+msgstr "Se creó una arista"
+
+#: src/i18n/en/core.ts:14
+msgctxt "history.entry.removedSeed"
+msgid "Removed the loaded data"
+msgstr "Se eliminaron los datos cargados"
+
+#: src/i18n/en/core.ts:15
+msgctxt "history.entry.removedManual"
+msgid "Removed hand-drawn work"
+msgstr "Se eliminó el trabajo dibujado a mano"
+
+#. Preserve placeholders: {source}
+#: src/i18n/en/core.ts:16
+msgctxt "history.entry.removedSource"
+msgid "Removed “{source}”"
+msgstr "Se eliminó «{source}»"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:17
+msgctxt "history.entry.grouped"
+msgid "Grouped “{group}”"
+msgstr "Se agrupó «{group}»"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:18
+msgctxt "history.entry.ungrouped"
+msgid "Ungrouped “{group}”"
+msgstr "Se desagrupó «{group}»"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:19
+msgctxt "history.entry.ungroupedMany"
+msgid "Ungrouped {count} group"
+msgid_plural "Ungrouped {count} groups"
+msgstr[0] "Se desagrupó {count} grupo"
+msgstr[1] "Se desagruparon {count} grupos"
+
+#. Preserve placeholders: {group}
+#: src/i18n/en/core.ts:20
+msgctxt "history.entry.renamed"
+msgid "Renamed to “{group}”"
+msgstr "Se cambió el nombre a «{group}»"
+
+#. Preserve placeholders: {count}, {type}
+#: src/i18n/en/core.ts:23
+msgctxt "simplify.typeLabel"
+msgid "{count} × {type}"
+msgstr "{count} × {type}"
+
+#: src/i18n/en/core.ts:24
+msgctxt "simplify.untyped"
+msgid "node"
+msgstr "nodo"
+
+#: src/i18n/en/core.ts:27
+msgctxt "simplify.builtin.neighbours.label"
+msgid "Same neighbours"
+msgstr "Mismos vecinos"
+
+#: src/i18n/en/core.ts:28
+msgctxt "simplify.builtin.neighbours.description"
+msgid "Nodes of one type linked to exactly the same nodes."
+msgstr "Nodos del mismo tipo conectados exactamente a los mismos nodos."
+
+#: src/i18n/en/core.ts:29
+msgctxt "simplify.builtin.chains.label"
+msgid "Chains"
+msgstr "Cadenas"
+
+#: src/i18n/en/core.ts:30
+msgctxt "simplify.builtin.chains.description"
+msgid "Nodes leading chains of the same shape, folded level by level."
+msgstr "Nodos que encabezan cadenas de la misma forma, contraídos nivel a nivel."
+
+#: src/i18n/en/core.ts:31
+msgctxt "simplify.builtin.degree.label"
+msgid "Few links"
+msgstr "Pocos enlaces"
+
+#: src/i18n/en/core.ts:32
+msgctxt "simplify.builtin.degree.description"
+msgid "Nodes with fewer links than this fold into the nodes they hang from."
+msgstr "Los nodos con menos enlaces se contraen en los nodos de los que dependen."
+
+#: src/i18n/en/core.ts:33
+msgctxt "simplify.builtin.kcore.label"
+msgid "Outside the core"
+msgstr "Fuera del núcleo"
+
+#: src/i18n/en/core.ts:34
+msgctxt "simplify.builtin.kcore.description"
+msgid "Peels off nodes with fewer links than this, again and again, into the core."
+msgstr "Incorpora al núcleo, de forma repetida, los nodos con menos enlaces."
+
+#: src/i18n/en/core.ts:35
+msgctxt "simplify.builtin.communities.label"
+msgid "Communities"
+msgstr "Comunidades"
+
+#: src/i18n/en/core.ts:36
+msgctxt "simplify.builtin.communities.description"
+msgid "Whole neighbourhoods into a few super-nodes."
+msgstr "Vecindarios enteros agrupados en unos pocos supernodos."
+
+#: src/i18n/en/core.ts:37
+msgctxt "simplify.builtin.landings.label"
+msgid "Pivot landings"
+msgstr "Resultados de pivotes"
+
+#: src/i18n/en/core.ts:38
+msgctxt "simplify.builtin.landings.description"
+msgid "What a pivot brought in, one group per type."
+msgstr "Lo que aportó un pivote, un grupo por tipo."
+
+#: src/i18n/en/core.ts:39
+msgctxt "simplify.builtin.manual.label"
+msgid "By hand"
+msgstr "Manual"
+
+#: src/i18n/en/core.ts:40
+msgctxt "simplify.builtin.manual.description"
+msgid "Groups made from a selection."
+msgstr "Grupos creados a partir de una selección."
+
+#: src/i18n/en/core.ts:43
+msgctxt "simplify.setting.level"
+msgid "Level"
+msgstr "Nivel"
+
+#: src/i18n/en/core.ts:44
+msgctxt "simplify.setting.minSize"
+msgid "Smallest group"
+msgstr "Grupo mínimo"
+
+#: src/i18n/en/core.ts:45
+msgctxt "simplify.setting.fewestLinks"
+msgid "Fewest links"
+msgstr "Mínimo de enlaces"
+
+#: src/i18n/en/core.ts:46
+msgctxt "simplify.setting.coreStrength"
+msgid "Core strength"
+msgstr "Fuerza del núcleo"
+
+#: src/i18n/en/core.ts:49
+msgctxt "renderer.progress.simulating"
+msgid "Optimizing node positions..."
+msgstr "Optimizando posiciones de nodos…"
+
+#: src/i18n/en/core.ts:50
+msgctxt "renderer.progress.rendering"
+msgid "Rendering in progress"
+msgstr "Renderizando"
+
+#. Preserve placeholders: {seconds}
+#: src/i18n/en/core.ts:51
+msgctxt "renderer.progress.elapsed"
+msgid "Elapsed time: {seconds} sec"
+msgstr "Tiempo transcurrido: {seconds} s"
+
+#: src/i18n/en/core.ts:52
+msgctxt "renderer.progress.done"
+msgid "All done"
+msgstr "Todo listo"
+
+#: src/i18n/en/core.ts:55
+msgctxt "simulation.slow.title"
+msgid "Physics engine running slow"
+msgstr "El motor físico va lento"
+
+#: src/i18n/en/core.ts:56
+msgctxt "simulation.slow.message"
+msgid "The physic has been disabled."
+msgstr "Se ha desactivado la física."
+
+#: src/i18n/en/core.ts:59
+msgctxt "node.expand.title"
+msgid "Expand node"
+msgstr "Expandir nodo"
+
+#: src/i18n/en/core.ts:60
+msgctxt "node.collapse.title"
+msgid "Collapse nodes"
+msgstr "Contraer nodos"
+
+#: src/i18n/en/core.ts:61
+msgctxt "node.defaultLabel"
+msgid "New node"
+msgstr "Nuevo nodo"
+
+#: src/i18n/en/core.ts:64
+msgctxt "groupOutline.drag.title"
+msgid "drag to move the group"
+msgstr "arrastra para mover el grupo"
+
+#: src/i18n/en/core.ts:65
+msgctxt "groupOutline.close.title"
+msgid "Fold back into the group"
+msgstr "Contraer de nuevo en el grupo"
+
+#. Preserve placeholders: {count}, {pivot}
+#: src/i18n/en/core.ts:68
+msgctxt "pivotBadge.title"
+msgid "~{count} · {pivot}"
+msgstr "~{count} · {pivot}"
+
+#. Preserve placeholders: {count}, {total}
+#: src/i18n/en/core.ts:69
+msgctxt "pivotBadge.summary.declared"
+msgid "~{total} across {count} pivot"
+msgid_plural "~{total} across {count} pivots"
+msgstr[0] "~{total} en {count} pivote"
+msgstr[1] "~{total} en {count} pivotes"
+
+#. Preserve placeholders: {count}
+#: src/i18n/en/core.ts:70
+msgctxt "pivotBadge.summary.applies"
+msgid "{count} pivot applies"
+msgid_plural "{count} pivots apply"
+msgstr[0] "{count} pivote aplicable"
+msgstr[1] "{count} pivotes aplicables"
+
+#: src/i18n/en/core.ts:73
+msgctxt "noteCard.surfaceToggle.title"
+msgid "Toggle terminal look"
+msgstr "Alternar aspecto de terminal"
+
+#: src/i18n/en/core.ts:74
+msgctxt "noteCard.edit.title"
+msgid "Edit the note"
+msgstr "Editar la nota"
+
+#: src/i18n/en/core.ts:75
+msgctxt "noteCard.save.title"
+msgid "Save changes"
+msgstr "Guardar cambios"
+
+#: src/i18n/en/core.ts:76
+msgctxt "noteCard.remove.title"
+msgid "Remove the note"
+msgstr "Eliminar la nota"
+
+#: src/i18n/en/core.ts:77
+msgctxt "noteCard.link.search.title"
+msgid "Search for a note"
+msgstr "Buscar una nota"
+
+#: src/i18n/en/core.ts:78
+msgctxt "noteCard.link.pickTitle"
+msgid "Select a node to link to this note"
+msgstr "Selecciona un nodo para vincular a esta nota"
+
+#: src/i18n/en/core.ts:79
+msgctxt "noteCard.link.empty"
+msgid "Link this note to a node"
+msgstr "Vincular esta nota a un nodo"
+
+#. Preserve placeholders: {id}
+#: src/i18n/en/core.ts:80
+msgctxt "noteCard.link.missing"
+msgid "Missing node: {id}"
+msgstr "Nodo ausente: {id}"
+
+#: src/i18n/en/core.ts:81
+msgctxt "noteCard.reference.unresolved.title"
+msgid "Could not resolve node"
+msgstr "No se pudo encontrar el nodo"
+
+#: src/i18n/en/core.ts:84
+msgctxt "minimap.expand.title"
+msgid "Show the minimap"
+msgstr "Mostrar minimapa"
+
+#: src/i18n/en/core.ts:85
+msgctxt "minimap.collapse.title"
+msgid "Collapse the minimap"
+msgstr "Contraer minimapa"
