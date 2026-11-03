@@ -37,24 +37,33 @@
     transition: background-color 0.1s ease;
 }
 
+// $bg-color is a custom property name, or null for no background of its own.
 @mixin dropdown-item-variant($bg-color, $bg-text-color) {
     @include dropdown-item;
 
-    background-color: var($bg-color);
+    @if $bg-color {
+        background-color: var($bg-color);
+    }
     color: var($bg-text-color);
 
-    &:hover {
-        background-color: color-mix(in srgb, var($bg-color) 90%, black);
+    @if $bg-color {
+        &:hover {
+            background-color: color-mix(in srgb, var($bg-color) 90%, black);
+        }
     }
 
     &:active {
-        background-color: color-mix(in srgb, var($bg-color) 85%, black);
+        @if $bg-color {
+            background-color: color-mix(in srgb, var($bg-color) 85%, black);
+        }
         transition: transform 0.05s ease-out;
         transform: scale(0.95);
     }
 
     &:disabled {
-        background-color: color-mix(in srgb, var($bg-color) 75%, black);
+        @if $bg-color {
+            background-color: color-mix(in srgb, var($bg-color) 75%, black);
+        }
         color: color-mix(in srgb, var($bg-text-color) 75%, black);
         cursor: not-allowed;
         transform: none;
@@ -132,7 +141,7 @@
 }
 
 @mixin dropdown-item-default {
-    @include dropdown-item-variant(#00000000, --pvt-text-color-5);
+    @include dropdown-item-variant(null, --pvt-text-color-5);
 }
 
 @mixin dropdown-item-primary {
