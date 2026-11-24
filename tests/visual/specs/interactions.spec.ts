@@ -80,6 +80,57 @@ test.describe('interactions', () => {
         await expectElement(tip, 'tooltip-node.png')
     })
 
+    test('positions and drags pinned tooltips on a scrolled page', async ({ page }) => {
+        await page.setViewportSize({ width: 1000, height: 920 })
+        await page.addStyleTag({ content: 'body { min-height: 1800px } #app { inset: 520px 24px auto; height: 700px }' })
+        await page.evaluate(() => window.scrollTo(0, 460))
+        expect(await page.evaluate(() => window.scrollY)).toBe(460)
+        await loadFixture(page, 'basic')
+        await harness(page, 'pin')
+        await waitForViewSettled(page)
+
+        const node = canvas(page).locator('#node-a')
+        await page.evaluate(() => {
+            const graph = window.__pivotick.graph!
+            const node = graph.getMutableNode('a')!
+            const { x, y } = graph.renderer.graphToScreenCoordinates(node.x!, node.y!)
+            const event = new MouseEvent('mousemove', { clientX: x, clientY: y })
+            graph.UIManager.tooltip!.openForNodeOnElement(event, node)
+        })
+
+        const tip = page.locator('.pvt-tooltip.shown:not(.pvt-tooltip-floating)')
+        await expect(tip).toBeVisible()
+        const nodeBox = (await node.boundingBox())!
+        const tipBox = (await tip.boundingBox())!
+        expect(Math.abs(tipBox.y - nodeBox.y)).toBeLessThanOrEqual(2)
+
+        // Activate the pin button without moving out of the hover region.
+        await tip.locator('.pin-button').evaluate((button: HTMLButtonElement) => button.click())
+        const pinned = page.locator('.pvt-tooltip-floating')
+        await expect(pinned).toBeVisible()
+        const link = page.locator('.pivotick-shadowlink')
+        await expect(link).toHaveAttribute('d', / L /)
+        const linkError = () => link.evaluate((path: SVGPathElement) => {
+            const graph = window.__pivotick.graph!
+            const node = graph.getMutableNode('a')!
+            const target = graph.renderer.graphToScreenCoordinates(node.x!, node.y!)
+            const end = path.getPointAtLength(path.getTotalLength()).matrixTransform(path.getScreenCTM()!)
+            return Math.hypot(end.x - target.x, end.y - target.y)
+        })
+        expect(await linkError()).toBeLessThanOrEqual(2)
+
+        const handle = await centerOf(pinned.locator('.pvt-tooltip-topbar'))
+        await page.mouse.move(handle.x, handle.y)
+        await page.mouse.down()
+        await page.mouse.move(handle.x, 890, { steps: 15 })
+        await page.mouse.up()
+
+        const pinnedBox = (await pinned.boundingBox())!
+        const appBox = (await page.locator('#app').boundingBox())!
+        expect(Math.abs(pinnedBox.y + pinnedBox.height - appBox.y - appBox.height)).toBeLessThanOrEqual(2)
+        expect(await linkError()).toBeLessThanOrEqual(2)
+    })
+
     // T7.3 — right-clicking a node opens the node context menu (Pin / Focus /
     // Hide quick-actions + Select Neighbors / Hide Children / Connect / Inspect).
     test('shows the node context menu', async ({ page }) => {
