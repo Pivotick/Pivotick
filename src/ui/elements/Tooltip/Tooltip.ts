@@ -552,13 +552,15 @@ export class Tooltip extends UIComponent {
         const parentHeight = canvasBbox.height
         const tooltipWidth = this.tooltip.offsetWidth
         const tooltipHeight = this.tooltip.offsetHeight
+        const hoveredX = hoveredBCR.left + window.scrollX
 
-        this.x = hoveredBCR.x + hoveredBCR.width + offsetX
-        this.y = hoveredBCR.y
+        // The tooltip is absolutely positioned on the page, just like the shadow link.
+        this.x = hoveredX + hoveredBCR.width + offsetX
+        this.y = hoveredBCR.top + window.scrollY
 
         // Adjust horizontal position if overflowing
         if (this.x + tooltipWidth + offset > parentX + parentWidth) {
-            this.x = hoveredBCR.x - tooltipWidth - offsetX
+            this.x = hoveredX - tooltipWidth - offsetX
         }
 
         // Left overflow
@@ -719,6 +721,7 @@ export class Tooltip extends UIComponent {
         })
         this.parentContainer.appendChild(clonedTooltip)
         this.shadowLinkManager?.addShadowLink(clonedTooltip)
+        this.updateShadowLinks(true)
 
         // Refit this copy's title to its own width, now and on every resize.
         const pinnedName = clonedTooltip.querySelector<HTMLElement>('.pvt-mainheader-nodeinfo-name')
@@ -732,13 +735,17 @@ export class Tooltip extends UIComponent {
     }
 
     /**
-     * Where a pinned tooltip's link lands, in client coordinates. A node's drawing box
+     * Where a pinned tooltip's link lands, in page coordinates. A node's drawing box
      * takes in its label, so its centre drifts off the node; the link aims at the node.
      */
     private linkTarget(element: Node | Edge): DOMRect {
-        if ('from' in element) return element.getGraphElement()!.getBoundingClientRect()
+        const { scrollX, scrollY } = window
+        if ('from' in element) {
+            const bounds = element.getGraphElement()!.getBoundingClientRect()
+            return new DOMRect(bounds.left + scrollX, bounds.top + scrollY, bounds.width, bounds.height)
+        }
         const { x, y } = this.uiManager.graph.renderer.graphToScreenCoordinates(element.x ?? 0, element.y ?? 0)
-        return new DOMRect(x, y, 0, 0)
+        return new DOMRect(x + scrollX, y + scrollY, 0, 0)
     }
 
     private updateShadowLinks(recalculateBBoxes = false): void {

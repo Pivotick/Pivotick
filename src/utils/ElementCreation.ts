@@ -330,12 +330,13 @@ export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement, b
         const { signal } = controller
         isDragging = true
         handleEl.style.transition = 'none' // disable smooth transitions while dragging
-        startX = e.clientX
-        startY = e.clientY
+        startX = e.pageX
+        startY = e.pageY
         initialX = draggableEl.offsetLeft
         initialY = draggableEl.offsetTop
         bbox = draggableEl.getBoundingClientRect()
-        appBox = box.getBoundingClientRect()
+        const bounds = box.getBoundingClientRect()
+        appBox = new DOMRect(bounds.left + window.scrollX, bounds.top + window.scrollY, bounds.width, bounds.height)
         callbacks.onDragStart?.(e, draggableEl)
         window.getSelection()?.removeAllRanges()
         document.addEventListener('mousemove', onMouseMove, { signal })
@@ -347,8 +348,8 @@ export function makeDraggable(draggableEl: HTMLElement, handleEl: HTMLElement, b
 
     function onMouseMove(e: MouseEvent) {
         if (!isDragging || !appBox || !bbox) return
-        const dx = e.clientX - startX
-        const dy = e.clientY - startY
+        const dx = e.pageX - startX
+        const dy = e.pageY - startY
         let posX = initialX + dx
         let posY = initialY + dy
 
