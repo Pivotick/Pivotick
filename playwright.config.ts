@@ -5,7 +5,8 @@ import { defineConfig, devices } from '@playwright/test'
  *
  * Boots the Vite dev server, drives a deterministic harness page in Chromium,
  * and compares screenshots against committed baselines with a small pixel
- * tolerance (anti-aliasing differs slightly even on the same engine).
+ * tolerance. A targeted Firefox project covers SVG loading geometry without
+ * comparing screenshots across browser engines.
  *
  * Determinism strategy: a single browser (Chromium) and a pinned viewport.
  * Baselines are suffixed with the platform so a future Linux CI run matches
@@ -59,6 +60,11 @@ export default defineConfig({
         {
             name: 'chromium',
             use: { ...devices['Desktop Chrome'] },
+        },
+        {
+            name: 'firefox',
+            testMatch: '**/label-loading-geometry.spec.ts',
+            use: { ...devices['Desktop Firefox'] },
         },
     ],
 

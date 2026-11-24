@@ -11,6 +11,7 @@ a test fails and shows you the pixel diff.
 ## Quick start
 
 ```bash
+npx playwright install chromium firefox  # screenshot engine + SVG geometry regression
 npm run test:visual          # run all visual tests against the baselines
 npm run test:visual:update   # re-generate baselines (after intentional visual changes)
 npm run test:visual:ui       # interactive Playwright UI runner
@@ -74,7 +75,7 @@ of run-to-run variance:
 | Zoom/pan transitions      | `render.zoomAnimation = false`                               |
 | Viewport size             | Pinned to 1280×800 in `playwright.config.ts`                 |
 | Web fonts                 | `await document.fonts.ready` before snapshotting             |
-| Browser engine            | Chromium only                                                |
+| Browser engine            | Chromium for screenshots; targeted loading-geometry coverage also runs in Firefox |
 | Sub-pixel anti-aliasing   | `maxDiffPixelRatio: 0.01` tolerance in the screenshot config |
 
 The graph is only screenshotted after the `ready` event fires (layout done, zoom layer

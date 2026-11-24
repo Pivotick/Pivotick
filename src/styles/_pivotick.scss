@@ -36,6 +36,13 @@
     display: none;
 }
 
+// Keep SVG text measurable during loading: Firefox returns empty getBBox()
+// results under display:none, placing padded label backgrounds at the origin.
+.pvt-canvas-element > .zoom-layer.hidden {
+    display: inline;
+    visibility: hidden;
+}
+
 // Room for the toolbar and rail. A viewer or a static graph takes the size it is given.
 .pvt-layout.mode-full .pvt-canvas,
 .pvt-layout.mode-light .pvt-canvas {
