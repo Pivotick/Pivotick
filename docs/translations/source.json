@@ -18553,6 +18553,18 @@
       "reference/README.md"
     ]
   },
+  "0f22a2544bac9efcc45887ba": {
+    "source": "[offensive.agency Graph](https://www.offensive.agency/graph)",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
+  "86537c0ca7d57595e01f4904": {
+    "source": "Visualize observed relationships between exposed AI agents and internet infrastructure.",
+    "pages": [
+      "reference/README.md"
+    ]
+  },
   "c082234a43572fc647633d37": {
     "source": "[pivotick](../globals.md) / DeepPartial",
     "pages": [

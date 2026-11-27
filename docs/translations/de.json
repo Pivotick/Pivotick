@@ -3774,6 +3774,8 @@
   "2775f827470d99a781e75a4c": "Von CIRCL gepflegte Open-Source-Projekte für Cybersicherheit entdecken.",
   "27c906e353829f01ccb92b52": "⟦0⟧MISP⟦1⟧",
   "0b5a687a2471745cd6e877a8": "Threat Intelligence mit offenen Standards teilen, speichern und korrelieren.",
+  "0f22a2544bac9efcc45887ba": "⟦0⟧offensive.agency Graph⟦1⟧",
+  "86537c0ca7d57595e01f4904": "Beobachtete Beziehungen zwischen öffentlich erreichbaren KI-Agenten und Internetinfrastruktur visualisieren.",
   "ae1c24b78f314d9c41a7270a": "Die Kataloge werden als ⟦0⟧, ⟦1⟧, ⟦2⟧, ⟦3⟧, exportiert.\n⟦4⟧, ⟦5⟧, ⟦6⟧, ⟦7⟧, ⟦8⟧ und zusammen als\n⟦9⟧, auch verfügbar auf ⟦10⟧ in Browser-Builds.",
   "53e3a600197c1ce882ff2716": "Das ⟦0⟧-Verzeichnis des Repositorys enthält eine Gettext-Vorlage, ⟦1⟧, und vollständig\n⟦2⟧, ⟦3⟧, ⟦4⟧, ⟦5⟧, ⟦6⟧, ⟦7⟧, ⟦8⟧ und ⟦9⟧ Dateien. Diese Dateien werden auch im npm-Paket geliefert.\nÖffnen Sie eine ⟦10⟧-Datei in Poedit oder einem beliebigen UTF-8-Texteditor. Jedes ⟦11⟧ ist der stabile Nachrichtenschlüssel;\n⟦12⟧ ist die englische Quelle und ⟦13⟧ ist die Übersetzung. Halten Sie ⟦14⟧ intakt.\nFür mehrere Einträge übersetzen Sie jeden ⟦15⟧-Slot: Chinesisch und Japanisch haben ⟦16⟧\nnur; Arabisch hat ⟦17⟧, ⟦18⟧, ⟦19⟧, ⟦20⟧, ⟦21⟧, dann ⟦22⟧; Französisch, Deutsch,\nPortugiesisch, Niederländisch und Spanisch haben ⟦23⟧, dann ⟦24⟧. Die Laufzeit verwendet ⟦25⟧,\nBei fehlenden Kategorien wird auf ⟦26⟧ zurückgegriffen, anstatt den gettext-Header als ⟦27⟧ auszuwerten.",
   "45f16144c18cb09894ec3e24": "Niederländisch",

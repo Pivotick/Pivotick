@@ -3774,6 +3774,8 @@
   "2775f827470d99a781e75a4c": "Découvrir les projets open source de cybersécurité maintenus par le CIRCL.",
   "27c906e353829f01ccb92b52": "⟦0⟧MISP⟦1⟧",
   "0b5a687a2471745cd6e877a8": "Partager, stocker et corréler le renseignement sur les menaces avec des standards ouverts.",
+  "0f22a2544bac9efcc45887ba": "⟦0⟧offensive.agency Graph⟦1⟧",
+  "86537c0ca7d57595e01f4904": "Visualiser les relations observées entre les agents d’IA exposés et l’infrastructure Internet.",
   "ae1c24b78f314d9c41a7270a": "Les catalogues sont exportés sous ⟦0⟧, ⟦1⟧, ⟦2⟧, ⟦3⟧,\n⟦4⟧, ⟦5⟧, ⟦6⟧, ⟦7⟧, ⟦8⟧ et ensemble comme\n⟦9⟧, également disponible sur ⟦10⟧ dans les versions de navigateur.",
   "53e3a600197c1ce882ff2716": "Le répertoire ⟦0⟧ du référentiel contient un modèle gettext, ⟦1⟧, et complet\nFichiers ⟦2⟧, ⟦3⟧, ⟦4⟧, ⟦5⟧, ⟦6⟧, ⟦7⟧, ⟦8⟧ et ⟦9⟧. Ces fichiers sont également livrés dans le package npm.\nOuvrez un fichier ⟦10⟧ dans Poedit ou dans n'importe quel éditeur de texte UTF-8. Chaque ⟦11⟧ est la clé de message stable ;\n⟦12⟧ est la source anglaise et ⟦13⟧ est la traduction. Gardez le ⟦14⟧ intact.\nPour les entrées plurielles, traduisez chaque ⟦15⟧ emplacement : le chinois et le japonais ont ⟦16⟧\nseulement; L'arabe a ⟦17⟧, ⟦18⟧, ⟦19⟧, ⟦20⟧, ⟦21⟧, puis ⟦22⟧ ; français, allemand,\nLe portugais, le néerlandais et l'espagnol ont ⟦23⟧ puis ⟦24⟧. Le runtime utilise ⟦25⟧,\nles catégories manquantes retombant à ⟦26⟧, plutôt que d'évaluer l'en-tête gettext comme ⟦27⟧.",
   "45f16144c18cb09894ec3e24": "Néerlandais",
