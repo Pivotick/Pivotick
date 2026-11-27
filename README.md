@@ -42,6 +42,7 @@ vulnerability research and security investigations. Discover the projects listed
 | [FlowIntel](https://flowintel.org/) | Organize security investigations, cases and analyst tasks. |
 | [CIRCL](https://www.circl.lu/projects/) | Discover open-source cybersecurity projects maintained by CIRCL. |
 | [MISP](https://www.misp-project.org/) | Share, store and correlate threat intelligence using open standards. |
+| [offensive.agency Graph](https://www.offensive.agency/graph) | Visualize observed relationships between exposed AI agents and internet infrastructure. |
 
 **Building something with Pivotick?** We'd love to feature it here! Share your project's
 name, a link and a short description of how you use Pivotick in

@@ -66,6 +66,13 @@ export const projects = [
         url: 'https://www.misp-project.org/',
         description: 'Share, store and correlate threat intelligence using open standards.',
     },
+    {
+        name: 'offensive.agency Graph',
+        initials: 'OA',
+        logo: '/projects/offensive-agency.png',
+        url: 'https://www.offensive.agency/graph',
+        description: 'Visualize observed relationships between exposed AI agents and internet infrastructure.',
+    },
 ]
 
 export const projectsIssueUrl = 'https://github.com/Pivotick/Pivotick/issues/34'
